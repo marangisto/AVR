@@ -75,6 +75,118 @@ const uint8_t TrellisQuad::m_remap[] =
 
 static TrellisQuad g_trellis;
 
+static bool charSpace[20] =
+	{ false, false, false, false
+	, false, false, false, false
+	, false, false, false, false
+	, false, false, false, false
+	, false, false, false, false
+	};
+
+static bool char0[20] =
+	{ false,  true,  true,  true
+	, false,  true, false,  true
+	, false,  true, false,  true
+	, false,  true, false,  true
+	, false,  true,  true,  true
+	};
+
+static bool char1[20] =
+	{ false, false,  true, false
+	, false, false,  true, false
+	, false, false,  true, false
+	, false, false,  true, false
+	, false, false,  true, false
+	};
+
+static bool char2[20] =
+	{ false,  true,  true,  true
+	, false, false, false,  true
+	, false,  true,  true,  true
+	, false,  true, false, false
+	, false,  true,  true,  true
+	};
+
+static bool char3[20] =
+	{ false,  true,  true,  true
+	, false, false, false,  true
+	, false, false,  true,  true
+	, false, false, false,  true
+	, false,  true,  true,  true
+	};
+
+static bool char4[20] =
+	{ false,  true, false,  true
+	, false,  true, false,  true
+	, false,  true,  true,  true
+	, false, false, false,  true
+	, false, false, false,  true
+	};
+
+static bool char5[20] =
+	{ false,  true,  true,  true
+	, false,  true, false, false
+	, false,  true,  true,  true
+	, false, false, false,  true
+	, false,  true,  true,  true
+	};
+
+static bool char6[20] =
+	{ false,  true,  true,  true
+	, false,  true, false, false
+	, false,  true,  true,  true
+	, false,  true, false,  true
+	, false,  true,  true,  true
+	};
+
+static bool char7[20] =
+	{ false,  true,  true,  true
+	, false, false, false,  true
+	, false, false, false,  true
+	, false, false, false,  true
+	, false, false, false,  true
+	};
+
+static bool char8[20] =
+	{ false,  true,  true,  true
+	, false,  true, false,  true
+	, false,  true,  true,  true
+	, false,  true, false,  true
+	, false,  true,  true,  true
+	};
+
+static bool char9[20] =
+	{ false,  true,  true,  true
+	, false,  true, false,  true
+	, false,  true,  true,  true
+	, false, false, false,  true
+	, false,  true,  true,  true
+	};
+
+void drawChar(uint8_t r0, uint8_t c0, char x)
+{
+	const bool *ch;
+
+	switch (x)
+	{
+		case '0': ch = char0; break;
+		case '1': ch = char1; break;
+		case '2': ch = char2; break;
+		case '3': ch = char3; break;
+		case '4': ch = char4; break;
+		case '5': ch = char5; break;
+		case '6': ch = char6; break;
+		case '7': ch = char7; break;
+		case '8': ch = char8; break;
+		case '9': ch = char9; break;
+		default: ch = charSpace;
+	}
+
+	for (uint8_t r = 0; r < 5; ++r)
+		for (uint8_t c = 0; c < 4; ++c)
+			g_trellis.setLed(r0 + r, c0 + c, ch[r * 4 + c]);
+}
+
 void setup()
 {
 	Serial.begin(9600);
@@ -82,22 +194,17 @@ void setup()
 	g_trellis.begin();
 }
 
-void loop() {
-	static int r = 0, c = 0;
-	static bool b = true;
+void loop()
+{
+	static int i = 0;
 
-	g_trellis.setLed(r, c, b);
+	drawChar(1, 0, '0' + i);
 
-	if (++c > 7)
-	{
-		if (++r > 7)
-		{
-			r = 0;
-			b = !b;
-		}
-		c = 0;
-	}
-	
+	if (++i > 9)
+		i = 0;
+
 	g_trellis.writeDisplay();
+
+	delay(500);
 }
 
