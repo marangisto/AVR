@@ -1,5 +1,5 @@
 :
 # compile and upload sketch from current directory to leonardo
 DIR=`pwd`
-arduino --board arduino:avr:leonardo --upload $DIR/`basename $DIR`.ino
+arduino --board arduino:avr:leonardo $* $DIR/`basename $DIR`.ino
 exit 0
