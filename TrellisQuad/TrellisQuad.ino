@@ -187,6 +187,12 @@ void drawChar(uint8_t r0, uint8_t c0, char x)
 			g_trellis.setLed(r0 + r, c0 + c, ch[r * 4 + c]);
 }
 
+void drawInt(uint8_t r0, uint8_t c0, int8_t i)
+{
+	drawChar(r0, c0 + 4, '0' + i % 10);
+	drawChar(r0, c0, '0' + i / 10);
+}
+
 void setup()
 {
 	Serial.begin(9600);
@@ -198,9 +204,9 @@ void loop()
 {
 	static int i = 0;
 
-	drawChar(1, 0, '0' + i);
+	drawInt(1, 0, i);
 
-	if (++i > 9)
+	if (++i > 99)
 		i = 0;
 
 	g_trellis.writeDisplay();
