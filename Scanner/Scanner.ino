@@ -4,49 +4,25 @@
 #include "LCDKeyPadShield.h"
 #include "MotorShield.h"
 
-static Stepper *gM0 = 0;
+static const uint8_t ledPin = 13;
+
 static Stepper *gM1 = 0;
+static Stepper *gM2 = 0;
 static HBridge *gHB1 = 0;
 static HBridge *gHB2 = 0;
 static HBridge *gHB3 = 0;
 static HBridge *gHB4 = 0;
 
-void runPWM(HBridge *hb, HBridgeState s)
-{
-	hb->setPWM(0);
-	hb->set(s);
-
-	for (uint16_t w = 1; w <= 4096; w *= 2)
-	{
-		hb->setPWM(w);
-		delay(50);
-	}
-}
-
-void runHB(HBridge *hb)
-{
-	runPWM(hb, Forward);
-	runPWM(hb, Reverse);
-	hb->set(Off);
-	delay(500);
-}
-
-void runHB(HBridge *hb, int n)
-{
-	for (uint8_t i = 0; i < n; ++i)
-		runHB(hb);
-}
-
-
 LCDKeyPad gLCDKP;
 
-void setup(){
+void setup()
+{
 	Serial.begin(9600);
 
 	MotorShieldV2 *motorShield = new MotorShieldV2();
 
-	gM0 = new Stepper(motorShield, Stepper1);
-	gM1 = new Stepper(motorShield, Stepper2);
+	gM1 = new Stepper(motorShield, Stepper1);
+	gM2 = new Stepper(motorShield, Stepper2);
 	gHB1 = new HBridge(motorShield, HBridge1);
 	gHB2 = new HBridge(motorShield, HBridge2);
 	gHB3 = new HBridge(motorShield, HBridge3);
@@ -59,7 +35,20 @@ void setup(){
 	lcd.print("Push the buttons");
 }
  
-void loop(){
+void loop()
+{
+	static bool ledState = false;					// current led state
+	static unsigned long ledNext = 0;				// next event for led
+	static unsigned long m1Next = 0, m2Next = 0;	// next event for motors
+	unsigned long now = millis();
+
+	if (ledNext < now)
+	{
+		digitalWrite(ledPin, ledState);
+		ledState = !ledState;
+		ledNext = now + 1000;
+	}
+
 	LiquidCrystal& lcd = gLCDKP.lcd();
 
 	lcd.setCursor(9,1);             // move cursor to second line "1" and 9 spaces over
@@ -76,13 +65,16 @@ void loop(){
 		case KeyNone:	lcd.print("      "); break;
 	}
 
-	gM0->step();
-	gM1->step();
-	delay(100);
+	if (m1Next < now)
+	{
+		gM1->step();
+		m1Next = now + 500;
+	}
 
-//	runHB(gHB1, 4);
-//	runHB(gHB2, 4);
-//	runHB(gHB3, 4);
-//	runHB(gHB4, 4);
+	if (m2Next < now)
+	{
+		gM2->step();
+		m2Next = now + 50;
+	}
 }
 
