@@ -8,10 +8,11 @@ static Stepper *gM1 = 0;
 void setup()
 {
   Serial.begin(9600);
-  MotorShieldV2 *pwmdrv = new MotorShieldV2(0x60);
 
-  gM0 = new Stepper(pwmdrv, 0);
-  gM1 = new Stepper(pwmdrv, 1);
+  MotorShieldV2 *motorShield = new MotorShieldV2();
+
+  gM0 = new Stepper(motorShield, 0);
+  gM1 = new Stepper(motorShield, 1);
 }
 
 void loop()
@@ -21,5 +22,4 @@ void loop()
   
 	delay(100);
 }
-
 

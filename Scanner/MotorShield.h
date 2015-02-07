@@ -3,7 +3,7 @@
 
 class MotorShieldV2 {
 public:
-	MotorShieldV2(uint8_t addr = 0x40);
+	MotorShieldV2(uint8_t addr = 0x60);
 	void reset(void);
 	void setPWMFreq(float freq);
 	void setPWM(uint8_t num, uint16_t on, uint16_t off);
