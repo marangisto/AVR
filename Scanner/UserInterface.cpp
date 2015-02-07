@@ -3,10 +3,12 @@
 
 UserInterface::UserInterface()
 	: m_last(KeyNone)
-	, m_item(Frames)
+	, m_item(Film)
+	, m_format(F24X36)
 	, m_frames(6)
 	, m_shutter(128)
 	, m_intensity(1024)
+	, m_light(false)
 {
 }
 
@@ -34,24 +36,17 @@ void UserInterface::processInput(LCDKeyPad& lcdkp, unsigned long now)
 	switch (key)
 	{
 	case KeyLeft:
-		switch (m_item)
-		{
-			case Frames: m_item = Intensity; break;
-			case Shutter: m_item = Frames; break;
-			case Intensity: m_item = Shutter; break;
-		}
+		m_item = static_cast<Item>((static_cast<int>(m_item) + 1) % static_cast<int>(LastItem));
 		break;
 	case KeyRight:
-		switch (m_item)
-		{
-			case Frames: m_item = Shutter; break;
-			case Shutter: m_item = Intensity; break;
-			case Intensity: m_item = Frames; break;
-		}
+		m_light = !m_light;
 		break;
 	case KeyUp:
 		switch (m_item)
 		{
+			case Film:
+				m_format = static_cast<Format>(min(static_cast<int>(m_format) + 1, static_cast<int>(LastFormat) - 1));
+				break;
 			case Frames:
 				m_frames = m_frames < max_frames ? m_frames + 1 : m_frames;
 				break;
@@ -61,11 +56,15 @@ void UserInterface::processInput(LCDKeyPad& lcdkp, unsigned long now)
 			case Intensity:
 				m_intensity = m_intensity < max_intensity ? m_intensity * 2 : m_intensity;
 				break;
+			default: ;
 		}
 		break;
 	case KeyDown:
 		switch (m_item)
 		{
+			case Film:
+				m_format = static_cast<Format>(max(static_cast<int>(m_format) - 1, 0));
+				break;
 			case Frames:
 				m_frames = m_frames > 1 ? m_frames - 1 : m_frames;
 				break;
@@ -75,6 +74,7 @@ void UserInterface::processInput(LCDKeyPad& lcdkp, unsigned long now)
 			case Intensity:
 				m_intensity = m_intensity > 1 ? m_intensity / 2 : m_intensity;
 				break;
+			default: ;
 		}
 		break;
 	default:;
@@ -84,23 +84,43 @@ void UserInterface::processInput(LCDKeyPad& lcdkp, unsigned long now)
 	refresh(lcdkp.lcd());
 }
 
+static const char *toString(Format f)
+{
+	switch (f)
+	{
+		case F18X24: return "18 X 24";
+		case F24X24: return "24 X 24";
+		case F24X36: return "24 X 36";
+		case F6X45: return "6 X 4.5";
+		case F6X6: return "6 X 6";
+		case F6X7: return "6 X 7";
+		case F6X8: return "6 X 8";
+		case F6X9: return "6 X 9";
+		default: return "?";
+	}
+}
+
 void UserInterface::refresh(LiquidCrystal& lcd)
 {
 	lcd.setCursor(0,0);
 	switch (m_item)
 	{
+		case Film:		lcd.print("Format   "); break;
 		case Frames:	lcd.print("Frames   "); break;
 		case Shutter:	lcd.print("Shutter  "); break;
 		case Intensity:	lcd.print("Intensity"); break;
+		default:		lcd.print("?"); break;
 	}
    	lcd.setCursor(0,1);
 	lcd.print(" =         ");
    	lcd.setCursor(3,1);
 	switch (m_item)
 	{
+		case Film:		lcd.print(toString(m_format)); break;
 		case Frames:	lcd.print(m_frames); break;
 		case Shutter:	lcd.print(m_shutter); break;
 		case Intensity:	lcd.print(m_intensity); break;
+		default:		lcd.print("?"); break;
 	}
 }
 
