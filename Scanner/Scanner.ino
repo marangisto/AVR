@@ -1,5 +1,7 @@
 #include <Wire.h>
+#include <LiquidCrystal.h>
 
+#include "LCDKeyPadShield.h"
 #include "MotorShield.h"
 
 static Stepper *gM0 = 0;
@@ -35,8 +37,10 @@ void runHB(HBridge *hb, int n)
 		runHB(hb);
 }
 
-void setup()
-{
+
+LCDKeyPad gLCDKP;
+
+void setup(){
 	Serial.begin(9600);
 
 	MotorShieldV2 *motorShield = new MotorShieldV2();
@@ -47,19 +51,38 @@ void setup()
 	gHB2 = new HBridge(motorShield, HBridge2);
 	gHB3 = new HBridge(motorShield, HBridge3);
 	gHB4 = new HBridge(motorShield, HBridge4);
-}
 
-void loop()
-{
+	LiquidCrystal& lcd = gLCDKP.lcd();
+
+	delay(1000);
+	lcd.setCursor(0,0);
+	lcd.print("Push the buttons");
+}
+ 
+void loop(){
+	LiquidCrystal& lcd = gLCDKP.lcd();
+
+	lcd.setCursor(9,1);             // move cursor to second line "1" and 9 spaces over
+	lcd.print(millis()/1000);       // display seconds elapsed since power-up
+	lcd.setCursor(0,1);             // move to the begining of the second line
+
+	switch (gLCDKP.read())
+	{
+		case KeyLeft:	lcd.print("Left  "); break;
+		case KeyRight:	lcd.print("Right "); break;
+		case KeyUp:		lcd.print("Up    "); break;
+		case KeyDown:	lcd.print("Down  "); break;
+		case KeySelect:	lcd.print("Select"); break;
+		case KeyNone:	lcd.print("      "); break;
+	}
+
 	gM0->step();
 	gM1->step();
 	delay(100);
 
-/*
-	runHB(gHB1, 4);
-	runHB(gHB2, 4);
-	runHB(gHB3, 4);
-	runHB(gHB4, 4);
-*/
+//	runHB(gHB1, 4);
+//	runHB(gHB2, 4);
+//	runHB(gHB3, 4);
+//	runHB(gHB4, 4);
 }
 
