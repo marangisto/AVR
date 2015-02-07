@@ -5,13 +5,18 @@
 
 enum Format { F18X24, F24X24, F24X36, F6X45, F6X6, F6X7, F6X8, F6X9, LastFormat };
 
+enum Event { None, Light, Start };
+
 class UserInterface
 {
 public:
 	UserInterface();
 
 	void setup(LCDKeyPad& lcdkp);
-	void processInput(LCDKeyPad& lcdkp, unsigned long now);
+	Event processInput(LCDKeyPad& lcdkp, unsigned long now);
+
+	inline uint16_t intensity() { return m_intensity; }
+	inline bool light() { return m_light; }
 
 private:
 	void refresh(LiquidCrystal& lcd);
@@ -28,8 +33,8 @@ private:
 	uint8_t		m_frames;
 	uint16_t	m_shutter;
 	uint16_t	m_intensity;
-	bool		m_light;
 	uint8_t		m_frame;
+	bool		m_light;
 };
 
 #endif // USER_INTERFACE_H
