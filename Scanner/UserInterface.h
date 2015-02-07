@@ -9,7 +9,7 @@ public:
 	UserInterface();
 
 	void setup(LCDKeyPad& lcdkp);
-	void processInput(LCDKeyPad& lcdkp);
+	void processInput(LCDKeyPad& lcdkp, unsigned long now);
 
 private:
 	void refresh(LiquidCrystal& lcd);

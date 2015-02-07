@@ -24,9 +24,9 @@ void UserInterface::setup(LCDKeyPad& lcdkp)
 	refresh(lcd);
 }
 
-void UserInterface::processInput(LCDKeyPad& lcdkp)
+void UserInterface::processInput(LCDKeyPad& lcdkp, unsigned long now)
 {
-	Key key = lcdkp.read();
+	Key key = lcdkp.read(now);
 
 	if (key == m_last)
 		return;

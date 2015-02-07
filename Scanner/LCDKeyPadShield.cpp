@@ -3,11 +3,23 @@
 
 #define BOARD_VERSION 10
 
-LCDKeyPad::LCDKeyPad(): m_lcd(8, 9, 4, 5, 6, 7)
+LCDKeyPad::LCDKeyPad(): m_lcd(8, 9, 4, 5, 6, 7), m_bounce(0), m_last(KeyNone), m_key(KeyNone)
 {
    m_lcd.begin(16, 2);
    m_lcd.setCursor(0,0);
    m_lcd.print("Hello World!");
+}
+
+Key LCDKeyPad::read(unsigned long now)
+{
+	Key k = read();
+
+	if (k != m_last)
+		m_bounce = now;
+	if (now - m_bounce > 25)
+		m_key = k;
+	m_last = k;
+	return m_key;
 }
 
 Key LCDKeyPad::read()

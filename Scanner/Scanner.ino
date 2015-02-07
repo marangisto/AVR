@@ -47,7 +47,7 @@ void loop()
 		ledNext = now + 1000;
 	}
 
-	gUI.processInput(gLCDKP);
+	gUI.processInput(gLCDKP, now);
 
 	if (m1Next < now)
 	{
