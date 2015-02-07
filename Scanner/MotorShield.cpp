@@ -76,25 +76,47 @@ void MotorShieldV2::write8(uint8_t addr, uint8_t d)
 	Wire.endTransmission();
 }
 
-void Stepper::set(uint8_t pin, bool x)
+HBridge::HBridge(MotorShieldV2 *shield, HBridgeEnum i): m_shield(shield)
+{
+	switch (i)
+	{
+		case HBridge1: m_a = 10; m_b = 9;  m_pwm = 8; break;
+		case HBridge2: m_a = 12; m_b = 11; m_pwm = 13; break;
+		case HBridge3: m_a = 4;  m_b = 3;  m_pwm = 2; break;
+		case HBridge4: m_a = 6;  m_b = 5;  m_pwm = 7; break;
+	}
+}
+
+void HBridge::setPWM(uint16_t x)
+{
+	if (x > 4095)
+		m_shield->setPWM(m_pwm, 4096, 0);
+	else
+		m_shield->setPWM(m_pwm, 0, x);
+}
+
+void HBridge::set(HBridgeState s)
+{
+	switch (s)
+	{
+		case Off: set(m_a, false); set(m_b, false); break;
+		case Forward: set(m_b, false); set(m_a, true); break;
+		case Reverse: set(m_a, false); set(m_b, true); break;
+	}
+}
+
+void HBridge::set(uint8_t pin, bool x)
 {
 	m_shield->setPWM(pin, x ? 4096 : 0, 0);
 }
 
-void Stepper::setPWM(uint8_t pin, uint16_t x)
+Stepper::Stepper(MotorShieldV2 *shield, StepperEnum i): m_shield(shield), m_i(0)
 {
-	if (x > 4095)
-		m_shield->setPWM(pin, 4096, 0);
-	else
-		m_shield->setPWM(pin, 0, x);
-}  
-
-Stepper::Stepper(MotorShieldV2 *shield, uint8_t i): m_shield(shield), m_i(0)
-{
-	m_a = i ? ain1 : ain2;
-	m_b = i ? bin1 : bin2;
-	m_c = i ? cin1 : cin2;
-	m_d = i ? din1 : din2;
+	switch (i)
+	{
+		case Stepper1: m_a = ain1; m_b = bin1; m_c = cin1; m_d = din1; break;
+		case Stepper2: m_a = ain2; m_b = bin2; m_c = cin2; m_d = din2; break;
+	}
 
 	set(m_a, false);
 	set(m_b, false);
@@ -117,4 +139,17 @@ void Stepper::step()
 	if (m_i > 3)
 		m_i = 0;
 }
+
+void Stepper::set(uint8_t pin, bool x)
+{
+	m_shield->setPWM(pin, x ? 4096 : 0, 0);
+}
+
+void Stepper::setPWM(uint8_t pin, uint16_t x)
+{
+	if (x > 4095)
+		m_shield->setPWM(pin, 4096, 0);
+	else
+		m_shield->setPWM(pin, 0, x);
+}  
 
