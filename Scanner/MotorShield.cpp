@@ -1,34 +1,17 @@
 #include <Wire.h>
 #include "MotorShield.h"
 
-#define PCA9685_SUBADR1 0x2
-#define PCA9685_SUBADR2 0x3
-#define PCA9685_SUBADR3 0x4
-
 #define PCA9685_MODE1 0x0
 #define PCA9685_PRESCALE 0xFE
 
-static const uint8_t apwm = 8, ain1 = 3, ain2 = 9;
-static const uint8_t bpwm = 13, bin1 = 4, bin2 = 10;
-static const uint8_t cpwm = 2, cin1 = 5, cin2 = 11;
-static const uint8_t dpwm = 7, din1 = 6, din2 = 12;
-
-MotorShieldV2::MotorShieldV2(uint8_t addr)
+MotorShieldV2::MotorShieldV2(uint8_t addr): m_i2caddr(addr)
 {
-	m_i2caddr = addr;
 	Wire.begin();
-	reset();
-}
-
-void MotorShieldV2::reset(void) {
 	write8(PCA9685_MODE1, 0x0);
 	setPWMFreq(1600);
+
 	for (uint8_t i=0; i<16; i++)
 		setPWM(i, 0, 0);
-	setPWM(apwm, 4096, 0);
-	setPWM(bpwm, 4096, 0);
-	setPWM(cpwm, 4096, 0);
-	setPWM(dpwm, 4096, 0);
 }
 
 void MotorShieldV2::setPWMFreq(float freq)
