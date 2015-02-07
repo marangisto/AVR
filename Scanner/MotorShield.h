@@ -23,7 +23,7 @@ enum HBridgeState { Off, Forward, Reverse };
 class HBridge
 {
 public:
-	HBridge(MotorShieldV2 *shield, HBridgeEnum i);
+	HBridge(MotorShieldV2 *shield, HBridgeEnum e);
 	void setPWM(uint16_t x);
 	void set(HBridgeState s);
 
@@ -39,16 +39,12 @@ enum StepperEnum { Stepper1, Stepper2 };
 class Stepper
 {
 public:
-	Stepper(MotorShieldV2 *shield, StepperEnum i);
+	Stepper(MotorShieldV2 *shield, StepperEnum e);
 	void step();
 
 private:
-	void set(uint8_t pin, bool x);
-	void setPWM(uint8_t pin, uint16_t x);
-
-	MotorShieldV2	*m_shield;
-	uint8_t			m_a, m_b, m_c, m_d;
-	uint8_t			m_i;
+	HBridge		m_a, m_b;
+	uint8_t		m_i;
 };
 
 #endif // MOTOR_SHIELD
