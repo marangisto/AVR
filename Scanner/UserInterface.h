@@ -16,7 +16,7 @@ public:
 private:
 	void refresh(LiquidCrystal& lcd);
 
-	enum Item { Film, Frames, Shutter, Intensity, LastItem };
+	enum Item { Film, Frames, Shutter, Intensity, Scan, Batch, LastItem };
 
 	static const uint8_t max_frames = 6;
 	static const uint16_t max_shutter = 32768;
@@ -29,6 +29,7 @@ private:
 	uint16_t	m_shutter;
 	uint16_t	m_intensity;
 	bool		m_light;
+	uint8_t		m_frame;
 };
 
 #endif // USER_INTERFACE_H

@@ -9,6 +9,7 @@ UserInterface::UserInterface()
 	, m_shutter(128)
 	, m_intensity(1024)
 	, m_light(false)
+	, m_frame(1)
 {
 }
 
@@ -49,12 +50,16 @@ void UserInterface::processInput(LCDKeyPad& lcdkp, unsigned long now)
 				break;
 			case Frames:
 				m_frames = m_frames < max_frames ? m_frames + 1 : m_frames;
+				m_frame = min(m_frame, m_frames);
 				break;
 			case Shutter:
 				m_shutter = m_shutter < max_shutter ? m_shutter * 2 : m_shutter;
 				break;
 			case Intensity:
 				m_intensity = m_intensity < max_intensity ? m_intensity * 2 : m_intensity;
+				break;
+			case Batch: case Scan:
+				m_frame = min(m_frame + 1, m_frames);
 				break;
 			default: ;
 		}
@@ -73,6 +78,9 @@ void UserInterface::processInput(LCDKeyPad& lcdkp, unsigned long now)
 				break;
 			case Intensity:
 				m_intensity = m_intensity > 1 ? m_intensity / 2 : m_intensity;
+				break;
+			case Batch: case Scan:
+				m_frame = max(m_frame - 1, 1);
 				break;
 			default: ;
 		}
@@ -109,10 +117,12 @@ void UserInterface::refresh(LiquidCrystal& lcd)
 		case Frames:	lcd.print("Frames   "); break;
 		case Shutter:	lcd.print("Shutter  "); break;
 		case Intensity:	lcd.print("Intensity"); break;
+		case Scan:		lcd.print("Scan     "); break;
+		case Batch:		lcd.print("Batch    "); break;
 		default:		lcd.print("?"); break;
 	}
    	lcd.setCursor(0,1);
-	lcd.print(" =         ");
+	lcd.print(" =              ");
    	lcd.setCursor(3,1);
 	switch (m_item)
 	{
@@ -120,6 +130,7 @@ void UserInterface::refresh(LiquidCrystal& lcd)
 		case Frames:	lcd.print(m_frames); break;
 		case Shutter:	lcd.print(m_shutter); break;
 		case Intensity:	lcd.print(m_intensity); break;
+		case Scan: case Batch: lcd.print(m_frame); lcd.print("("); lcd.print(m_frames); lcd.print(")"); break;
 		default:		lcd.print("?"); break;
 	}
 }
