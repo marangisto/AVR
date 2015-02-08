@@ -9,7 +9,6 @@ UserInterface::UserInterface()
 	, m_shutter(128)
 	, m_intensity(1024)
 	, m_frame(1)
-	, m_light(false)
 {
 }
 
@@ -27,10 +26,10 @@ void UserInterface::setup(LCDKeyPad& lcdkp)
 	refresh(lcd);
 }
 
-Event UserInterface::processInput(LCDKeyPad& lcdkp, unsigned long now)
+Command UserInterface::processInput(LCDKeyPad& lcdkp)
 {
-	Event e = None;
-	Key key = lcdkp.read(now);
+	Command cmd = None;
+	Key key = lcdkp.read(millis());
 
 	if (key == m_last)
 		return None;
@@ -38,20 +37,13 @@ Event UserInterface::processInput(LCDKeyPad& lcdkp, unsigned long now)
 	switch (key)
 	{
 	case KeySelect:
-		switch (m_item)
-		{
-			case Batch: case Scan:
-				e = Start;
-				break;
-			default: ;
-		}
+		cmd = Start;
 		break;
 	case KeyLeft:
 		m_item = static_cast<Item>((static_cast<int>(m_item) + 1) % static_cast<int>(LastItem));
 		break;
 	case KeyRight:
-		m_light = !m_light;
-		e = Light;
+		cmd = LightSwitch;
 		break;
 	case KeyUp:
 		switch (m_item)
@@ -68,7 +60,7 @@ Event UserInterface::processInput(LCDKeyPad& lcdkp, unsigned long now)
 				break;
 			case Intensity:
 				m_intensity = m_intensity < max_intensity ? m_intensity * 2 : m_intensity;
-				e = Light;
+				cmd = IntensityChange;
 				break;
 			case Batch: case Scan:
 				m_frame = min(m_frame + 1, m_frames);
@@ -90,7 +82,7 @@ Event UserInterface::processInput(LCDKeyPad& lcdkp, unsigned long now)
 				break;
 			case Intensity:
 				m_intensity = m_intensity > 1 ? m_intensity / 2 : m_intensity;
-				e = Light;
+				cmd = IntensityChange;
 				break;
 			case Batch: case Scan:
 				m_frame = max(m_frame - 1, 1);
@@ -103,7 +95,7 @@ Event UserInterface::processInput(LCDKeyPad& lcdkp, unsigned long now)
 
 	m_last = key;
 	refresh(lcdkp.lcd());
-	return e;
+	return cmd;
 }
 
 static const char *toString(Format f)
