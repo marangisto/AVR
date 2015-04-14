@@ -39,6 +39,7 @@ class Stepper
 {
 public:
 	Stepper(MotorShieldV2 *shield, StepperEnum e);
+	void setPWM(uint16_t x);
 	void step();
 
 private:

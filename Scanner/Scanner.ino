@@ -27,6 +27,7 @@ void setup()
 	gHB3 = new HBridge(motorShield, HBridge3);
 
 	gUI.setup(gLCDKP);
+	gM1->setPWM(gUI.intensity());
 }
  
 void loop()
@@ -69,6 +70,7 @@ void loop()
 	case IntensityChange:
 		if (gState == Focus)
 			gHB3->setPWM(gUI.intensity());
+		gM1->setPWM(gUI.intensity());		// FIXME: motor power control
 		break;
 	case Start:
 		if (gState == Initial)
@@ -109,7 +111,7 @@ void loop()
 	if (m1Next < now)
 	{
 		gM1->step();
-		m1Next = now + 500;
+		m1Next = now + gUI.shutter();	// FIXME: speed control
 	}
 
 	if (gState != lastState)

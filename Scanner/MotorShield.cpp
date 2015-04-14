@@ -103,6 +103,12 @@ Stepper::Stepper(MotorShieldV2 *shield, StepperEnum e)
 {
 }
 
+void Stepper::setPWM(uint16_t x)
+{
+	m_a.setPWM(x);
+	m_b.setPWM(x);
+}
+
 void Stepper::step()
 {
 	switch (m_i)

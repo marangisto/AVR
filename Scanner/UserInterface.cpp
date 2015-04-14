@@ -7,7 +7,7 @@ UserInterface::UserInterface()
 	, m_format(F24X36)
 	, m_frames(6)
 	, m_shutter(128)
-	, m_intensity(1024)
+	, m_intensity(256)
 	, m_frame(1)
 {
 }
