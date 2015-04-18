@@ -4,7 +4,11 @@ A Makefile for Arduino Sketches
 The following is the rough list of changes that went into different versions.
 I tried to give credit whenever possible. If I have missed anyone, kindly add it to the list.
 
-### In development
+### In Development
+
+- Tweak: Looks for submenu items first when parsing BOARDS_TXT (Issue #347) (https://github.com/sej7278)
+
+### 1.5 (2015-04-07)
 - New: Add support for new 1.5.x library layout (Issue #275) (https://github.com/lukasz-e)
 - New: Add support for 1.5.x vendor/hardware architecture library location (Issue #276) (https://github.com/lukasz-e)
 - New: Added test suite and integration with travis CI. (https://github.com/peplin)
@@ -17,8 +21,7 @@ I tried to give credit whenever possible. If I have missed anyone, kindly add it
 - New: Support for PuTTY under Windows (https://github.com/PeterMosmans)
 - New: Add support for installation using homebrew(https://github.com/ladislas)
 - New: Add support and example for flashing on a remote RPi. (https://github.com/Gaboose)
-
-- Tweak: Update Malefile-example.mk with STD flags (https://github.com/ladislas)
+- Tweak: Update Makefile-example.mk with STD flags (https://github.com/ladislas)
 - Tweak: Allow remove of any OBJDIR with `$(REMOVE) $(OBJDIR)`. (https://github.com/ladislas)
 - Tweak: Add cpp to extensions supported by "make generate_assembly". (https://github.com/sej7278)
 - Tweak: Update travis-ci to test against Arduino 1.0.6. (https://github.com/sej7278)
@@ -27,7 +30,12 @@ I tried to give credit whenever possible. If I have missed anyone, kindly add it
 - Tweak: Moved location of avrdude for 1.5.8 on Linux (Issue #301) (https://github.com/sej7278)
 - Tweak: Allow 'build.core' param as found in [arduino-tiny](https://code.google.com/p/arduino-tiny/) Prospective Boards.txt. (https://github.com/Gaboose)
 - Tweak: Replace CXX_NAME with CXX as per the Emacs Flymake Wiki (Issue #309) (https://github.com/sej7278)
-
+- Tweak: Ability to override `USB_TYPE` in Teensy.md (Issue #313) (https://github.com/Poofjunior)
+- Tweak: Integration instructions for CodeBlocks IDE (Issue #321) (https://github.com/fbielejec)
+- Tweak: Add BOARD_SUB to OBJDIR if defined in 1.5+ (https://github.com/sej7278)
+- Tweak: Add = to PARSE_BOARD regex to make it less greedy and not match vid.0, vid.1 and vid (https://github.com/sej7278)
+- Tweak: Added note about clock submenu's being used as F_CPU (https://github.com/sej7278)
+- Tweak: Better autodetection of ARDUINO_SKETCHBOOK and ARDUINO_DIR on OSX (https://github.com/sej7278)
 - Fix: Improved Windows (Cygwin/MSYS) support (https://github.com/PeterMosmans)
 - Fix: Change "tinyladi" username to "ladislas" in HISTORY.md. (https://github.com/ladislas)
 - Fix: Make avr-g++ use CXXFLAGS instead of CFLAGS. (https://github.com/sej7278)
@@ -42,6 +50,12 @@ I tried to give credit whenever possible. If I have missed anyone, kindly add it
 - Fix: Allow avrdude to erase the chip before programming during ispload (https://github.com/tchebb)
 - Fix: Fix speed regression. Thanks ladislas (Issue #280) (https://github.com/sej7278)
 - Fix: Removed some double quotes that were breaking variable expansion. (https://github.com/sej7278)
+- Fix: Fixed PLATFORM_LIB support for 1.5+ and removed duplicate libs (https://github.com/sej7278)
+- Fix: Added ARCHITECTURE to ALTERNATE_CORE_PATH to support 1.5+ cores like arduino-tiny (https://github.com/sej7278)
+- Fix: Can now find IDE 1.5+ preferences.txt on Linux and Mac (https://github.com/sej7278)
+- Fix: Added support for VARIANT being a submenu item in 1.6 cores like attiny (https://github.com/sej7278)
+- Fix: Replaced copyright symbol causing sed problems on OSX (Issue #335). (https://github.com/sej7278)
+- Fix: Fix issues with resetting Leonardo and Micro boards(Issue #340) (https://github.com/calvinli)
 
 ### 1.3.4 (2014-07-12)
 - Tweak: Allow spaces in "Serial.begin (....)". (Issue #190) (https://github.com/pdav)

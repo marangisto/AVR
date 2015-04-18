@@ -12,8 +12,8 @@ This is a very simple Makefile which knows how to build Arduino sketches. It def
 - Works on all three major OS (Mac, Linux, Windows)
 - Auto detects serial baud rate and libraries used
 - Support for `*.ino` and `*.pde` sketches as well as raw `*.c` and `*.cpp`
-- Support for Arduino Software versions 1.0.x as well as 0.x.
-Support for Arduino 1.5.x is still work in progress
+- Support for Arduino Software versions 0.x, 1.0.x, 1.5.x and 1.6.x except 1.6.2.
+We recommend 1.6.3 or above version of Arduino IDE.
 - Automatic dependency tracking. Referred libraries are automatically included
 in the build process. Changes in `*.h` files lead to recompilation of sources which include them
 
@@ -26,7 +26,7 @@ in the build process. Changes in `*.h` files lead to recompilation of sources wh
 If you're using FreeBSD, Debian, Raspbian or Ubuntu, you can find this in the `arduino-mk`
 package which can be installed using `apt-get` or `aptitude`.
 
-```
+```sh
 sudo apt-get install arduino-mk
 ```
 
@@ -35,9 +35,9 @@ sudo apt-get install arduino-mk
 If you're using homebrew (or [linuxbrew](https://github.com/Homebrew/linuxbrew)) then you can find this in the
 `arduino-mk` package which can be installed using the following commands.
 
-Also make sure you have the necessary dependencies installed. Refer to the Requirements section below to install the dependencies.
+Also make sure you have the necessary dependencies installed. Refer to the [Requirements](#requirements) section below to install the dependencies.
 
-```shell
+```sh
 # add tap
 $ brew tap sudar/arduino-mk
 
@@ -53,7 +53,7 @@ $ brew install --HEAD arduino-mk
 Arch Linux users can use the unofficial AUR package [arduino-mk](https://aur.archlinux.org/packages/arduino-mk/).
 It can be installed using the following command.
 
-```
+```sh
 yaourt -S arduino-mk
 ```
 
@@ -70,41 +70,56 @@ to build an RPM.
 
 ## Requirements
 
+### Arduino IDE
+
 You need to have the Arduino IDE. You can either install it through the
 installer or download the distribution zip file and extract it.
 
+### pySerial
+
 The Makefile also delegates resetting the board to a short Python program.
-You'll need to install `pySerial` to use it though.
+You'll need to install [`pySerial`](https://pypi.python.org/pypi/pyserial) to use it though.
+
+On most systems you should be able to install it using either `pip` or `easy_install`.
+
+```sh
+pip install pyserial
+
+# or if you prefer easy_install
+
+easy_install -U pyserial
+```
+
+If you prefer to install it as a package, then you can do that as well.
 
 On Debian or Ubuntu:
 
-       apt-get install python-serial
+```sh
+apt-get install python-serial
+```
 
 On Fedora:
 
-       yum install pyserial
+```sh
+yum install pyserial
+```
 
 On openSUSE:
 
-      zypper install python-serial
+```sh
+zypper install python-serial
+```
 
 On Mac using MacPorts:
 
-      sudo port install py27-serial
+```sh
+sudo port install py27-serial
+```
 
 On Windows:
 
-You need to install Cygwin and its packages for Make, Perl and the following Serial library.
-
-       pySerial can be downloaded from PyPi
-
-On other systems:
-
-       pip install pyserial
-
-        or
-
-       easy_install -U pyserial
+You need to install Cygwin and its packages for Make, Perl and the following Serial library
+or you can install it using the [pre-built package installer](https://pypi.python.org/pypi/pyserial)
 
 ## Usage
 
@@ -116,33 +131,43 @@ Download a copy of this repo some where in your system or install it through a p
 
 On the Mac you might want to set:
 
+```make
     ARDUINO_DIR   = /Applications/Arduino.app/Contents/Resources/Java
     ARDMK_DIR     = /usr/local
     AVR_TOOLS_DIR = /usr
     MONITOR_PORT  = /dev/ttyACM0
     BOARD_TAG     = mega2560
+```
 
 On Linux (if you have installed through package), you shouldn't need to set anything other than your board type and port:
 
+```make
     BOARD_TAG     = mega2560
     MONITOR_PORT  = /dev/ttyACM0
+```
 
 On Windows (using cygwin), you might want to set:
 
+```make
     ARDUINO_DIR   = ../../arduino
     ARDMK_DIR     = path/to/mkfile
     MONITOR_PORT  = com3
     BOARD_TAG     = mega2560
+```
 
 On Windows (using MSYS and PuTTY), you might want to set the following extra parameters:
 
+```make
     MONITOR_CMD   = putty
     MONITOR_PARMS = 8,1,n,N
+```
 
 On Arduino 1.5.x installs, you should set the architecture to either `avr` or `sam` and if using a submenu CPU, then also set that:
 
+```make
 	ARCHITECTURE  = avr
     BOARD_SUB     = atmega168
+```
 
 It is recommended in Windows that you create a symbolic link to avoid problems with file naming conventions on Windows. For example, if your your Arduino directory is in:
 
@@ -152,16 +177,21 @@ You will get problems with the special characters on the directory name. More de
 
 To create a symbolic link, you can use the command “mklink” on Windows, e.g.
 
+```sh
     mklink /d c:\Arduino c:\Program Files (x86)\Arduino
+```
 
 After which, the variables should be:
 
+```make
     ARDUINO_DIR=../../../../../Arduino
+```
 
 Instead of:
 
+```make
     ARDUINO_DIR=../../../../../Program\ Files\ \(x86\)/Arduino
-
+```
 
 - `BOARD_TAG` - Type of board, for a list see boards.txt or `make show_boards`
 - `MONITOR_PORT` - The port where your Arduino is plugged in, usually `/dev/ttyACM0` or `/dev/ttyUSB0` in Linux or Mac OS X and `com3`, `com4`, etc. in Windows.
@@ -176,7 +206,9 @@ The list of all variables that can be overridden is available at [arduino-mk-var
 
 You can specify space separated list of libraries that are needed for your sketch to the variable `ARDUINO_LIBS`.
 
-`ARDUINO_LIBS = Wire SoftwareSerial`
+```make
+	ARDUINO_LIBS = Wire SoftwareSerial
+```
 
 The libraries will be searched in the following places in the following order.
 
@@ -191,8 +223,10 @@ The makefile can autodetect the libraries that are included from your sketch and
 
 To upload compiled files, `avrdude` is used. This Makefile tries to find `avrdude` and it's config (`avrdude.conf`) below `ARDUINO_DIR`. If you like to use the one installed on your system instead of the one which came with Arduino, you can try to set the variables `AVRDUDE` and `AVRDUDE_CONF`. On a typical Linux system these could be set to
 
-      AVRDUDE     = /usr/bin/avrdude
+```make
+      AVRDUDE      = /usr/bin/avrdude
       AVRDUDE_CONF = /etc/avrdude.conf
+```
 
 ## Teensy 3.x
 
@@ -202,7 +236,7 @@ See examples/BlinkTeensy for example usage.
 
 ## Versioning
 
-The current version of the makefile is `1.3.4`. You can find the full history in the [HISTORY.md](HISTORY.md) file
+The current version of the makefile is `1.5`. You can find the full history in the [HISTORY.md](HISTORY.md) file
 
 This project adheres to Semantic [Versioning 2.0](http://semver.org/).
 
@@ -221,10 +255,11 @@ If you are looking for ideas to work on, then check out the following TODO items
 
 ## Limitations / Know Issues / TODO's
 
-- Doesn't work with Arduino 1.5.x yet. Follow [issue #45](https://github.com/sudar/Arduino-Makefile/issues/45) for progress.
+- Doesn't support SAM boards yet.
 - Since it doesn't do any pre processing like Arduino IDE, you have to declare all methods before you use them ([issue #59](https://github.com/sudar/Arduino-Makefile/issues/59))
 - More than one .ino or .pde file is not supported yet ([issue #49](https://github.com/sudar/Arduino-Makefile/issues/49))
 - When you compile for the first time, it builds all libs inside Arduino directory even if it is not needed. But while linking only the relevant files are linked. ([issue #29](https://github.com/sudar/Arduino-Makefile/issues/29)). Even Arduino IDE does the same thing though.
+- This makefile doesn't support boards or IDE from Arduino.org.
 
 If you find an issue or have an idea for a feature then log them in the [issue tracker](https://github.com/sudar/Arduino-Makefile/issues/)
 
@@ -257,9 +292,51 @@ Then click on "Apply and Save" button
 
 Then, the following line must be added to the project Makefile :
 
-```
+```make
     check-syntax:
         $(CXX) -c -include Arduino.h   -x c++ $(CXXFLAGS)   $(CPPFLAGS)  -fsyntax-only $(CHK_SOURCES)
+```
+
+### Code:Blocks integration
+
+In Code:Blocks open Project -> Properties -> Project settings tab -> check "This is custom Makefile".
+
+Now go to Settings -> Environment -> Environment variables -> Add
+
+Add three keys with paths as values, using full paths (!):
+
+```make
+	ARDUINO_DIR=/full/path/to/arduino-1.0.6
+	ARDMK_DIR=/full/path/to/sketchbook
+	AVR_TOOLS_DIR=/usr
+```
+
+Now to set DEBUG target (this will compile the project) go to Build options -> Debug -> "Make" commands
+
+In Build Project/Target remove $target:
+
+```sh
+$make -f $makefile
+```
+
+In Clean Project/Target remove $target:
+
+```sh
+$make -f $makefile clean
+```
+
+To set the RELEASE target (which will compile and upload) go to Build options -> Release -> "Make" commands
+
+In Build Project/Target put:
+
+```sh
+$make -f $makefile upload
+```
+
+In Clean Project/Target remove $target:
+
+```sh
+$make -f $makefile clean
 ```
 
 ## Test Suite
@@ -285,7 +362,7 @@ Please be sure to report issues to [Bare-Arduino–Project](https://github.com/W
 ## Credits
 
 This makefile was originally created by [Martin Oldfield](http://mjo.tc/atelier/2009/02/arduino-cli.html) and he maintained it till v0.10.2.
-From May 2013, it is maintained by [Sudar](http://hardwarefun.com/tutorials/compiling-arduino-sketches-using-makefile)
+From May 2013, it is maintained by [Sudar Muthu](http://hardwarefun.com/tutorials/compiling-arduino-sketches-using-makefile) and [Simon John](https://github.com/sej7278) with the help of [40+ contributors](https://github.com/sudar/Arduino-Makefile/graphs/contributors).
 
 ## Similar works
 - It's not a derivative of this, but Alan Burlison has written a [similar thing](http://bleaklow.com/2010/06/04/a_makefile_for_arduino_sketches.html).

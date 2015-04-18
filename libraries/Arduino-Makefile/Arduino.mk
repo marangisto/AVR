@@ -19,7 +19,7 @@
 #
 # Original Arduino adaptation by mellis, eighthave, oli.keller
 #
-# Current version: 1.3.4
+# Current version: 1.5
 #
 # Refer to HISTORY.md file for complete history of changes
 #
@@ -329,10 +329,16 @@ endif
 
 ifndef ARDUINO_SKETCHBOOK
     ifndef ARDUINO_PREFERENCES_PATH
+        ifeq ($(shell expr $(ARDUINO_VERSION) '>' 150), 1)
+            AUTO_ARDUINO_PREFERENCES := $(firstword \
+                $(call dir_if_exists,$(HOME)/.arduino15/preferences.txt) \
+                $(call dir_if_exists,$(HOME)/Library/Arduino15/preferences.txt) )
+        else
+            AUTO_ARDUINO_PREFERENCES := $(firstword \
+                $(call dir_if_exists,$(HOME)/.arduino/preferences.txt) \
+                $(call dir_if_exists,$(HOME)/Library/Arduino/preferences.txt) )
+        endif
 
-        AUTO_ARDUINO_PREFERENCES := $(firstword \
-            $(call dir_if_exists,$(HOME)/.arduino/preferences.txt) \
-            $(call dir_if_exists,$(HOME)/Library/Arduino/preferences.txt) )
         ifdef AUTO_ARDUINO_PREFERENCES
            ARDUINO_PREFERENCES_PATH = $(AUTO_ARDUINO_PREFERENCES)
            $(call show_config_variable,ARDUINO_PREFERENCES_PATH,[AUTODETECTED])
@@ -351,7 +357,9 @@ ifndef ARDUINO_SKETCHBOOK
     ifneq ($(ARDUINO_SKETCHBOOK),)
         $(call show_config_variable,ARDUINO_SKETCHBOOK,[AUTODETECTED],(from arduino preferences file))
     else
-        ARDUINO_SKETCHBOOK := $(HOME)/sketchbook
+        ARDUINO_SKETCHBOOK := $(firstword \
+            $(call dir_if_exists,$(HOME)/sketchbook) \
+            $(call dir_if_exists,$(HOME)/Documents/Arduino) )
         $(call show_config_variable,ARDUINO_SKETCHBOOK,[DEFAULT])
     endif
 else
@@ -475,7 +483,7 @@ ifdef ALTERNATE_CORE
     $(call show_config_variable,ALTERNATE_CORE,[USER])
 
     ifndef ALTERNATE_CORE_PATH
-        ALTERNATE_CORE_PATH = $(ARDUINO_SKETCHBOOK)/hardware/$(ALTERNATE_CORE)
+        ALTERNATE_CORE_PATH = $(ARDUINO_SKETCHBOOK)/hardware/$(ALTERNATE_CORE)/$(ARCHITECTURE)
     endif
 endif
 
@@ -552,7 +560,7 @@ endif
 
 ifndef PARSE_BOARD
     # result = $(call READ_BOARD_TXT, 'boardname', 'parameter')
-    PARSE_BOARD = $(shell grep -v '^\#' $(BOARDS_TXT) | grep $(1).$(2) | cut -d = -f 2 )
+    PARSE_BOARD = $(shell grep -v '^\#' $(BOARDS_TXT) | grep $(1).$(2)= | cut -d = -f 2 )
 endif
 
 # If NO_CORE is set, then we don't have to parse boards.txt file
@@ -571,34 +579,38 @@ ifeq ($(strip $(NO_CORE)),)
 
     # Which variant ? This affects the include path
     ifndef VARIANT
-        VARIANT = $(call PARSE_BOARD,$(BOARD_TAG),build.variant)
+        VARIANT := $(call PARSE_BOARD,$(BOARD_TAG),menu.cpu.$(BOARD_SUB).build.variant)
+        ifndef VARIANT
+            VARIANT := $(call PARSE_BOARD,$(BOARD_TAG),build.variant)
+        endif
+        $(call show_config_variable,VARIANT,[COMPUTED],(from build.variant))
+    else
+        $(call show_config_variable,VARIANT,[USER])
     endif
 
     # see if we are a caterina device like leonardo or micro
-    CATERINA := $(findstring caterina,$(call PARSE_BOARD,$(BOARD_TAG),bootloader.path))
+    CATERINA := $(findstring caterina,$(call PARSE_BOARD,$(BOARD_TAG),menu.cpu.$(BOARD_SUB).bootloader.file))
     ifndef CATERINA
-        # bootloader.path is deprecated in 1.5, its now part of bootloader.file
+        # 1.5+ method if not a submenu
         CATERINA := $(findstring caterina,$(call PARSE_BOARD,$(BOARD_TAG),bootloader.file))
     endif
     ifndef CATERINA
-        # might be a submenu
-        CATERINA := $(findstring caterina,$(call PARSE_BOARD,$(BOARD_TAG),menu.cpu.$(BOARD_SUB).bootloader.file))
+        # 1.0 method uses deprecated bootloader.path
+        CATERINA := $(findstring caterina,$(call PARSE_BOARD,$(BOARD_TAG),bootloader.path))
     endif
 
     # processor stuff
     ifndef MCU
-        MCU := $(call PARSE_BOARD,$(BOARD_TAG),build.mcu)
+        MCU := $(call PARSE_BOARD,$(BOARD_TAG),menu.cpu.$(BOARD_SUB).build.mcu)
         ifndef MCU
-		    # might be a submenu
-            MCU := $(call PARSE_BOARD,$(BOARD_TAG),menu.cpu.$(BOARD_SUB).build.mcu)
+            MCU := $(call PARSE_BOARD,$(BOARD_TAG),build.mcu)
         endif
     endif
 
     ifndef F_CPU
-        F_CPU := $(call PARSE_BOARD,$(BOARD_TAG),build.f_cpu)
+        F_CPU := $(call PARSE_BOARD,$(BOARD_TAG),menu.cpu.$(BOARD_SUB).build.f_cpu)
         ifndef F_CPU
-		    # might be a submenu
-            F_CPU := $(call PARSE_BOARD,$(BOARD_TAG),menu.cpu.$(BOARD_SUB).build.f_cpu)
+            F_CPU := $(call PARSE_BOARD,$(BOARD_TAG),build.f_cpu)
         endif
     endif
 
@@ -615,18 +627,16 @@ ifeq ($(strip $(NO_CORE)),)
 
     # normal programming info
     ifndef AVRDUDE_ARD_PROGRAMMER
-        AVRDUDE_ARD_PROGRAMMER := $(call PARSE_BOARD,$(BOARD_TAG),upload.protocol)
+        AVRDUDE_ARD_PROGRAMMER := $(call PARSE_BOARD,$(BOARD_TAG),menu.cpu.$(BOARD_SUB).upload.protocol)
         ifndef AVRDUDE_ARD_PROGRAMMER
-		    # might be a submenu
-            AVRDUDE_ARD_PROGRAMMER := $(call PARSE_BOARD,$(BOARD_TAG),menu.cpu.$(BOARD_SUB).upload.protocol)
+            AVRDUDE_ARD_PROGRAMMER := $(call PARSE_BOARD,$(BOARD_TAG),upload.protocol)
         endif
     endif
 
     ifndef AVRDUDE_ARD_BAUDRATE
-        AVRDUDE_ARD_BAUDRATE := $(call PARSE_BOARD,$(BOARD_TAG),upload.speed)
+        AVRDUDE_ARD_BAUDRATE := $(call PARSE_BOARD,$(BOARD_TAG),menu.cpu.$(BOARD_SUB).upload.speed)
         ifndef AVRDUDE_ARD_BAUDRATE
-		    # might be a submenu
-            AVRDUDE_ARD_BAUDRATE := $(call PARSE_BOARD,$(BOARD_TAG),menu.cpu.$(BOARD_SUB).upload.speed)
+            AVRDUDE_ARD_BAUDRATE := $(call PARSE_BOARD,$(BOARD_TAG),upload.speed)
         endif
     endif
 
@@ -636,26 +646,23 @@ ifeq ($(strip $(NO_CORE)),)
     endif
 
     ifndef ISP_HIGH_FUSE
-        ISP_HIGH_FUSE := $(call PARSE_BOARD,$(BOARD_TAG),bootloader.high_fuses)
+        ISP_HIGH_FUSE := $(call PARSE_BOARD,$(BOARD_TAG),menu.cpu.$(BOARD_SUB).bootloader.high_fuses)
         ifndef ISP_HIGH_FUSE
-		    # might be a submenu
-            ISP_HIGH_FUSE := $(call PARSE_BOARD,$(BOARD_TAG),menu.cpu.$(BOARD_SUB).bootloader.high_fuses)
+            ISP_HIGH_FUSE := $(call PARSE_BOARD,$(BOARD_TAG),bootloader.high_fuses)
         endif
     endif
 
     ifndef ISP_LOW_FUSE
-        ISP_LOW_FUSE := $(call PARSE_BOARD,$(BOARD_TAG),bootloader.low_fuses)
+        ISP_LOW_FUSE := $(call PARSE_BOARD,$(BOARD_TAG),menu.cpu.$(BOARD_SUB).bootloader.low_fuses)
         ifndef ISP_LOW_FUSE
-		    # might be a submenu
-            ISP_LOW_FUSE := $(call PARSE_BOARD,$(BOARD_TAG),menu.cpu.$(BOARD_SUB).bootloader.low_fuses)
+            ISP_LOW_FUSE := $(call PARSE_BOARD,$(BOARD_TAG),bootloader.low_fuses)
         endif
     endif
 
     ifndef ISP_EXT_FUSE
-        ISP_EXT_FUSE := $(call PARSE_BOARD,$(BOARD_TAG),bootloader.extended_fuses)
+        ISP_EXT_FUSE := $(call PARSE_BOARD,$(BOARD_TAG),menu.cpu.$(BOARD_SUB).bootloader.extended_fuses)
         ifndef ISP_EXT_FUSE
-		    # might be a submenu
-            ISP_EXT_FUSE := $(call PARSE_BOARD,$(BOARD_TAG),menu.cpu.$(BOARD_SUB).bootloader.extended_fuses)
+            ISP_EXT_FUSE := $(call PARSE_BOARD,$(BOARD_TAG),bootloader.extended_fuses)
         endif
     endif
 
@@ -664,10 +671,9 @@ ifeq ($(strip $(NO_CORE)),)
     endif
 
     ifndef BOOTLOADER_FILE
-        BOOTLOADER_FILE := $(call PARSE_BOARD,$(BOARD_TAG),bootloader.file)
+        BOOTLOADER_FILE := $(call PARSE_BOARD,$(BOARD_TAG),menu.cpu.$(BOARD_SUB).bootloader.file)
         ifndef BOOTLOADER_FILE
-		    # might be a submenu
-            BOOTLOADER_FILE := $(call PARSE_BOARD,$(BOARD_TAG),menu.cpu.$(BOARD_SUB).bootloader.file)
+            BOOTLOADER_FILE := $(call PARSE_BOARD,$(BOARD_TAG),bootloader.file)
         endif
     endif
 
@@ -676,10 +682,9 @@ ifeq ($(strip $(NO_CORE)),)
     endif
 
     ifndef HEX_MAXIMUM_SIZE
-        HEX_MAXIMUM_SIZE := $(call PARSE_BOARD,$(BOARD_TAG),upload.maximum_size)
+        HEX_MAXIMUM_SIZE := $(call PARSE_BOARD,$(BOARD_TAG),menu.cpu.$(BOARD_SUB).upload.maximum_size)
         ifndef HEX_MAXIMUM_SIZE
-		    # might be a submenu
-            HEX_MAXIMUM_SIZE := $(call PARSE_BOARD,$(BOARD_TAG),menu.cpu.$(BOARD_SUB).upload.maximum_size)
+            HEX_MAXIMUM_SIZE := $(call PARSE_BOARD,$(BOARD_TAG),upload.maximum_size)
         endif
     endif
 
@@ -688,6 +693,9 @@ endif
 # Everything gets built in here (include BOARD_TAG now)
 ifndef OBJDIR
     OBJDIR = build-$(BOARD_TAG)
+    ifdef BOARD_SUB
+        OBJDIR = build-$(BOARD_TAG)-$(BOARD_SUB)
+    endif
     $(call show_config_variable,OBJDIR,[COMPUTED],(from BOARD_TAG))
 else
     $(call show_config_variable,OBJDIR,[USER])
@@ -814,6 +822,8 @@ ifndef ARDUINO_LIBS
         $(shell sed -ne 's/^ *\# *include *[<\"]\(.*\)\.h[>\"]/\1/p' $(LOCAL_SRCS)))
     ARDUINO_LIBS += $(filter $(notdir $(wildcard $(USER_LIB_PATH)/*)), \
         $(shell sed -ne 's/^ *\# *include *[<\"]\(.*\)\.h[>\"]/\1/p' $(LOCAL_SRCS)))
+    ARDUINO_LIBS += $(filter $(notdir $(wildcard $(ARDUINO_PLATFORM_LIB_PATH)/*)), \
+        $(shell sed -ne 's/^ *\# *include *[<\"]\(.*\)\.h[>\"]/\1/p' $(LOCAL_SRCS)))
 endif
 
 ########################################################################
@@ -912,15 +922,15 @@ get_library_files  = $(if $(and $(wildcard $(1)/src), $(wildcard $(1)/library.pr
                         $(wildcard $(1)/*.$(2) $(1)/utility/*.$(2)))
 
 # General arguments
-USER_LIBS      := $(wildcard $(patsubst %,$(USER_LIB_PATH)/%,$(ARDUINO_LIBS)))
+USER_LIBS      := $(sort $(wildcard $(patsubst %,$(USER_LIB_PATH)/%,$(ARDUINO_LIBS))))
 USER_LIB_NAMES := $(patsubst $(USER_LIB_PATH)/%,%,$(USER_LIBS))
 
 # Let user libraries override system ones.
-SYS_LIBS       := $(wildcard $(patsubst %,$(ARDUINO_LIB_PATH)/%,$(filter-out $(USER_LIB_NAMES),$(ARDUINO_LIBS))))
+SYS_LIBS       := $(sort $(wildcard $(patsubst %,$(ARDUINO_LIB_PATH)/%,$(filter-out $(USER_LIB_NAMES),$(ARDUINO_LIBS)))))
 SYS_LIB_NAMES  := $(patsubst $(ARDUINO_LIB_PATH)/%,%,$(SYS_LIBS))
 
 ifdef ARDUINO_PLATFORM_LIB_PATH
-    PLATFORM_LIBS       := $(wildcard $(patsubst %,$(ARDUINO_PLATFORM_LIB_PATH)/%,$(filter-out $(USER_LIB_NAMES),$(ARDUINO_LIBS))))
+    PLATFORM_LIBS       := $(sort $(wildcard $(patsubst %,$(ARDUINO_PLATFORM_LIB_PATH)/%,$(filter-out $(USER_LIB_NAMES),$(ARDUINO_LIBS)))))
     PLATFORM_LIB_NAMES  := $(patsubst $(ARDUINO_PLATFORM_LIB_PATH)/%,%,$(PLATFORM_LIBS))
 endif
 
@@ -1096,8 +1106,12 @@ ifneq (,$(strip $(USER_LIB_NAMES)))
     $(foreach lib,$(USER_LIB_NAMES),$(call show_config_info,  $(lib),[USER]))
 endif
 
-ifneq (,$(strip $(SYS_LIB_NAMES) $(PLATFORM_LIB_NAMES)))
+ifneq (,$(strip $(SYS_LIB_NAMES)))
     $(foreach lib,$(SYS_LIB_NAMES),$(call show_config_info,  $(lib),[SYSTEM]))
+endif
+
+ifneq (,$(strip $(PLATFORM_LIB_NAMES)))
+    $(foreach lib,$(PLATFORM_LIB_NAMES),$(call show_config_info,  $(lib),[PLATFORM]))
 endif
 
 # either calculate parent dir from arduino dir, or user-defined path
@@ -1110,7 +1124,7 @@ endif
 
 ########################################################################
 # Tools version info
-ARDMK_VERSION = 1.3.4
+ARDMK_VERSION = 1.5
 $(call show_config_variable,ARDMK_VERSION,[COMPUTED])
 
 CC_VERSION := $(shell $(CC) -dumpversion)
@@ -1342,7 +1356,7 @@ endif
 AVRDUDE_ISP_OPTS = -c $(ISP_PROG) -b $(AVRDUDE_ISP_BAUDRATE)
 
 ifndef $(ISP_PORT)
-    ifneq ($(strip $(ISP_PROG)),$(filter $(ISP_PROG), usbasp usbtiny gpio avrispmkii))
+    ifneq ($(strip $(ISP_PROG)),$(filter $(ISP_PROG), usbasp usbtiny gpio linuxgpio avrispmkii))
         AVRDUDE_ISP_OPTS += -P $(call get_isp_port)
     endif
 else
