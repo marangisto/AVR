@@ -1,4 +1,5 @@
 #include <Wire.h>
+#include <Arduino.h>
 #include "MotorShield.h"
 
 #define PCA9685_MODE1 0x0
