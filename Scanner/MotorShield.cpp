@@ -110,14 +110,34 @@ void Stepper::setPWM(uint16_t x)
 	m_b.setPWM(x);
 }
 
-void Stepper::step()
+void Stepper::step(Direction dir)
 {
+/*
+	if (dir == Hlt)
+	{
+		m_a.set(Off);
+		m_b.set(Off);
+		return;
+	}
+
+*/
 	switch (m_i)
 	{
-		case 0: m_b.set(Off); m_a.set(Forward); ++m_i; break;
-		case 1: m_a.set(Off); m_b.set(Forward); ++m_i; break;
-		case 2: m_b.set(Off); m_a.set(Reverse); ++m_i; break;
-		case 3: m_a.set(Off); m_b.set(Reverse); m_i = 0; break;
+		case 0: m_b.set(Off); m_a.set(Forward); break;
+		case 1: m_a.set(Off); m_b.set(Forward); break;
+		case 2: m_b.set(Off); m_a.set(Reverse); break;
+		case 3: m_a.set(Off); m_b.set(Reverse); break;
+	}
+
+	if (dir == Fwd)
+	{
+		if (++m_i > 3)
+			m_i = 0;
+	}
+	else
+	{
+		if (--m_i < 0)
+			m_i = 3;
 	}
 }
 

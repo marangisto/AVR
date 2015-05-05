@@ -37,6 +37,8 @@ void loop()
 	static unsigned long m1Next = 0;		// next event for motors
 	static unsigned long exposeEnd = 0;		// end of exposure
 	static unsigned long pauseEnd = 0;		// end of pause
+	static long pos = 0;					// stepper position
+	static long inc = 1;					// next position increment
 
 	Command cmd = gUI.processInput(gLCDKP);
 
@@ -110,7 +112,11 @@ void loop()
 
 	if (m1Next < now)
 	{
-		gM1->step();
+		if (pos >= 200 || pos < 0)
+			inc = -inc;
+
+		gM1->step(inc > 0 ? Fwd : Rev);
+		pos += inc;
 		m1Next = now + gUI.shutter();	// FIXME: speed control
 	}
 

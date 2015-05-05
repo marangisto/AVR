@@ -35,16 +35,18 @@ private:
 
 enum StepperEnum { Stepper1, Stepper2 };
 
+enum Direction { Hlt, Fwd, Rev };
+
 class Stepper
 {
 public:
 	Stepper(MotorShieldV2 *shield, StepperEnum e);
 	void setPWM(uint16_t x);
-	void step();
+	void step(Direction dir = Fwd);
 
 private:
 	HBridge		m_a, m_b;
-	uint8_t		m_i;
+	int8_t		m_i;
 };
 
 #endif // MOTOR_SHIELD
