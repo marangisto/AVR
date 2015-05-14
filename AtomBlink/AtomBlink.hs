@@ -14,7 +14,8 @@ main = do
         name = "AtomBlink"
 
         pins :: [(String, Int, PinType, String)]
-        pins = [ ("p8",   8, Output, "b8")
+        pins = [ ("p7",   7, Input,  "b7")
+               , ("p8",   8, Output, "b8")
                , ("p9",   9, Output, "b9")
                , ("p10", 10, Output, "b10")
                , ("p11", 11, Output, "b11")
@@ -24,6 +25,7 @@ main = do
 
         blink :: Atom ()
         blink = do
+            b7 <- bool "b7" False
             b8 <- bool "b8" False
             b9 <- bool "b9" False
             b10 <- bool "b10" False
@@ -31,9 +33,10 @@ main = do
             b12 <- bool "b12" False
             b13 <- bool "b13" False
 
-            period 100000 $ atom "a8" $ do
+            period 1000 $ atom "a8" $ do
+                call update7
+                b8 <== not_ (value b7)
                 call update8
-                b8 <== not_ (value b8)
 
             period 20000 $ atom "a9" $ do
                 call update9
@@ -55,7 +58,7 @@ main = do
                 call update13
                 b13 <== not_ (value b13)
  
-        (decls, defs, [update8, update9, update10, update11, update12, update13]) = setupPins name pins
+        (decls, defs, [ update7, update8, update9, update10, update11, update12, update13 ]) = setupPins name pins
 
         prePostCode :: [Name] -> [Name] -> [(Name, Type)] -> (String, String)
         prePostCode _ _ _ = (pretty 80 $ ppr decls, pretty 80 $ ppr defs)

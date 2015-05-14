@@ -47,7 +47,8 @@ setupPins atomName pins = (decls, defs, pinFuncNames)
     pinFuncDefs = [ [cedecl| void $id:(toPinFunc pinName) () { $stm:updatePin } |]
                   | (pinName, _, pinType, stateVar) <- pins
                   , let updatePin = case pinType of
-                             Output -> [cstm| digitalWrite( $id:pinName, state.$id:atomName.$id:stateVar); |]
+                             Input -> [cstm| state.$id:atomName.$id:stateVar = digitalRead($id:pinName); |]
+                             Output -> [cstm| digitalWrite($id:pinName, state.$id:atomName.$id:stateVar); |]
                   ]
 
     setup = [cedecl| void setup () { $stms:pinInit } |]
