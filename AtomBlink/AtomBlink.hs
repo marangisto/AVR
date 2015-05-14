@@ -7,7 +7,13 @@ import Arduino
  
 main :: IO ()
 main = do
-    (schedule, _, _, _, _) <- compile name defaults { cCode = prePostCode } blink
+    let config = defaults
+            { cCode = prePostCode
+--            , hardwareClock = Just $ Clock "millis" Word32 1 "delay" Nothing
+            , cRuleCoverage = False
+            , cAssert = False
+            }
+    (schedule, _, _, _, _) <- compile name config blink
     putStrLn $ reportSchedule schedule
     renameFile (name ++ ".c") (name ++ ".ino") -- Makefile expects .ino
     where
@@ -33,10 +39,12 @@ main = do
             b12 <- bool "b12" False
             b13 <- bool "b13" False
 
-            period 1000 $ atom "a8" $ do
+            period 1000 $ phase 0 $ atom "a7" $ do
                 call update7
-                b8 <== not_ (value b7)
+
+            period 1000 $ phase 1 $ atom "a8" $ do
                 call update8
+                b8 <== not_ (value b7)
 
             period 20000 $ atom "a9" $ do
                 call update9
