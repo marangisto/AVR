@@ -28,6 +28,7 @@ main = do
                , ("p12", 12, Output, "dg4")
                , ("p13", 13, Output, "b13")
                , ("p14", 14, Output, "sDP")
+               , ("p15", 15, Input,  "btn")
                ]
 
         blink :: Atom ()
@@ -35,6 +36,7 @@ main = do
             [sgA, sgB, sgC, sgD, sgE, sgF, sgG, sDP] <- mapM (`bool` False) [ "sgA", "sgB", "sgC", "sgD", "sgE", "sgF", "sgG", "sDP" ]
             [dg1, dg2, dg3, dg4] <- mapM (`bool` False) [ "dg1", "dg2", "dg3", "dg4" ]
             b13 <- bool "b13" False
+            btn <- bool "btn" False
 
             x <- word16 "x" 0    -- value to display
             i <- word8 "i" 0     -- position
@@ -71,13 +73,23 @@ main = do
                 mapM_ (<== false) [ dg1, dg2, dg3, dg4 ]
 -}
 
-            period 4000 $ atom "a2" $ do
+--            period 4000 $ atom "a2" $ do
+--                x <== (value x + 1) `mod_` 10000
+
+            period 100 $ atom "a4" $ do
+                mapM_ call [ rBtn, w13 ]
+                b13 <== not_ (value btn)
+
+            period 100 $ atom "a5" $ do
+                cond (value b13)
                 x <== (value x + 1) `mod_` 10000
+
+
 
         ( decls, defs
          , [ wSgA, wSgB, wSgC, wSgD, wSgE, wSgF, wSgG
            , wDg1, wDg2, wDg3, wDg4
-           , update13, wSDP
+           , w13, wSDP, rBtn
            ]
          ) = setupPins name pins
 
