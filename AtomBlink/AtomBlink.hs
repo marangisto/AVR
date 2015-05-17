@@ -39,33 +39,24 @@ main = do
             b12 <- bool "b12" False
             b13 <- bool "b13" False
 
-            period 1000 $ phase 0 $ atom "a7" $ do
-                call update7
+            i <- word8 "i" 0
+
+            period 100000 $ atom "a0" $ do
+                call update9
+                call update10
+                call update11
+                call update12
+                incr i
+                b9 <== (value i .&. 1) /=. 0
+                b10 <== (value i .&. 2) /=. 0
+                b11 <== (value i .&. 4) /=. 0
+                b12 <== (value i .&. 8) /=. 0
 
             period 1000 $ phase 1 $ atom "a8" $ do
+                call update7
                 call update8
                 b8 <== not_ (value b7)
 
-            period 20000 $ atom "a9" $ do
-                call update9
-                b9 <== not_ (value b9)
- 
-            period 23000 $ atom "a10" $ do
-                call update10
-                b10 <== not_ (value b10)
- 
-            period 27000 $ atom "a11" $ do
-                call update11
-                b11 <== not_ (value b11)
- 
-            period 24000 $ atom "a12" $ do
-                call update12
-                b12 <== not_ (value b12)
- 
-            period 50000 $ atom "a13" $ do
-                call update13
-                b13 <== not_ (value b13)
- 
         (decls, defs, [ update7, update8, update9, update10, update11, update12, update13 ]) = setupPins name pins
 
         prePostCode :: [Name] -> [Name] -> [(Name, Type)] -> (String, String)
