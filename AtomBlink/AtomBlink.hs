@@ -78,17 +78,22 @@ main = do
             period 40000 $ atom "a3" $ do
                 dp <== (value dp + 1) `mod_` 5
 
---            period 4000 $ atom "a2" $ do
---                x <== (value x + 1) `mod_` 10000
+            pressed <- bool "pressed" False
+            released <- bool "released" False
 
-            period 100 $ atom "a4" $ do
+            let debounce = 1000
+
+            period debounce $ atom "a4" $ do
                 mapM_ call [ rBtn, w13 ]
                 b13 <== not_ (value btn)
 
-            period 133 $ atom "a5" $ do
-                cond (value b13)
-                x <== (value x + 1) `mod_` 10000
+            period debounce $ atom "a6" $ do
+                pressed <== not_ (value btn ||. value b13)
+                released <== value btn &&. value b13
 
+            period debounce $ atom "a7" $ do
+                cond (value pressed ||. value released)
+                x <== (value x + 1) `mod_` 10000
 
 
         ( decls, defs
