@@ -43,9 +43,15 @@ main = do
             dp <- word8 "dp" 1   -- decimal point
             ks <- array "ks" [1, 10, 100, 1000]
 
-            period 500 $ phase 0 $ atom "a0" $ do
+            let refresh = 250
+
+            period refresh $ phase 0 $ atom "z0" $ do        -- avoid timing artifacts
+                mapM_ (<== false) [ dg1, dg2, dg3, dg4 ]
+
+            period refresh $ phase 1 $ atom "z1" $ do        -- avoid timing artifacts
                 mapM_ call [ wDg1, wDg2, wDg3, wDg4 ]
-                mapM_ call [ wSgA, wSgB, wSgC, wSgD, wSgE, wSgF, wSgG, wSDP ]
+
+            period refresh $ phase 2 $ atom "z2" $ do
                 -- sequencing
                 let vi = value i
                 i <== (vi + 1) .&. 3
@@ -65,13 +71,12 @@ main = do
                 sgG <== not_ (or_ $ map (vd ==.) [2, 3, 4, 5, 6, 8, 9])
                 sDP <== not_ (value dp ==. vi + 1)
 
+            period refresh $ phase 3 $ atom "z3" $ do        -- avoid timing artifacts
+                mapM_ call [ wSgA, wSgB, wSgC, wSgD, wSgE, wSgF, wSgG, wSDP ]
+                mapM_ call [ wDg1, wDg2, wDg3, wDg4 ]
+
             period 40000 $ atom "a3" $ do
                 dp <== (value dp + 1) `mod_` 5
-{-
-            period 500 $ phase 1 $ atom "a1" $ do        -- avoid timing artifacts
-                mapM_ call [ wDg1, wDg2, wDg3, wDg4 ]
-                mapM_ (<== false) [ dg1, dg2, dg3, dg4 ]
--}
 
 --            period 4000 $ atom "a2" $ do
 --                x <== (value x + 1) `mod_` 10000
@@ -80,7 +85,7 @@ main = do
                 mapM_ call [ rBtn, w13 ]
                 b13 <== not_ (value btn)
 
-            period 100 $ atom "a5" $ do
+            period 133 $ atom "a5" $ do
                 cond (value b13)
                 x <== (value x + 1) `mod_` 10000
 
