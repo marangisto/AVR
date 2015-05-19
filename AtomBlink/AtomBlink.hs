@@ -45,10 +45,10 @@ main = do
 
             let refresh = 250
 
-            period refresh $ phase 0 $ atom "z0" $ do        -- avoid timing artifacts
+            period refresh $ phase 0 $ atom "z0" $ do
                 mapM_ (<== false) [ dg1, dg2, dg3, dg4 ]
 
-            period refresh $ phase 1 $ atom "z1" $ do        -- avoid timing artifacts
+            period refresh $ phase 1 $ atom "z1" $ do
                 mapM_ call [ wDg1, wDg2, wDg3, wDg4 ]
 
             period refresh $ phase 2 $ atom "z2" $ do
@@ -71,30 +71,29 @@ main = do
                 sgG <== not_ (or_ $ map (vd ==.) [2, 3, 4, 5, 6, 8, 9])
                 sDP <== not_ (value dp ==. vi + 1)
 
-            period refresh $ phase 3 $ atom "z3" $ do        -- avoid timing artifacts
+            period refresh $ phase 3 $ atom "z3" $ do
                 mapM_ call [ wSgA, wSgB, wSgC, wSgD, wSgE, wSgF, wSgG, wSDP ]
                 mapM_ call [ wDg1, wDg2, wDg3, wDg4 ]
-
-            period 40000 $ atom "a3" $ do
-                dp <== (value dp + 1) `mod_` 5
 
             pressed <- bool "pressed" False
             released <- bool "released" False
 
             let debounce = 1000
 
-            period debounce $ atom "a4" $ do
+            period debounce $ phase 4 $ atom "a0" $ do
                 mapM_ call [ rBtn, w13 ]
                 b13 <== not_ (value btn)
 
-            period debounce $ atom "a6" $ do
+            period debounce $ phase 5 $ atom "a1" $ do
                 pressed <== not_ (value btn ||. value b13)
                 released <== value btn &&. value b13
 
-            period debounce $ atom "a7" $ do
-                cond (value pressed ||. value released)
+            period debounce $ phase 6 $ atom "a2" $ do
+                cond (value pressed)
                 x <== (value x + 1) `mod_` 10000
 
+            period 40000 $ atom "a3" $ do
+                dp <== (value dp + 1) `mod_` 5
 
         ( decls, defs
          , [ wSgA, wSgB, wSgC, wSgD, wSgE, wSgF, wSgG
