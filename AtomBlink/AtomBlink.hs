@@ -29,12 +29,13 @@ main = do
                , ("p13", 13, Output, "b13")
                , ("p14", 14, Output, "sDP")
                , ("p15", 15, Input,  "btn")
+               , ("p16", 18, Output, "b16")   -- A0
                ]
 
         blink :: Atom ()
         blink = do
             [sgA, sgB, sgC, sgD, sgE, sgF, sgG, sDP] <- mapM (`bool` False) [ "sgA", "sgB", "sgC", "sgD", "sgE", "sgF", "sgG", "sDP" ]
-            [dg1, dg2, dg3, dg4] <- mapM (`bool` False) [ "dg1", "dg2", "dg3", "dg4" ]
+            [dg1, dg2, dg3, dg4, b16] <- mapM (`bool` False) [ "dg1", "dg2", "dg3", "dg4", "b16" ]
             b13 <- bool "b13" False
             btn <- bool "btn" False
 
@@ -95,10 +96,14 @@ main = do
             period 40000 $ atom "a3" $ do
                 dp <== (value dp + 1) `mod_` 5
 
+            period 100 $ atom "m0" $ do
+                call wP16
+                b16 <== not_ (value b16)
+
         ( decls, defs
          , [ wSgA, wSgB, wSgC, wSgD, wSgE, wSgF, wSgG
            , wDg1, wDg2, wDg3, wDg4
-           , w13, wSDP, rBtn
+           , w13, wSDP, rBtn, wP16
            ]
          ) = setupPins name pins
 
