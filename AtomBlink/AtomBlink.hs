@@ -29,13 +29,15 @@ main = do
                , ("p13", 13, Output, "b13")
                , ("p14", 14, Output, "sDP")
                , ("p15", 15, Input,  "btn")
-               , ("p16", 18, Output, "b16")   -- A0
+               , ("p16", 18, Output, "step")   -- A0
+               , ("p17", 19, Output, "dir")   -- A1
                ]
 
         blink :: Atom ()
         blink = do
             [sgA, sgB, sgC, sgD, sgE, sgF, sgG, sDP] <- mapM (`bool` False) [ "sgA", "sgB", "sgC", "sgD", "sgE", "sgF", "sgG", "sDP" ]
-            [dg1, dg2, dg3, dg4, b16] <- mapM (`bool` False) [ "dg1", "dg2", "dg3", "dg4", "b16" ]
+            [dg1, dg2, dg3, dg4] <- mapM (`bool` False) [ "dg1", "dg2", "dg3", "dg4"]
+            [step, dir] <- mapM (`bool` False) [ "step", "dir" ]
             b13 <- bool "b13" False
             btn <- bool "btn" False
 
@@ -92,24 +94,26 @@ main = do
             period debounce $ phase 6 $ atom "a2" $ do
                 cond (value pressed)
                 x <== 1000
+                dir <== not_ (value dir)
+                call wDir
 
             period 40000 $ atom "a3" $ do
                 dp <== (value dp + 1) `mod_` 5
 
             period 100 $ phase 10 $ atom "m0" $ do
                 cond (value x >. 0)
-                call wP16
-                b16 <== True
+                call wStep
+                step <== true
                 decr x
 
             period 100 $ phase 11 $ atom "m1" $ do
-                call wP16
-                b16 <== False
+                call wStep
+                step <== false
 
         ( decls, defs
          , [ wSgA, wSgB, wSgC, wSgD, wSgE, wSgF, wSgG
            , wDg1, wDg2, wDg3, wDg4
-           , w13, wSDP, rBtn, wP16
+           , w13, wSDP, rBtn, wStep, wDir
            ]
          ) = setupPins name pins
 
