@@ -91,14 +91,20 @@ main = do
 
             period debounce $ phase 6 $ atom "a2" $ do
                 cond (value pressed)
-                x <== (value x + 1) `mod_` 10000
+                x <== 1000
 
             period 40000 $ atom "a3" $ do
                 dp <== (value dp + 1) `mod_` 5
 
-            period 100 $ atom "m0" $ do
+            period 100 $ phase 10 $ atom "m0" $ do
+                cond (value x >. 0)
                 call wP16
-                b16 <== not_ (value b16)
+                b16 <== True
+                decr x
+
+            period 100 $ phase 11 $ atom "m1" $ do
+                call wP16
+                b16 <== False
 
         ( decls, defs
          , [ wSgA, wSgB, wSgC, wSgD, wSgE, wSgF, wSgG
