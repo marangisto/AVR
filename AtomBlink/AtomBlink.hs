@@ -93,22 +93,27 @@ main = do
 
             period debounce $ phase 6 $ atom "a2" $ do
                 cond (value pressed)
-                x <== 1000
+                x <== 2000
                 dir <== not_ (value dir)
                 call wDir
 
             period 40000 $ atom "a3" $ do
                 dp <== (value dp + 1) `mod_` 5
 
-            period 100 $ phase 10 $ atom "m0" $ do
-                cond (value x >. 0)
-                call wStep
-                step <== true
-                decr x
+            let w = 6;
 
-            period 100 $ phase 11 $ atom "m1" $ do
+            j <- word16 "j" w
+
+            period 5 $ phase 0 $ atom "m0" $ do
+                cond (value j ==. 0 &&. value x >. 0)
                 call wStep
-                step <== false
+                step <== not_ (value step)
+                decr x
+                j <== Const w
+
+            period 5 $ phase 1 $ atom "m1" $ do
+                cond (value j >. 0)
+                decr j
 
         ( decls, defs
          , [ wSgA, wSgB, wSgC, wSgD, wSgE, wSgF, wSgG
