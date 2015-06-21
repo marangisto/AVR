@@ -3,7 +3,7 @@ import Development.Shake.Command
 import Development.Shake.FilePath
 import Development.Shake.Util
 
-avrgcc = "/Applications/Arduino.app/Contents/Java/hardware/tools/avr/bin/avr-gcc"
+avrgcc = "/Applications/Arduino.app/Contents/Java/hardware/tools/avr/bin/avr-g++"
 avrocp = "/Applications/Arduino.app/Contents/Java/hardware/tools/avr/bin/avr-objcopy"
 avrdude = "/Applications/Arduino.app/Contents/Java/hardware/tools/avr/bin/avrdude"
 
@@ -53,7 +53,7 @@ main = shakeArgs shakeOptions{ shakeFiles = buildDir } $ do
         removeFilesAfter buildDir [ "//*" ]
 
     buildDir </> "image" <.> "elf" %> \out -> do
-        cs <- getDirectoryFiles "" [ "//*.c" ]
+        cs <- getDirectoryFiles "" [ "//*.c", "//*.cpp" ]
         let os = [ buildDir </> c -<.> "o" | c <- cs ]
         need os
         cmd avrgcc ldflags "-o" [ out ] os
@@ -64,7 +64,7 @@ main = shakeArgs shakeOptions{ shakeFiles = buildDir } $ do
         cmd avrocp ocflags [ elf ] [ out ]
 
     buildDir </> "//*.o" %> \out -> do
-        let c = dropDirectory1 $ out -<.> "c"
+        let c = dropDirectory1 $ out -<.> "cpp"
             m = out -<.> "m"
         () <- cmd avrgcc ccflags [ c ] "-o" [ out ] "-MMD -MF" [ m ]
         needMakefileDependencies m

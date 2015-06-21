@@ -1,4 +1,5 @@
 #include <avr/io.h>
+#include "../AVR/Pins.h"
 
 void delay_loop_2(uint16_t __count)
 {
@@ -17,15 +18,17 @@ void delay(uint16_t n)
 		delay_loop_2(4000);
 }
 
+typedef Pd0 led;
+
 void setup()
 {
-	DDRD |= (1 << 0);
+	output_mode<led>();
 }
 
 void loop()
 {
-	delay(1000);
-	PORTD ^= (1 << 0);
+	delay(100);
+	toggle<led>();
 }
 
 int main()
