@@ -9,8 +9,8 @@ static unit8_t DDRD = 0, PORTD = 0, PIND = 0;
 
 #include "Pins.h"
 
-typedef Pd0 step_pin;
-typedef Pd1 dir_pin;
+typedef pin_t<PD,0> step_pin;
+typedef pin_t<PD,1> dir_pin;
 
 void show()
 {
@@ -22,8 +22,8 @@ void show()
 int main()
 {
 	show();
-	output_mode<dir_pin>();		show();
-	output_mode<step_pin>();	show();
+	digital_out<dir_pin>();		show();
+	digital_out<step_pin>();	show();
 	write<dir_pin>(true);		show();
 	write<step_pin>(true);		show();
 	toggle<step_pin>();			show();

@@ -18,16 +18,16 @@ void delay(uint16_t n)
 		delay_loop_2(4000);
 }
 
-typedef Pd0 led;
+typedef pin_t<PD,0> led;
 
 void setup()
 {
-	output_mode<led>();
+	digital_out<led>();
 }
 
 void loop()
 {
-	delay(100);
+	delay(250);
 	toggle<led>();
 }
 
