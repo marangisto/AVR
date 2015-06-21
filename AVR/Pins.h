@@ -1,12 +1,41 @@
 #ifndef PINS_H
 #define PINS_H
 
-template<class PIN> struct digital_pin
+template<class PORT> struct port_t
 {
 	static inline volatile uint8_t& ddr();
 	static inline volatile uint8_t& port();
 	static inline const volatile uint8_t& pin();
+};
+
+template<class PIN> struct pin_t
+{
 	static inline uint8_t mask();
+};
+
+struct PortB;;
+struct PortC;;
+struct PortD;;
+
+template<> struct port_t<PortB>
+{
+	static inline volatile uint8_t& ddr() { return DDRB; }
+	static inline volatile uint8_t& port() { return PORTB; }
+	static inline volatile const uint8_t& pin() { return PINB; }
+};
+
+template<> struct port_t<PortC>
+{
+	static inline volatile uint8_t& ddr() { return DDRC; }
+	static inline volatile uint8_t& port() { return PORTC; }
+	static inline volatile const uint8_t& pin() { return PINC; }
+};
+
+template<> struct port_t<PortD>
+{
+	static inline volatile uint8_t& ddr() { return DDRD; }
+	static inline volatile uint8_t& port() { return PORTD; }
+	static inline volatile const uint8_t& pin() { return PIND; }
 };
 
 struct Pb0;
@@ -36,225 +65,60 @@ struct Pd5;
 struct Pd6;
 struct Pd7;
 
-template<> struct digital_pin<Pb0>
-{
-	static inline volatile uint8_t& ddr() { return DDRB; }
-	static inline volatile uint8_t& port() { return PORTB; }
-	static inline volatile const uint8_t& pin() { return PINB; }
-	static inline uint8_t mask() { return 1 << 0; }
-};
-
-template<> struct digital_pin<Pb1>
-{
-	static inline volatile uint8_t& ddr() { return DDRB; }
-	static inline volatile uint8_t& port() { return PORTB; }
-	static inline const volatile uint8_t& pin() { return PINB; }
-	static inline uint8_t mask() { return 1 << 1; }
-};
-
-template<> struct digital_pin<Pb2>
-{
-	static inline volatile uint8_t& ddr() { return DDRB; }
-	static inline volatile uint8_t& port() { return PORTB; }
-	static inline const volatile uint8_t& pin() { return PINB; }
-	static inline uint8_t mask() { return 1 << 2; }
-};
-
-template<> struct digital_pin<Pb3>
-{
-	static inline volatile uint8_t& ddr() { return DDRB; }
-	static inline volatile uint8_t& port() { return PORTB; }
-	static inline const volatile uint8_t& pin() { return PINB; }
-	static inline uint8_t mask() { return 1 << 3; }
-};
-
-template<> struct digital_pin<Pb4>
-{
-	static inline volatile uint8_t& ddr() { return DDRB; }
-	static inline volatile uint8_t& port() { return PORTB; }
-	static inline const volatile uint8_t& pin() { return PINB; }
-	static inline uint8_t mask() { return 1 << 4; }
-};
-
-template<> struct digital_pin<Pb5>
-{
-	static inline volatile uint8_t& ddr() { return DDRB; }
-	static inline volatile uint8_t& port() { return PORTB; }
-	static inline const volatile uint8_t& pin() { return PINB; }
-	static inline uint8_t mask() { return 1 << 5; }
-};
-
+template<> struct pin_t<Pb0> : port_t<PortB> { static inline uint8_t mask() { return 1 << 0; } };
+template<> struct pin_t<Pb1> : port_t<PortB> { static inline uint8_t mask() { return 1 << 1; } };
+template<> struct pin_t<Pb2> : port_t<PortB> { static inline uint8_t mask() { return 1 << 2; } };
+template<> struct pin_t<Pb3> : port_t<PortB> { static inline uint8_t mask() { return 1 << 3; } };
+template<> struct pin_t<Pb4> : port_t<PortB> { static inline uint8_t mask() { return 1 << 4; } };
+template<> struct pin_t<Pb5> : port_t<PortB> { static inline uint8_t mask() { return 1 << 5; } };
 /* NOT AVAILABLE ON Atmega-328 (used for crystal)
-template<> struct digital_pin<Pb6>
-{
-	static inline volatile uint8_t& ddr() { return DDRB; }
-	static inline volatile uint8_t& port() { return PORTB; }
-	static inline const volatile uint8_t& pin() { return PINB; }
-	static inline uint8_t mask() { return 1 << 6; }
-};
-
-template<> struct digital_pin<Pb7>
-{
-	static inline volatile uint8_t& ddr() { return DDRB; }
-	static inline volatile uint8_t& port() { return PORTB; }
-	static inline const volatile uint8_t& pin() { return PINB; }
-	static inline uint8_t mask() { return 1 << 7; }
-};
+template<> struct pin_t<Pb6> : port_t<PortB> { static inline uint8_t mask() { return 1 << 6; } };
+template<> struct pin_t<Pb7> : port_t<PortB> { static inline uint8_t mask() { return 1 << 7; } };
 */
 
-template<> struct digital_pin<Pc0>
-{
-	static inline volatile uint8_t& ddr() { return DDRC; }
-	static inline volatile uint8_t& port() { return PORTC; }
-	static inline const volatile uint8_t& pin() { return PINC; }
-	static inline uint8_t mask() { return 1 << 0; }
-};
-
-template<> struct digital_pin<Pc1>
-{
-	static inline volatile uint8_t& ddr() { return DDRC; }
-	static inline volatile uint8_t& port() { return PORTC; }
-	static inline const volatile uint8_t& pin() { return PINC; }
-	static inline uint8_t mask() { return 1 << 1; }
-};
-
-template<> struct digital_pin<Pc2>
-{
-	static inline volatile uint8_t& ddr() { return DDRC; }
-	static inline volatile uint8_t& port() { return PORTC; }
-	static inline const volatile uint8_t& pin() { return PINC; }
-	static inline uint8_t mask() { return 1 << 2; }
-};
-
-template<> struct digital_pin<Pc3>
-{
-	static inline volatile uint8_t& ddr() { return DDRC; }
-	static inline volatile uint8_t& port() { return PORTC; }
-	static inline const volatile uint8_t& pin() { return PINC; }
-	static inline uint8_t mask() { return 1 << 3; }
-};
-
-template<> struct digital_pin<Pc4>
-{
-	static inline volatile uint8_t& ddr() { return DDRC; }
-	static inline volatile uint8_t& port() { return PORTC; }
-	static inline const volatile uint8_t& pin() { return PINC; }
-	static inline uint8_t mask() { return 1 << 4; }
-};
-
-template<> struct digital_pin<Pc5>
-{
-	static inline volatile uint8_t& ddr() { return DDRC; }
-	static inline volatile uint8_t& port() { return PORTC; }
-	static inline const volatile uint8_t& pin() { return PINC; }
-	static inline volatile uint8_t mask() { return 1 << 5; }
-};
-
-template<> struct digital_pin<Pc6>
-{
-	static inline volatile uint8_t& ddr() { return DDRC; }
-	static inline volatile uint8_t& port() { return PORTC; }
-	static inline const volatile uint8_t& pin() { return PINC; }
-	static inline uint8_t mask() { return 1 << 6; }
-};
-
+template<> struct pin_t<Pc0> : port_t<PortC> { static inline uint8_t mask() { return 1 << 0; } };
+template<> struct pin_t<Pc1> : port_t<PortC> { static inline uint8_t mask() { return 1 << 1; } };
+template<> struct pin_t<Pc2> : port_t<PortC> { static inline uint8_t mask() { return 1 << 2; } };
+template<> struct pin_t<Pc3> : port_t<PortC> { static inline uint8_t mask() { return 1 << 3; } };
+template<> struct pin_t<Pc4> : port_t<PortC> { static inline uint8_t mask() { return 1 << 4; } };
+template<> struct pin_t<Pc5> : port_t<PortC> { static inline uint8_t mask() { return 1 << 5; } };
+template<> struct pin_t<Pc6> : port_t<PortC> { static inline uint8_t mask() { return 1 << 6; } };
 /* NOT AVAILABLE ON Atmega-328
-template<> struct digital_pin<Pc7>
-{
-	static inline volatile uint8_t& ddr() { return DDRC; }
-	static inline volatile uint8_t& port() { return PORTC; }
-	static inline const volatile uint8_t& pin() { return PINC; }
-	static inline uint8_t mask() { return 1 << 7; }
-};
+template<> struct pin_t<Pc7> : port_t<PortC> { static inline uint8_t mask() { return 1 << 7; } };
 */
 
-template<> struct digital_pin<Pd0>
-{
-	static inline volatile uint8_t& ddr() { return DDRD; }
-	static inline volatile uint8_t& port() { return PORTD; }
-	static inline const volatile uint8_t& pin() { return PIND; }
-	static inline uint8_t mask() { return 1 << 0; }
-};
-
-template<> struct digital_pin<Pd1>
-{
-	static inline volatile uint8_t& ddr() { return DDRD; }
-	static inline volatile uint8_t& port() { return PORTD; }
-	static inline const volatile uint8_t& pin() { return PIND; }
-	static inline uint8_t mask() { return 1 << 1; }
-};
-
-template<> struct digital_pin<Pd2>
-{
-	static inline volatile uint8_t& ddr() { return DDRD; }
-	static inline volatile uint8_t& port() { return PORTD; }
-	static inline const volatile uint8_t& pin() { return PIND; }
-	static inline uint8_t mask() { return 1 << 2; }
-};
-
-template<> struct digital_pin<Pd3>
-{
-	static inline volatile uint8_t& ddr() { return DDRD; }
-	static inline volatile uint8_t& port() { return PORTD; }
-	static inline const volatile uint8_t& pin() { return PIND; }
-	static inline uint8_t mask() { return 1 << 3; }
-};
-
-template<> struct digital_pin<Pd4>
-{
-	static inline volatile uint8_t& ddr() { return DDRD; }
-	static inline volatile uint8_t& port() { return PORTD; }
-	static inline const volatile uint8_t& pin() { return PIND; }
-	static inline uint8_t mask() { return 1 << 4; }
-};
-
-template<> struct digital_pin<Pd5>
-{
-	static inline volatile uint8_t& ddr() { return DDRD; }
-	static inline volatile uint8_t& port() { return PORTD; }
-	static inline const volatile uint8_t& pin() { return PIND; }
-	static inline uint8_t mask() { return 1 << 5; }
-};
-
-template<> struct digital_pin<Pd6>
-{
-	static inline volatile uint8_t& ddr() { return DDRD; }
-	static inline volatile uint8_t& port() { return PORTD; }
-	static inline const volatile uint8_t& pin() { return PIND; }
-	static inline uint8_t mask() { return 1 << 6; }
-};
-
-template<> struct digital_pin<Pd7>
-{
-	static inline volatile uint8_t& ddr() { return DDRD; }
-	static inline volatile uint8_t& port() { return PORTD; }
-	static inline const volatile uint8_t& pin() { return PIND; }
-	static inline uint8_t mask() { return 1 << 7; }
-};
+template<> struct pin_t<Pd0> : port_t<PortD> { static inline uint8_t mask() { return 1 << 0; } };
+template<> struct pin_t<Pd1> : port_t<PortD> { static inline uint8_t mask() { return 1 << 1; } };
+template<> struct pin_t<Pd2> : port_t<PortD> { static inline uint8_t mask() { return 1 << 2; } };
+template<> struct pin_t<Pd3> : port_t<PortD> { static inline uint8_t mask() { return 1 << 3; } };
+template<> struct pin_t<Pd4> : port_t<PortD> { static inline uint8_t mask() { return 1 << 4; } };
+template<> struct pin_t<Pd5> : port_t<PortD> { static inline uint8_t mask() { return 1 << 5; } };
+template<> struct pin_t<Pd6> : port_t<PortD> { static inline uint8_t mask() { return 1 << 6; } };
+template<> struct pin_t<Pd7> : port_t<PortD> { static inline uint8_t mask() { return 1 << 7; } };
 
 template<class PIN> static inline void input_mode()
 {
-	digital_pin<PIN>::ddr() &= ~digital_pin<PIN>::mask();
+	pin_t<PIN>::ddr() &= ~pin_t<PIN>::mask();
 }
 
 template<class PIN> static inline void output_mode()
 {
-	digital_pin<PIN>::ddr() |= digital_pin<PIN>::mask();
+	pin_t<PIN>::ddr() |= pin_t<PIN>::mask();
 }
 
 template<class PIN> static inline void set()
 {
-	digital_pin<PIN>::port() |= digital_pin<PIN>::mask();
+	pin_t<PIN>::port() |= pin_t<PIN>::mask();
 }
 
 template<class PIN> static inline void clear()
 {
-	digital_pin<PIN>::port() &= ~digital_pin<PIN>::mask();
+	pin_t<PIN>::port() &= ~pin_t<PIN>::mask();
 }
 
 template<class PIN> static inline void toggle()
 {
-	digital_pin<PIN>::port() ^= digital_pin<PIN>::mask();
+	pin_t<PIN>::port() ^= pin_t<PIN>::mask();
 }
 
 template<class PIN> static inline void write(bool x)
