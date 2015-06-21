@@ -4,7 +4,8 @@ import Development.Shake.FilePath
 import Development.Shake.Util
 
 avrgcc = "/Applications/Arduino.app/Contents/Java/hardware/tools/avr/bin/avr-g++"
-avrocp = "/Applications/Arduino.app/Contents/Java/hardware/tools/avr/bin/avr-objcopy"
+avrcopy = "/Applications/Arduino.app/Contents/Java/hardware/tools/avr/bin/avr-objcopy"
+avrdump = "/Applications/Arduino.app/Contents/Java/hardware/tools/avr/bin/avr-objdump"
 avrdude = "/Applications/Arduino.app/Contents/Java/hardware/tools/avr/bin/avrdude"
 
 ccflags =
@@ -28,12 +29,12 @@ ldflags =
     , "-mmcu=atmega328p"
     ]
 
-ocflags =
+copyflags =
     [ "-Oihex"
     , "-R.eeprom"
     ]
 
-ddflags =
+dudeflags =
     [ "-C/Applications/Arduino.app/Contents/Java/hardware/tools/avr/etc/avrdude.conf"
     , "-P/dev/cu.usbmodem1d21"
     , "-v"
@@ -46,7 +47,7 @@ ddflags =
 
 main :: IO ()
 main = shakeArgs shakeOptions{ shakeFiles = buildDir } $ do
-    want [ buildDir </> "image" <.> "hex" ]
+    want [ buildDir </> "image" <.> "hex", buildDir </> "image" <.> "s" ]
 
     phony "clean" $ do
         putNormal $ "Cleaning files in " ++ buildDir
@@ -61,7 +62,13 @@ main = shakeArgs shakeOptions{ shakeFiles = buildDir } $ do
     buildDir </> "image" <.> "hex" %> \out -> do
         let elf = out -<.> ".elf"
         need [ elf ]
-        cmd avrocp ocflags [ elf ] [ out ]
+        cmd avrcopy copyflags [ elf ] [ out ]
+
+    buildDir </> "image" <.> "s" %> \out -> do
+        let elf = out -<.> ".elf"
+        need [ elf ]
+        Stdout res <- cmd avrdump "-S" [ elf ]
+        writeFile' out res
 
     buildDir </> "//*.o" %> \out -> do
         let c = dropDirectory1 $ out -<.> "cpp"
@@ -72,7 +79,7 @@ main = shakeArgs shakeOptions{ shakeFiles = buildDir } $ do
     phony "upload" $ do
         let hex = buildDir </> "image" <.> "hex"
         need [ hex ]
-        cmd avrdude ddflags ("-Uflash:w:" ++ hex ++ ":i")
+        cmd avrdude dudeflags ("-Uflash:w:" ++ hex ++ ":i")
 
 buildDir = "_build"
 
