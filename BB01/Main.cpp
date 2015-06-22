@@ -20,22 +20,37 @@ void delay(uint16_t n)
 
 typedef pin_t<PD,0> ledA;
 typedef pin_t<PD,1> ledB;
+typedef pin_t<PD,2> btnDn;
+typedef pin_t<PD,3> btnUp;
 
 void setup()
 {
+	digital_in<btnDn, btnUp>();
+	set<btnDn, btnUp>(); 			// pull-ups
 	digital_out<ledA, ledB>();
 }
 
 void loop()
 {
-	delay(250);
+	static uint16_t ms = 250;
+	bool bu, bd;
+
+	read<btnUp, btnDn>(bu, bd);
+
 	toggle<ledA>();
-	delay(250);
-	toggle<ledB>();
-	delay(250);
-	toggle<ledA>();
-	delay(250);
-	toggle<ledA, ledB>();
+
+	if (bu)
+	{
+		toggle<ledB>();
+		ms += 10;
+	}
+	else if (bd)
+	{
+		toggle<ledB>();
+		ms = ms > 10 ? ms - 10 : 10;
+	}
+
+	delay(ms);
 }
 
 int main()

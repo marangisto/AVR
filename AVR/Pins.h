@@ -111,5 +111,50 @@ static inline void write(bool x)
 	x ? set<T0, T1, T2, T3, T4, T5, T6, T7>() : clear<T0, T1, T2, T3, T4, T5, T6, T7>();
 }
 
+template<class T0>
+static inline bool read()
+{
+	return (T0::pin() & T0::mask()) != 0;
+}
+
+template<class T0, class T1>
+static inline void read(bool& b0, bool& b1)
+{
+	static_assert(is_same<typename T0::ty, typename T1::ty>(), "2nd pin on different port");
+
+	uint8_t x = T0::pin();
+
+	b0 = (x & T0::mask()) != 0;
+	b1 = (x & T1::mask()) != 0;
+}
+
+template<class T0, class T1, class T2>
+static inline void read(bool& b0, bool& b1, bool& b2)
+{
+	static_assert(is_same<typename T0::ty, typename T1::ty>(), "2nd pin on different port");
+	static_assert(is_same<typename T0::ty, typename T2::ty>(), "3rd pin on different port");
+
+	uint8_t x = T0::pin();
+
+	b0 = (x & T0::mask()) != 0;
+	b1 = (x & T1::mask()) != 0;
+	b2 = (x & T2::mask()) != 0;
+}
+
+template<class T0, class T1, class T2, class T3>
+static inline void read(bool& b0, bool& b1, bool& b2, bool& b3)
+{
+	static_assert(is_same<typename T0::ty, typename T1::ty>(), "2nd pin on different port");
+	static_assert(is_same<typename T0::ty, typename T2::ty>(), "3rd pin on different port");
+	static_assert(is_same<typename T0::ty, typename T3::ty>(), "4th pin on different port");
+
+	uint8_t x = T0::pin();
+
+	b0 = (x & T0::mask()) != 0;
+	b1 = (x & T1::mask()) != 0;
+	b2 = (x & T2::mask()) != 0;
+	b3 = (x & T3::mask()) != 0;
+}
+
 #endif // PINS_H
 
