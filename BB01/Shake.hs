@@ -13,6 +13,7 @@ ccflags =
     , "-g"
     , "-Os"
     , "-w"
+    , "-std=c++11"
     , "-fno-exceptions"
     , "-ffunction-sections"
     , "-fdata-sections"

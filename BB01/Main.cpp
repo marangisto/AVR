@@ -18,17 +18,24 @@ void delay(uint16_t n)
 		delay_loop_2(4000);
 }
 
-typedef pin_t<PD,0> led;
+typedef pin_t<PD,0> ledA;
+typedef pin_t<PD,1> ledB;
 
 void setup()
 {
-	digital_out<led>();
+	digital_out<ledA, ledB>();
 }
 
 void loop()
 {
 	delay(250);
-	toggle<led>();
+	toggle<ledA>();
+	delay(250);
+	toggle<ledB>();
+	delay(250);
+	toggle<ledA>();
+	delay(250);
+	toggle<ledA, ledB>();
 }
 
 int main()

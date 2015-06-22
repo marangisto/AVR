@@ -22,8 +22,7 @@ void show()
 int main()
 {
 	show();
-	digital_out<dir_pin>();		show();
-	digital_out<step_pin>();	show();
+	digital_out<dir_pin, step_pin>();		show();
 	write<dir_pin>(true);		show();
 	write<step_pin>(true);		show();
 	toggle<step_pin>();			show();
