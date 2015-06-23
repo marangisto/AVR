@@ -3,23 +3,26 @@
 
 // missing <type_traits> on avr-g++?
 
-template<class T, T v>
-struct integral_constant {
-    static constexpr T value = v;
-    typedef T value_type;
-    typedef integral_constant type;
-    constexpr operator value_type() const noexcept { return value; }
-    constexpr value_type operator()() const noexcept { return value; } //since c++14
-};
+namespace std
+{
+	template<class T, T v>
+	struct integral_constant {
+    	static constexpr T value = v;
+    	typedef T value_type;
+    	typedef integral_constant type;
+    	constexpr operator value_type() const noexcept { return value; }
+    	constexpr value_type operator()() const noexcept { return value; } //since c++14
+	};
 
-typedef integral_constant<bool, true> true_type;
-typedef integral_constant<bool, false> false_type;
+	typedef integral_constant<bool, true> true_type;
+	typedef integral_constant<bool, false> false_type;
 
-template<class T, class U>
-struct is_same : false_type {};
+	template<class T, class U>
+	struct is_same : false_type {};
 
-template<class T>
-struct is_same<T, T> : true_type {};
+	template<class T>
+	struct is_same<T, T> : true_type {};
+}
 
 template<class PORT> struct port_t
 {
@@ -65,13 +68,13 @@ template<> struct port_t<PD>
 template<class T0, class T1, class T2, class T3, class T4, class T5, class T6, class T7>
 static inline uint8_t union_mask()
 {
-	static_assert(is_same<typename T0::ty, typename T1::ty>(), "2nd pin on different port");
-	static_assert(is_same<typename T0::ty, typename T2::ty>(), "3rd pin on different port");
-	static_assert(is_same<typename T0::ty, typename T3::ty>(), "4th pin on different port");
-	static_assert(is_same<typename T0::ty, typename T4::ty>(), "5th pin on different port");
-	static_assert(is_same<typename T0::ty, typename T5::ty>(), "6th pin on different port");
-	static_assert(is_same<typename T0::ty, typename T6::ty>(), "7th pin on different port");
-	static_assert(is_same<typename T0::ty, typename T7::ty>(), "8th pin on different port");
+	static_assert(std::is_same<typename T0::ty, typename T1::ty>(), "2nd pin on different port");
+	static_assert(std::is_same<typename T0::ty, typename T2::ty>(), "3rd pin on different port");
+	static_assert(std::is_same<typename T0::ty, typename T3::ty>(), "4th pin on different port");
+	static_assert(std::is_same<typename T0::ty, typename T4::ty>(), "5th pin on different port");
+	static_assert(std::is_same<typename T0::ty, typename T5::ty>(), "6th pin on different port");
+	static_assert(std::is_same<typename T0::ty, typename T6::ty>(), "7th pin on different port");
+	static_assert(std::is_same<typename T0::ty, typename T7::ty>(), "8th pin on different port");
 	return T0::mask() | T1::mask() | T2::mask() | T3::mask() | T4::mask() | T5::mask() | T6::mask() | T7::mask();
 }
 
@@ -120,7 +123,7 @@ static inline bool read()
 template<class T0, class T1>
 static inline void read(bool& b0, bool& b1)
 {
-	static_assert(is_same<typename T0::ty, typename T1::ty>(), "2nd pin on different port");
+	static_assert(std::is_same<typename T0::ty, typename T1::ty>(), "2nd pin on different port");
 
 	uint8_t x = T0::pin();
 
@@ -131,8 +134,8 @@ static inline void read(bool& b0, bool& b1)
 template<class T0, class T1, class T2>
 static inline void read(bool& b0, bool& b1, bool& b2)
 {
-	static_assert(is_same<typename T0::ty, typename T1::ty>(), "2nd pin on different port");
-	static_assert(is_same<typename T0::ty, typename T2::ty>(), "3rd pin on different port");
+	static_assert(std::is_same<typename T0::ty, typename T1::ty>(), "2nd pin on different port");
+	static_assert(std::is_same<typename T0::ty, typename T2::ty>(), "3rd pin on different port");
 
 	uint8_t x = T0::pin();
 
@@ -144,9 +147,9 @@ static inline void read(bool& b0, bool& b1, bool& b2)
 template<class T0, class T1, class T2, class T3>
 static inline void read(bool& b0, bool& b1, bool& b2, bool& b3)
 {
-	static_assert(is_same<typename T0::ty, typename T1::ty>(), "2nd pin on different port");
-	static_assert(is_same<typename T0::ty, typename T2::ty>(), "3rd pin on different port");
-	static_assert(is_same<typename T0::ty, typename T3::ty>(), "4th pin on different port");
+	static_assert(std::is_same<typename T0::ty, typename T1::ty>(), "2nd pin on different port");
+	static_assert(std::is_same<typename T0::ty, typename T2::ty>(), "3rd pin on different port");
+	static_assert(std::is_same<typename T0::ty, typename T3::ty>(), "4th pin on different port");
 
 	uint8_t x = T0::pin();
 
