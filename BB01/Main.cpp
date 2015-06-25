@@ -59,26 +59,49 @@ static volatile uint16_t n_steps = 0;    // tell isr how many steps to run
 static volatile uint16_t cur_step = 0;   // current isr step
 static volatile uint16_t max_i = 0;        // max speed
 static volatile uint8_t limit_mask = 0;
+static volatile uint16_t half_time_step = 10000;	// half-step duration
 static volatile bool inflight = false;
 
-static const uint16_t micro_steps = 4;  // micro-steps shifts
+static const uint16_t micro_steps = 0;  // micro-steps shifts
 
-void runStepper(dir_t dir, uint16_t n)
+enum prescale_t { prescale_1 = 1, prescale_8 = 8, prescale_64 = 64, prescale_256 = 256, prescale_1024 = 1024 };
+
+static void timer1_config(prescale_t s)
+{
+	uint8_t tccr1a = 0, tccr1b = 0;
+
+	switch (s)
+	{
+		case prescale_1:	tccr1b |= (1 << CS10);					break;
+		case prescale_8:	tccr1b |= (1 << CS11);					break;
+		case prescale_64:	tccr1b |= (1 << CS10) | (1 << CS11);	break;
+		case prescale_256:	tccr1b |= (1 << CS12);					break;
+		case prescale_1024:	tccr1b |= (1 << CS12) | (1 << CS10);	break;
+	}
+
+	TCCR1A = tccr1a;
+	TCCR1B = tccr1b;
+}
+
+static void timer1_enable()
+{
+    TIMSK1 |= (1 << TOIE1);     // enable timer overflow interrupt
+}
+
+void runStepper(dir_t dir, uint16_t n, uint16_t t)
 {
     cli();                     // disable global interrupts
     n_steps = n << micro_steps;
     cur_step = 0;
+	half_time_step = t;
     max_i = min(profile_size - 1, n / 10);    // FIXME: do we want this?
     inflight = true;
     write<DIR>(dir == Left);
 //    limit_mask = (dir == Right) ? B00000100 : B00001000;			// FIXME!
-    TCCR1A = 0;                // set entire TCCR1A register to 0
-    TCCR1B = 0;                // same for TCCR1B
-    TCNT1 = 0;                 // max delay to 1st pulse
-//    TCCR1B |= (1 << CS10);
-    TCCR1B |= (1 << CS11);
-//    TCCR1B |= (1 << CS12);
-    TIMSK1 |= (1 << TOIE1);     // enable timer overflow interrupt
+
+	timer1_config(prescale_256);
+	timer1_enable();
+
     sei();
 
     while (inflight)
@@ -87,9 +110,9 @@ void runStepper(dir_t dir, uint16_t n)
 
 void homePosition()
 {
-    runStepper(Right, 4000);
+    runStepper(Right, 4000, half_time_step);
     delay(500);
-    runStepper(Left, 200);
+    runStepper(Left, 200, half_time_step);
     delay(100);
 }
 
@@ -98,9 +121,10 @@ ISR(TIMER1_OVF_vect)
     if ((cur_step < n_steps)) // FIXME: LIMITS =  && !(PIND & limit_mask))
     {
 		uint16_t c = cur_step, m = max_i;
-        uint16_t i = min(c, n_steps - c) >> 1;  // update once per step cycle
+//        uint16_t i = min(c, n_steps - c) >> 1;  // update once per step cycle
 
-        TCNT1 = 65535 - (profile[min(i, m)] >> 2);
+//        TCNT1 = 65535 - (profile[min(i, m)] >> 2);
+		TCNT1 = 65535 - half_time_step;
         toggle<STEP>();
         ++cur_step;
     } else
@@ -113,21 +137,29 @@ void setup()
 	set<btnDn, btnUp>(); 			// pull-ups
 	digital_out<DIR, STEP>();
 
-	homePosition();
+//	homePosition();
 }
 
 void loop()
 {
-    const uint16_t w = 380;
-    const uint16_t et = 500;
+    const uint16_t w = 100;
+//    const uint16_t w = 380;
+    const uint16_t et = 100;
+//    const uint16_t et = 500;
     
     for (uint8_t i = 0; i < 5; ++i)
     {
-      runStepper(Left, w);
+      runStepper(Left, w, 3000 - i * 500);
       delay(et);
     }
-    runStepper(Right, 5 * w);
-    delay(1000);
+
+    for (uint8_t i = 0; i < 5; ++i)
+    {
+      runStepper(Right, w, 3000 - i * 500);
+      delay(et);
+    }
+//    runStepper(Right, 5 * w, 5000);
+//    delay(1000);
 }
 
 int main()
