@@ -37,7 +37,7 @@ copyflags =
 
 dudeflags =
     [ "-C/Applications/Arduino.app/Contents/Java/hardware/tools/avr/etc/avrdude.conf"
-    , "-P/dev/cu.usbmodem1d21"
+    , "-P/dev/cu.usbmodem1d11"
     , "-v"
     , "-cstk500v1"
     , "-patmega328p"
