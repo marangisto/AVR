@@ -76,7 +76,7 @@ static void timer1_config(prescale_t s)
 
 static void timer1_enable()
 {
-    TIMSK1 |= (1 << TOIE1);     // enable timer overflow interrupt
+	TIMSK1 |= (1 << TOIE1);     // enable timer overflow interrupt
 }
 
 static volatile uint16_t n_steps = 0;    // tell isr how many steps to run
@@ -97,11 +97,11 @@ static inline uint16_t eq12(uint16_t c, uint16_t n)
 
 ISR(TIMER1_OVF_vect)
 {
-    if (step_i < n_steps)
-    {
-        set<STEP>();			// 2 cycles
+	if (step_i < n_steps)
+	{
+		set<STEP>();			// 2 cycles
 		nop<14>();				// need 1us so total 16 cycles
-        clear<STEP>();
+		clear<STEP>();
 		TCNT1 = 65535 - (dt << 1);
 		dt = eq12(dt, ++step_i);
 	}
@@ -111,18 +111,18 @@ ISR(TIMER1_OVF_vect)
 
 void speedTest(dir_t dir, uint16_t n, uint16_t c)
 {
-    cli();                     // disable global interrupts
-    inflight = true;
-    accel = true;
+	cli();                     // disable global interrupts
+	inflight = true;
+	accel = true;
 	n_steps = n;
 	step_i = 0;
 	dt = c;
-    write<DIR>(dir == Left);
+	write<DIR>(dir == Left);
 	timer1_config(prescale_8);
 	timer1_enable();
-    sei();
-    while (inflight)
-        delay(100);
+	sei();
+	while (inflight)
+		delay(100);
 }
 
 void setup()
