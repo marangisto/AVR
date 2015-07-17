@@ -5,6 +5,30 @@
 template<class T> T min(const T& x, const T& y) { return x < y ? x : y; }
 template<class T> T max(const T& x, const T& y) { return x > y ? x : y; }
 
+template<int N>
+struct no_operation
+{
+	static inline void run()
+	{
+		__asm__ volatile("nop");
+		::no_operation<N-1>::run();
+	}
+};
+
+template<>
+struct no_operation<0>
+{
+	static inline void run()
+	{
+	}
+};
+
+template<int N>
+static inline void nop()
+{
+	no_operation<N>::run();
+}
+
 void delay_loop_2(uint16_t __count)
 {
 	__asm__ volatile
@@ -75,7 +99,8 @@ ISR(TIMER1_OVF_vect)
 {
     if (step_i < n_steps)
     {
-        set<STEP>();			// pulse!
+        set<STEP>();			// 2 cycles
+		nop<14>();				// need 1us so total 16 cycles
         clear<STEP>();
 		TCNT1 = 65535 - (dt << 1);
 		dt = eq12(dt, ++step_i);
