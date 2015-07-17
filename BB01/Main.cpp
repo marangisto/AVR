@@ -80,6 +80,7 @@ static void timer1_enable()
 }
 
 static volatile uint16_t n_steps = 0;    // tell isr how many steps to run
+static volatile uint16_t n_accel = 0;	// max acceleration steps
 static volatile uint16_t cur_step = 0;   // current isr step
 static volatile uint16_t max_i = 0;        // max speed
 static volatile uint8_t limit_mask = 0;
@@ -87,12 +88,12 @@ static volatile uint16_t half_time_step = 10000;	// half-step duration
 static volatile bool inflight = false;
 static volatile uint16_t step_i = 0;
 static volatile uint16_t dt = 0;
-static volatile bool accel = false;
 static const uint16_t micro_steps = 0;  // micro-steps shifts
 
-static inline uint16_t eq12(uint16_t c, uint16_t n)
+static inline uint16_t eq12(uint16_t c, uint16_t n, bool acc)
 {
-	return c - (c << 1) / ((n << 2) + 1);
+    uint16_t k = (c << 1) / ((n << 2) + 1);
+    return acc ? (c - k) : (c + k);
 }
 
 ISR(TIMER1_OVF_vect)
@@ -103,7 +104,17 @@ ISR(TIMER1_OVF_vect)
 		nop<14>();				// need 1us so total 16 cycles
 		clear<STEP>();
 		TCNT1 = 65535 - (dt << 1);
-		dt = eq12(dt, ++step_i);
+
+        if (++step_i < n_accel)  // still time to accelerate
+        {
+            uint16_t dt_ = eq12(dt, step_i, true);
+            if (dt_ == dt)
+                n_accel = step_i;      // actual acceleration steps
+            else
+                dt = dt_;
+        }
+        else if (step_i + n_accel > n_steps) // time to decelerate
+            dt = eq12(dt, n_steps - step_i, false);
 	}
 	else
 		inflight = false;
@@ -113,8 +124,8 @@ void speedTest(dir_t dir, uint16_t n, uint16_t c)
 {
 	cli();                     // disable global interrupts
 	inflight = true;
-	accel = true;
 	n_steps = n;
+	n_accel = n >> 1;;		// max number of acceleration steps
 	step_i = 0;
 	dt = c;
 	write<DIR>(dir == Left);
