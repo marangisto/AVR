@@ -148,8 +148,11 @@ void setup()
 void loop()
 {
 	static bool dir = false;
-	delay(100);
-	speedTest(dir, 2000, 15000);
+//	delay(100);
+//	speedTest(dir, 2000, 15000);	// conservative limit
+//	speedTest(dir, 100, 5000);		// good short run
+//	speedTest(dir, 100, 3000);		// fantastic!
+	speedTest(dir, 100, 1500);		// still works - we need to explore the envelope
 	dir = !dir;
 }
 
