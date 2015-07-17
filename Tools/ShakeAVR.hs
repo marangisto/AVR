@@ -11,7 +11,7 @@ avrdude = "/Applications/Arduino.app/Contents/Java/hardware/tools/avr/bin/avrdud
 ccflags =
     [ "-c"
     , "-g"
-    , "-Os"
+    , "-O3"
     , "-w"
     , "-std=c++11"
     , "-fno-exceptions"

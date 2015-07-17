@@ -66,7 +66,7 @@ template<> struct port_t<PD>
 };
 
 template<class T0, class T1, class T2, class T3, class T4, class T5, class T6, class T7>
-static inline uint8_t union_mask()
+static inline void check_union_mask()
 {
 	static_assert(std::is_same<typename T0::ty, typename T1::ty>(), "2nd pin on different port");
 	static_assert(std::is_same<typename T0::ty, typename T2::ty>(), "3rd pin on different port");
@@ -75,13 +75,26 @@ static inline uint8_t union_mask()
 	static_assert(std::is_same<typename T0::ty, typename T5::ty>(), "6th pin on different port");
 	static_assert(std::is_same<typename T0::ty, typename T6::ty>(), "7th pin on different port");
 	static_assert(std::is_same<typename T0::ty, typename T7::ty>(), "8th pin on different port");
+}
+
+template<class T0, class T1, class T2, class T3, class T4, class T5, class T6, class T7>
+static inline uint8_t union_mask()
+{
+	check_union_mask<T0, T1, T2, T3, T4, T5, T6, T7>();
 	return T0::mask() | T1::mask() | T2::mask() | T3::mask() | T4::mask() | T5::mask() | T6::mask() | T7::mask();
+}
+
+template<class T0, class T1, class T2, class T3, class T4, class T5, class T6, class T7>
+static inline uint8_t invert_union_mask()
+{
+	check_union_mask<T0, T1, T2, T3, T4, T5, T6, T7>();
+	return 0xff ^ (T0::mask() | T1::mask() | T2::mask() | T3::mask() | T4::mask() | T5::mask() | T6::mask() | T7::mask());
 }
 
 template<class T0, class T1 = T0, class T2 = T0, class T3 = T0, class T4 = T0, class T5 = T0, class T6 = T0, class T7 = T0>
 static inline void digital_in()
 {
-	T0::ddr() &= ~union_mask<T0, T1, T2, T3, T4, T5, T6, T7>();
+	T0::ddr() &= invert_union_mask<T0, T1, T2, T3, T4, T5, T6, T7>();
 }
 
 template<class T0, class T1 = T0, class T2 = T0, class T3 = T0, class T4 = T0, class T5 = T0, class T6 = T0, class T7 = T0>
@@ -99,7 +112,7 @@ static inline void set()
 template<class T0, class T1 = T0, class T2 = T0, class T3 = T0, class T4 = T0, class T5 = T0, class T6 = T0, class T7 = T0>
 static inline void clear()
 {
-	T0::port() &= ~union_mask<T0, T1, T2, T3, T4, T5, T6, T7>();
+	T0::port() &= invert_union_mask<T0, T1, T2, T3, T4, T5, T6, T7>();
 }
 
 template<class T0, class T1 = T0, class T2 = T0, class T3 = T0, class T4 = T0, class T5 = T0, class T6 = T0, class T7 = T0>
