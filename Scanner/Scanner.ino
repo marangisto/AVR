@@ -4,10 +4,12 @@
 #include "LCDKeyPadShield.h"
 #include "UserInterface.h"
 #include "MotorShield.h"
+#include "Motion.h"
 
 static const uint8_t ledPin = 13;
 
-static Stepper *gM1 = 0;
+static Motion *gM = 0;
+// static Stepper *gM1 = 0;
 static HBridge *gHB3 = 0;
 
 enum State { Initial, Abort, Position, Focus, Expose, Pause };
@@ -18,16 +20,18 @@ static State gState = Initial;
 
 void setup()
 {
-	Serial.begin(9600);
+    Serial.begin(9600);
+    while(!Serial); // Wait for serial port to connect - used on Leonardo, Teensy and other boards with built-in USB CDC serial connection
+    Serial.println("Start");
 	pinMode(ledPin, OUTPUT);
 
 	MotorShieldV2 *motorShield = new MotorShieldV2();
 
-	gM1 = new Stepper(motorShield, Stepper1);
+	Stepper *m1 = new Stepper(motorShield, Stepper1);
+	gM = new Motion(m1);
 	gHB3 = new HBridge(motorShield, HBridge3);
 
 	gUI.setup(gLCDKP);
-	gM1->setPWM(gUI.intensity());
 }
  
 void loop()
@@ -37,8 +41,7 @@ void loop()
 	static unsigned long m1Next = 0;		// next event for motors
 	static unsigned long exposeEnd = 0;		// end of exposure
 	static unsigned long pauseEnd = 0;		// end of pause
-	static long pos = 0;					// stepper position
-	static long inc = 1;					// next position increment
+	static int16_t pos = 0;					// stepper position
 
 	Command cmd = gUI.processInput(gLCDKP);
 
@@ -72,18 +75,14 @@ void loop()
 	case IntensityChange:
 		if (gState == Focus)
 			gHB3->setPWM(gUI.intensity());
-		gM1->setPWM(gUI.intensity());		// FIXME: motor power control
 		break;
 	case Start:
 		if (gState == Initial)
-		{
-			gHB3->setPWM(gUI.intensity());
-			gHB3->set(Forward);
-			exposeEnd = now + gUI.shutter();
 			gState = Expose;
-		}
+/*
 		else
 			gState = Abort;
+*/
 		break;
 	default: ;
 	}
@@ -93,15 +92,15 @@ void loop()
 	case Abort:
 		if (lastState == Focus || lastState == Expose)
 			gHB3->set(Off);
-		pauseEnd = now + 500;
+		pauseEnd = now + 100;
 		gState = Pause;
 		break;
 	case Expose:
-		if (exposeEnd < now)
-		{
-			gHB3->set(Off);
-			gState = Initial;
-		}
+		gState = Initial;
+		pos = pos ? 0 : 50;
+		Serial.println("calling moveto");
+		gM->MoveTo(pos);	// blocking!
+		Serial.println("returned");
 		break;
 	case Pause:
 		if (pauseEnd < now)
@@ -110,17 +109,9 @@ void loop()
 	default: ;
 	}
 
-	if (m1Next < now)
-	{
-		if (pos >= 200 || pos < 0)
-			inc = -inc;
+//	if (gState != lastState)
+//		Serial.print(gState);
 
-		gM1->step(inc > 0 ? Fwd : Rev);
-		pos += inc;
-		m1Next = now + gUI.shutter();	// FIXME: speed control
-	}
-
-	if (gState != lastState)
-		Serial.print(gState);
+	delay(1);
 }
 

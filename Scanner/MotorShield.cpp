@@ -112,7 +112,6 @@ void Stepper::setPWM(uint16_t x)
 
 void Stepper::step(Direction dir)
 {
-/*
 	if (dir == Hlt)
 	{
 		m_a.set(Off);
@@ -120,7 +119,6 @@ void Stepper::step(Direction dir)
 		return;
 	}
 
-*/
 	switch (m_i)
 	{
 		case 0: m_b.set(Off); m_a.set(Forward); break;
