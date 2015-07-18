@@ -133,7 +133,7 @@ void speedTest(dir_t dir, uint16_t n, uint16_t c)
 	timer1_enable();
 	sei();
 	while (inflight)
-		delay(100);
+		delay(1);
 }
 
 void setup()
