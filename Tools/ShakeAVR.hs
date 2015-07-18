@@ -2,6 +2,21 @@ import Development.Shake
 import Development.Shake.Command
 import Development.Shake.FilePath
 import Development.Shake.Util
+import Data.Char (toLower)
+
+data MCU = Atmega328p | Atmega32u4 deriving Show
+data Board = BB328 | Leonardo deriving Show
+data Programmer = STK500v1 | AVR109 deriving Show
+
+board = Leonardo
+
+mcu = case board of
+    BB328    -> Atmega328p
+    Leonardo -> Atmega32u4
+
+programmer = case board of
+    BB328    -> STK500v1
+    Leonardo -> AVR109
 
 avrgcc = "/Applications/Arduino.app/Contents/Java/hardware/tools/avr/bin/avr-g++"
 avrcopy = "/Applications/Arduino.app/Contents/Java/hardware/tools/avr/bin/avr-objcopy"
@@ -19,7 +34,7 @@ ccflags =
     , "-fdata-sections"
     , "-fno-threadsafe-statics"
     , "-MMD"
-    , "-mmcu=atmega328p"
+    , "-mmcu=" ++ showLower mcu
     , "-DF_CPU=16000000L"
     , "-I/Applications/Arduino.app/Contents/Java/hardware/arduino/avr/variants/standard"
     ]
@@ -27,7 +42,7 @@ ccflags =
 ldflags =
     [ "-Os"
     , "-Wl,--gc-sections"
-    , "-mmcu=atmega328p"
+    , "-mmcu=" ++ showLower mcu
     ]
 
 copyflags =
@@ -39,12 +54,11 @@ dudeflags =
     [ "-C/Applications/Arduino.app/Contents/Java/hardware/tools/avr/etc/avrdude.conf"
     , "-P/dev/cu.usbmodem1d11"
     , "-v"
-    , "-cstk500v1"
-    , "-patmega328p"
-    , "-b19200"
-    , "-i25"
-    , "-u"
-    ]
+    , "-c" ++ showLower programmer
+    , "-p" ++ showLower mcu
+    ] ++ case programmer of
+        STK500v1 -> [ "-b19200", "-i25", "-u" ]
+        AVR109   -> [ "-b57600", "-D" ]
 
 main :: IO ()
 main = shakeArgs shakeOptions{ shakeFiles = buildDir } $ do
@@ -83,4 +97,7 @@ main = shakeArgs shakeOptions{ shakeFiles = buildDir } $ do
         cmd avrdude dudeflags ("-Uflash:w:" ++ hex ++ ":i")
 
 buildDir = "_build"
+
+showLower :: (Show a) => a -> [Char]
+showLower = map toLower . show
 
