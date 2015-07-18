@@ -1,6 +1,8 @@
 #ifndef PINS_H
 #define PINS_H
 
+#include <avr/io.h>
+
 // missing <type_traits> on avr-g++?
 
 namespace std

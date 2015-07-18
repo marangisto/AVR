@@ -1,50 +1,9 @@
-#include <avr/io.h>
-#include <avr/interrupt.h>
 #include "../AVR/Pins.h"
+#include "../AVR/Delay.h"
+#include <avr/interrupt.h>
 
 template<class T> T min(const T& x, const T& y) { return x < y ? x : y; }
 template<class T> T max(const T& x, const T& y) { return x > y ? x : y; }
-
-template<int N>
-struct no_operation
-{
-	static inline void run()
-	{
-		__asm__ volatile("nop");
-		::no_operation<N-1>::run();
-	}
-};
-
-template<>
-struct no_operation<0>
-{
-	static inline void run()
-	{
-	}
-};
-
-template<int N>
-static inline void nop()
-{
-	no_operation<N>::run();
-}
-
-void delay_loop_2(uint16_t __count)
-{
-	__asm__ volatile
-	(
-		"1: sbiw %0,1" "\n\t"
-		"brne 1b"
-			: "=w" (__count)
-			: "0" (__count)
-	);
-}
-
-void delay(uint16_t n)
-{
-	while (n-- > 0)
-		delay_loop_2(4000);
-}
 
 typedef bool dir_t;
 static const bool Left = false;
