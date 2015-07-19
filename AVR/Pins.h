@@ -42,6 +42,7 @@ template<class PORT, unsigned PIN> struct pin_t : port_t<PORT>
 struct PB;
 struct PC;
 struct PD;
+struct PE;
 
 template<> struct port_t<PB>
 {
@@ -65,6 +66,14 @@ template<> struct port_t<PD>
 	static inline volatile uint8_t& ddr() { return DDRD; }
 	static inline volatile uint8_t& port() { return PORTD; }
 	static inline volatile const uint8_t& pin() { return PIND; }
+};
+
+template<> struct port_t<PE>
+{
+	typedef PE ty;
+	static inline volatile uint8_t& ddr() { return DDRE; }
+	static inline volatile uint8_t& port() { return PORTE; }
+	static inline volatile const uint8_t& pin() { return PINE; }
 };
 
 template<class T0, class T1, class T2, class T3, class T4, class T5, class T6, class T7>
