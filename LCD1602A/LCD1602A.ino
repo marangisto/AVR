@@ -2,8 +2,9 @@
 //#include "../AVR/Delay.h"
 
 typedef pin_t<PC,7> LED;
-typedef pin_t<PB,5> RS;
-typedef pin_t<PB,4> RW;
+typedef pin_t<PB,6> RS;
+typedef pin_t<PB,5> RW;
+typedef pin_t<PB,4> E;
 typedef pin_t<PD,2> DB0;
 typedef pin_t<PD,3> DB1;
 typedef pin_t<PD,1> DB2;
@@ -18,6 +19,7 @@ void setup()
 	digital_out<LED>();
 	digital_out<RS>();
 	digital_out<RW>();
+	digital_out<E>();
 	digital_out<DB0>();
 	digital_out<DB1>();
 	digital_out<DB2>();
