@@ -42,6 +42,41 @@ static void write_char(char c)
 	exec_display();
 }
 
+static void write_string(const char *p)
+{
+	uint8_t i = 0;
+
+	while (*p && i++ < 15)
+		write_char(*p++);
+}
+
+static void position_display(uint8_t r, uint8_t c)
+{
+	clear<RS, RW>();	// command mode
+	write_data((1 << 7) | (r ? 0x40 : 0) | (c & 0x1f));	// set ddram address + address
+	exec_display();
+}
+
+static void clear_display()
+{
+	clear<RS, RW>();	// command mode
+	write_data(0);
+	set<DB0>();			// display clear
+	exec_display();
+	delay(4);			// FIXME: requires 1.64ms
+}
+
+static void cursor_display(bool on, bool blink)
+{
+	clear<RS, RW>();	// command mode
+	write_data(0);
+	set<DB3>();			// display & cursor on/off
+	set<DB2>();			// display on
+	write<DB1>(on);		// cursor on
+	write<DB0>(blink);	// cursor blink
+	exec_display();
+}
+
 static void init_display()
 {
 	clear<RS, RW>();	// command mode
@@ -66,10 +101,7 @@ static void init_display()
 //	set<DB0>();			// shift display
 	exec_display();
 
-	write_data(0);
-	set<DB0>();			// display clear
-	exec_display();
-	delay(2);			// requires 1.64ms
+	clear_display();
 }
 
 void setup()
@@ -89,16 +121,30 @@ void setup()
 	init_display();
 }
 
+static const char *fortunes[] =
+	{ "You can never be sure how many beers you had last night."
+	, "We have reason to be afraid. This is a terrible place."
+	, "It is annoying to be honest to no purpose."
+	, "Man belongs wherever he wants to go."
+	, "Inspiration without perspiration is usually sterile."
+	, "Beauty may be skin deep, but ugly goes clear to the bone."
+	, "You're either part of the solution or part of the problem."
+	};
+
+static const uint16_t n_fortunes = sizeof(fortunes) / sizeof(*fortunes);
+
 void loop()
 {
-	static const char msg[] = "This is the 1602A-1 LCD display in direct control using 8 bit data transfer... ";
-	static const uint16_t msg_len = sizeof(msg) - 1;
-	static uint16_t p = 0;
+	static uint16_t i = 0;
 
 	toggle<LED>();
-	write_char(msg[p++]);
-	if (p >= msg_len)
-		p = 0;
-	delay(100);
+
+	clear_display();
+	position_display(i & 1, i & 2);
+	write_string(fortunes[i]);
+	cursor_display(i & 1, i & 2);
+	if (++i >= n_fortunes)
+		i = 0;
+	delay(250);
 }
 
