@@ -17,9 +17,9 @@ typedef pin_t<PE,6> DB7;
 static void exec_display()
 {
 	set<E>();
-	delay(1);	// FIXME: pulse width min 140ns
+	__asm__ volatile("nop");	// FIXME: nop<1>();	// minimum pulse width 140ns
 	clear<E>();
-	delay(1);	// FIXME: min cycle time is 1.2us but min op time is 37us
+	delayMicroseconds(40);		// min cycle time is min op time is 37us
 }
 
 static void write_data(uint8_t x)
@@ -63,7 +63,7 @@ static void clear_display()
 	write_data(0);
 	set<DB0>();			// display clear
 	exec_display();
-	delay(4);			// FIXME: requires 1.64ms
+	delayMicroseconds(1700);	// requires 1.64ms
 }
 
 static void cursor_display(bool on, bool blink)
