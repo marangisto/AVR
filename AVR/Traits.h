@@ -24,20 +24,5 @@ namespace std
 	struct is_same<T, T> : true_type {};
 }
 
-template<class PORT> struct port_t
-{
-	static inline volatile uint8_t& ddr();
-	static inline volatile uint8_t& port();
-	static inline const volatile uint8_t& pin();
-};
-
-template<class PORT, unsigned PIN> struct pin_t : port_t<PORT>
-{
-	static const int pin = PIN;
-
-	static_assert(PIN < 8, "pin bit out of range");
-	static inline uint8_t mask() { return 1 << PIN; }
-};
-
 #endif // TRAITS_H
 
