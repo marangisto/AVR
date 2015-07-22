@@ -35,6 +35,8 @@ template<class PORT> struct port_t
 
 template<class PORT, unsigned PIN> struct pin_t : port_t<PORT>
 {
+	static const int pin = PIN;
+
 	static_assert(PIN < 8, "pin bit out of range");
 	static inline uint8_t mask() { return 1 << PIN; }
 };
