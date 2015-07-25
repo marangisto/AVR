@@ -4,17 +4,19 @@ import Development.Shake.FilePath
 import Development.Shake.Util
 import Data.Char (toLower)
 
-data MCU = Atmega328p | Atmega32u4 deriving Show
-data Board = BB328 | Leonardo deriving Show
-data Programmer = STK500v1 | AVR109 deriving Show
+data MCU = Atmega328p | Atmega32u4 | Attiny85 deriving Show
+data Board = BB328 | BB85 | Leonardo deriving Show
+data Programmer = STK500v1 | AVR109 | AvrIspMkII deriving Show
 
-board = Leonardo
+board = BB85
 
 mcu = case board of
+    BB85     -> Attiny85
     BB328    -> Atmega328p
     Leonardo -> Atmega32u4
 
 programmer = case board of
+    BB85     -> AvrIspMkII
     BB328    -> STK500v1
     Leonardo -> AVR109
 
@@ -57,8 +59,9 @@ dudeflags =
     , "-c" ++ showLower programmer
     , "-p" ++ showLower mcu
     ] ++ case programmer of
-        STK500v1 -> [ "-b19200", "-i25", "-u" ]
-        AVR109   -> [ "-b57600", "-D" ]
+        STK500v1   -> [ "-b19200", "-i25", "-u" ]
+        AVR109     -> [ "-b57600", "-D" ]
+        AvrIspMkII -> [ "-Pusb" ]
 
 main :: IO ()
 main = shakeArgs shakeOptions{ shakeFiles = buildDir } $ do
