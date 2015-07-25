@@ -20,9 +20,18 @@ template<class PORT, unsigned PIN> struct pin_t : port_t<PORT>
 };
 
 struct PB;
+
+#if defined(PC)
 struct PC;
+#endif
+
+#if defined(PD)
 struct PD;
+#endif
+
+#if defined(PE)
 struct PE;
+#endif
 
 template<> struct port_t<PB>
 {
@@ -32,6 +41,7 @@ template<> struct port_t<PB>
 	static inline volatile const uint8_t& pin() { return PINB; }
 };
 
+#if defined(PC)
 template<> struct port_t<PC>
 {
 	typedef PC port;
@@ -39,7 +49,9 @@ template<> struct port_t<PC>
 	static inline volatile uint8_t& reg() { return PORTC; }
 	static inline volatile const uint8_t& pin() { return PINC; }
 };
+#endif
 
+#if defined(PD)
 template<> struct port_t<PD>
 {
 	typedef PD port;
@@ -47,7 +59,9 @@ template<> struct port_t<PD>
 	static inline volatile uint8_t& reg() { return PORTD; }
 	static inline volatile const uint8_t& pin() { return PIND; }
 };
+#endif
 
+#if defined(PE)
 template<> struct port_t<PE>
 {
 	typedef PE port;
@@ -55,6 +69,7 @@ template<> struct port_t<PE>
 	static inline volatile uint8_t& reg() { return PORTE; }
 	static inline volatile const uint8_t& pin() { return PINE; }
 };
+#endif
 
 template<class T0, class T1, class T2, class T3, class T4, class T5, class T6, class T7>
 static inline void check_union_mask()
