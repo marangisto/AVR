@@ -6,7 +6,7 @@ import Data.Char (toLower)
 
 data MCU = Atmega328p | Atmega32u4 | Attiny85 deriving Show
 data Board = BB328 | BB85 | Leonardo deriving Show
-data Programmer = STK500v1 | AVR109 | AvrIspMkII deriving Show
+data Programmer = STK500v1 | AVR109 | AvrIspMk2 deriving Show
 
 board = BB85
 
@@ -16,14 +16,15 @@ mcu = case board of
     Leonardo -> Atmega32u4
 
 programmer = case board of
-    BB85     -> AvrIspMkII
+    BB85     -> AvrIspMk2
     BB328    -> STK500v1
     Leonardo -> AVR109
 
-avrgcc = "/Applications/Arduino.app/Contents/Java/hardware/tools/avr/bin/avr-g++"
-avrcopy = "/Applications/Arduino.app/Contents/Java/hardware/tools/avr/bin/avr-objcopy"
-avrdump = "/Applications/Arduino.app/Contents/Java/hardware/tools/avr/bin/avr-objdump"
-avrdude = "/Applications/Arduino.app/Contents/Java/hardware/tools/avr/bin/avrdude"
+avrgcc = "avr-g++"
+avrcopy = "avr-objcopy"
+avrdump = "avr-objdump"
+avrdude = "avrdude"
+atprogram = "atprogram"
 
 ccflags =
     [ "-c"
@@ -38,7 +39,6 @@ ccflags =
     , "-MMD"
     , "-mmcu=" ++ showLower mcu
     , "-DF_CPU=16000000L"
-    , "-I/Applications/Arduino.app/Contents/Java/hardware/arduino/avr/variants/standard"
     ]
 
 ldflags =
@@ -53,7 +53,7 @@ copyflags =
     ]
 
 dudeflags =
-    [ "-C/Applications/Arduino.app/Contents/Java/hardware/tools/avr/etc/avrdude.conf"
+    [ "-C$AVRDUDE_CONF"
     , "-P/dev/cu.usbmodem1d11"
     , "-v"
     , "-c" ++ showLower programmer
@@ -61,7 +61,7 @@ dudeflags =
     ] ++ case programmer of
         STK500v1   -> [ "-b19200", "-i25", "-u" ]
         AVR109     -> [ "-b57600", "-D" ]
-        AvrIspMkII -> [ "-Pusb" ]
+        AvrIspMk2  -> [ "-Pusb" ]
 
 main :: IO ()
 main = shakeArgs shakeOptions{ shakeFiles = buildDir } $ do
@@ -97,7 +97,11 @@ main = shakeArgs shakeOptions{ shakeFiles = buildDir } $ do
     phony "upload" $ do
         let hex = buildDir </> "image" <.> "hex"
         need [ hex ]
-        cmd avrdude dudeflags ("-Uflash:w:" ++ hex ++ ":i")
+--        cmd avrdude dudeflags ("-Uflash:w:" ++ hex ++ ":i")
+        cmd atprogram [ "-t", showLower programmer ]
+                      [ "-d", showLower mcu ]
+                      [ "-i", "isp" ]
+                      [ "program", "-c", "--verify", "-f", hex ]
 
 buildDir = "_build"
 
