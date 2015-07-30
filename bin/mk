@@ -1,3 +1,2 @@
-:
 # invoke shake on current directory project
 exec runghc ../Tools/ShakeAVR.hs $*
