@@ -11,23 +11,31 @@ class lcd1602a_t
 public:
 	static void setup()
 	{
+		static uint8_t data[] =
+			{ 0x3					// sync
+			, 0x3					// sync
+			, 0x3					// function set
+			, 0x2					// 4-bit mode
+			, 0x2					// function set
+			, 0x8					// two-line mode
+			, 0x0					// items on/off
+			, 0x8 | 0x4				// 0x8, display = 0x4 | cursor = 0x2 | blink = 0x1
+			, 0x0					// entry mode
+			, 0x0					// 0x4, right direction = 0x2, shift display = 0x1
+			};
+
 		sr::setup();
+
+		const uint8_t *p = data;
+
 		delay_ms(15);				// startup delay > 15ms
-		send(0x3);
+		send(*p++);
 		delay_ms(5);				// wait time > 4.1ms
-		send(0x3);
+		send(*p++);
 		delay_us(100);				// wait time > 100us
-		send(0x3);					// function set
-		send(0x2);					// 4-bit mode
 
-		send(0x2);					// function set
-		send(0x8);					// two-line mode
-
-		send(0x0);					// items on/off
-		send(0x8 | 0x4);			// 0x8, display = 0x4 | cursor = 0x2 | blink = 0x1
-
-		send(0x0);					// entry mode
-		send(0x0);					// 0x4, right direction = 0x2, shift display = 0x1
+		while (p < data + sizeof(data) / sizeof(*data))
+			send(*p++);
 
 		clear();
 	}
