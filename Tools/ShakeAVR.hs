@@ -20,6 +20,11 @@ programmer = case board of
     BB328    -> STK500v1
     Leonardo -> AVR109
 
+freq mcu = case mcu of
+    Atmega328p -> 16000000
+    Atmega32u4 -> 16000000
+    Attiny85 -> 1000000
+
 avrgcc = "avr-g++"
 avrcopy = "avr-objcopy"
 avrdump = "avr-objdump"
@@ -38,7 +43,7 @@ ccflags =
     , "-fno-threadsafe-statics"
     , "-MMD"
     , "-mmcu=" ++ showLower mcu
-    , "-DF_CPU=16000000L"
+    , "-DF_CPU=" ++ show (freq mcu) ++"L"
     ]
 
 ldflags =

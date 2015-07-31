@@ -1,7 +1,5 @@
 #include "../AVR/Pins.h"
 #include "../AVR/Delay.h"
-#define F_CPU 1000000L
-#include <util/delay.h>
 #include "../AVR/LCD1602A.h"
 
 typedef pin_t<PB, 3> LED;
@@ -38,11 +36,11 @@ void loop()
 	lcd::clear();
 	lcd::cursor(i & 1, i & 2);
 	lcd::set_pos(i & 1, i & 2);
-	_delay_ms(1000);
+	delay_ms(500);
 	lcd::write(fortunes[i]);
 	if (++i >= n_fortunes)
 		i = 0;
-	_delay_ms(1000);
+	delay_ms(1000);
 }
 
 int main()

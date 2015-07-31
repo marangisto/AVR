@@ -1,7 +1,7 @@
 #ifndef DELAY_H
 #define DELAY_H
 
-#include <util/delay_basic.h>
+#include <util/delay.h>
 
 template<int N>
 struct no_operation
@@ -27,10 +27,14 @@ static inline void nop()
 	no_operation<N>::run();
 }
 
-void delay(uint16_t n)
+static inline void delay_ms(uint16_t t)
 {
-	while (n-- > 0)
-		_delay_loop_2(4000);	// FIXME: use controller frequency!
+	_delay_ms(t);
+}
+
+static inline void delay_us(uint16_t t)
+{
+	_delay_us(t);
 }
 
 #endif DELAY_H

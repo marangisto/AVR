@@ -3,8 +3,7 @@
 
 #include "Pins.h"
 #include "Delay.h"
-#include <util/delay.h>
-#include "../AVR/SN74HC595.h"
+#include "SN74HC595.h"
 
 template<class DT, class CK, class LT>
 class lcd1602a_t
@@ -13,11 +12,11 @@ public:
 	static void setup()
 	{
 		sr::setup();
-		_delay_ms(15);				// startup delay > 15ms
+		delay_ms(15);				// startup delay > 15ms
 		send(0x3);
-		_delay_ms(5);				// wait time > 4.1ms
+		delay_ms(5);				// wait time > 4.1ms
 		send(0x3);
-		_delay_us(100);				// wait time > 100us
+		delay_us(100);				// wait time > 100us
 		send(0x3);					// function set
 		send(0x2);					// 4-bit mode
 
@@ -69,7 +68,7 @@ public:
 	{
 		send(0x0);					// display clear
 		send(0x1);
-		_delay_us(1700);			// wait time > 1.64ms
+		delay_us(1700);				// wait time > 1.64ms
 	}
 
 private:
@@ -84,7 +83,7 @@ private:
 		sr::write(w | E);
 		nop<1>();					// minimum pulse width 140ns
 		sr::write(w & ~E);
-		_delay_us(40);				// min cycle time is min op time is 37us
+		delay_us(40);				// min cycle time is min op time is 37us
 	}
 };
 
