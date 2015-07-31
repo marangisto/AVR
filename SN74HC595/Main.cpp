@@ -20,7 +20,7 @@ void loop()
 	for (int i = 0; i < 255; ++i)
 	{
 		toggle<LED>();
-		delay(5);
+		delay_ms(25);
 		sn74hc595::write(i);
 	}
 }
