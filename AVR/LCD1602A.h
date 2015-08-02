@@ -80,17 +80,17 @@ public:
 	}
 
 private:
-	typedef sn74hc595_t<DT, CK, LT, MSB_FIRST> sr;
+	typedef sn74hc595_t<DT, CK, LT, LSB_FIRST> sr;
 
-	static const uint8_t RS = (1 << 7);
-	static const uint8_t RW = (1 << 6);
+	static const uint8_t RS = (1 << 4);
 	static const uint8_t E  = (1 << 5);
+	static const uint8_t L  = (1 << 6);
 
 	static void send(uint8_t w)
 	{
-		sr::write(w | E);
+		sr::write(w | L | E);
 		nop<1>();					// minimum pulse width 140ns
-		sr::write(w & ~E);
+		sr::write((w | L) & ~E);
 		delay_us(40);				// min cycle time is min op time is 37us
 	}
 };
