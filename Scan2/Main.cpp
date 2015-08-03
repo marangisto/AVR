@@ -33,7 +33,7 @@ void loop()
 	lcd::set_pos(1, 0);
 	lcd::write(itoa(i, buf, 10));
 	lcd::set_pos(1, 8);
-	lcd::write(dtostrf(adc::temp(), 7, 2, buf));
+	lcd::write(itoa(adc::temp(), buf, 10));
 	delay_ms(200);
 }
 
