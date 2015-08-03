@@ -1,40 +1,44 @@
 #include "../AVR/Pins.h"
 #include "../AVR/Delay.h"
-#include "../AVR/ADC.h"
 #include "../AVR/LCD1602A.h"
+#include "Buttons.h"
 #include <stdlib.h>
 
-typedef analog_input_t<3> BTNS;
 typedef pin_t<PB, 0> CLOCK;
 typedef pin_t<PB, 1> LATCH;
 typedef pin_t<PB, 2> DATA;
 
 typedef lcd1602a_t<DATA, CLOCK, LATCH> lcd;
+typedef buttons_t<analog_input_t<3>> btns;
 
 void setup()
 {
-	adc::setup();
+	btns::setup();
 	lcd::setup();
 }
 
 void loop()
 {
 	static char buf[32];
-	static float y = 0;
 	static int i = 0;
 
-	float x = adc::read<BTNS>();
+	uint8_t x = btns::read();
 
-	i++;
+	switch (x)
+	{
+		case 1: --i; break;
+		case 2: ++i; break;
+		case 3: i = 0; break;
+		case 4: i -= 10; break;
+		case 5: i += 10; break;
+		default: ;
+	}
 
-	lcd::clear();
 	lcd::set_pos(0, 0);
-	lcd::write(dtostrf(x, 7, 2, buf));
-	lcd::set_pos(1, 0);
 	lcd::write(itoa(i, buf, 10));
-	lcd::set_pos(1, 8);
-	lcd::write(itoa(adc::temp(), buf, 10));
-	delay_ms(200);
+	lcd::write("            ");
+
+	delay_ms(1);
 }
 
 int main()

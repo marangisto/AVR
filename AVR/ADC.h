@@ -1,6 +1,5 @@
 #ifndef ADC_H
 #define ADC_H
-#endif // ADC_H
 
 enum ref_source_t
 	{ ref_source_vcc		= 0
@@ -49,4 +48,6 @@ struct adc
 		return adc::read<analog_input_t<15, ref_source_1_1>>() - 273;
 	}
 };
+
+#endif // ADC_H
 
