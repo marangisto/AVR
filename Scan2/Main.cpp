@@ -1,9 +1,10 @@
 #include "../AVR/Pins.h"
 #include "../AVR/Delay.h"
+#include "../AVR/ADC.h"
 #include "../AVR/LCD1602A.h"
 #include <stdlib.h>
 
-typedef pin_t<PB, 3> BTNS;
+typedef analog_input_t<3> BTNS;
 typedef pin_t<PB, 0> CLOCK;
 typedef pin_t<PB, 1> LATCH;
 typedef pin_t<PB, 2> DATA;
@@ -12,13 +13,8 @@ typedef lcd1602a_t<DATA, CLOCK, LATCH> lcd;
 
 void setup()
 {
-	digital_in<BTNS>();
+	adc::setup();
 	lcd::setup();
-
-	ADCSRA |= ((1<<ADPS1) | (1<<ADPS0));				// ADC prescale 8 (1MHz / 8 = 125kHz)
-	ADMUX |= ((1<<MUX1) | (1<<MUX0));					// Selct PB3 (on Attiny85)
-	ADCSRB |= 0;										// free running mode
-	ADCSRA |= ((1<<ADEN) | (1 << ADSC) | (1 << ADATE));	// start ADC
 }
 
 void loop()
@@ -27,7 +23,7 @@ void loop()
 	static float y = 0;
 	static int i = 0;
 
-	float x = ADCW;
+	float x = adc::read<BTNS>();
 
 	i++;
 
@@ -36,6 +32,8 @@ void loop()
 	lcd::write(dtostrf(x, 7, 2, buf));
 	lcd::set_pos(1, 0);
 	lcd::write(itoa(i, buf, 10));
+	lcd::set_pos(1, 8);
+	lcd::write(dtostrf(adc::temp(), 7, 2, buf));
 	delay_ms(200);
 }
 
