@@ -4,6 +4,7 @@
 #include "Pins.h"
 #include "Delay.h"
 #include "SN74HC595.h"
+#include <stdlib.h>
 
 template<class DT, class CK, class LT>
 class lcd1602a_t
@@ -40,9 +41,34 @@ public:
 		clear();
 	}
 
-	static void write(uint8_t x)
+	static void write(int x, int radix = 10)
 	{
-		send(0);
+		write(itoa(x, buf, 10));
+	}
+
+	static void write(unsigned x, int radix = 10)
+	{
+		write(utoa(x, buf, 10));
+	}
+
+	static void write(long x, int radix = 10)
+	{
+		write(ltoa(x, buf, 10));
+	}
+
+	static void write(unsigned long x, int radix = 10)
+	{
+		write(ultoa(x, buf, 10));
+	}
+
+	static void write(double x, signed char w = 8, unsigned char p = 2)
+	{
+		write(dtostrf(x, w, p, buf));
+	}
+
+	static void write_e(double x, unsigned char p = 2)
+	{
+		write(dtostre(x, buf, p, 0x01));
 	}
 
 	static void write(const char *p)
@@ -93,7 +119,12 @@ private:
 		sr::write((w | L) & ~E);
 		delay_us(40);				// min cycle time is min op time is 37us
 	}
+
+	static char buf[33];			// radix 2 on a 32-bit number plus terminator
 };
+
+template<class DT, class CK, class LT>
+char lcd1602a_t<DT, CK, LT>::buf[33];
 
 #endif // LCD1602A_H
 

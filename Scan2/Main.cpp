@@ -19,8 +19,7 @@ void setup()
 
 void loop()
 {
-	static char buf[32];
-	static int i = 0;
+	static int i = 0, j = 0;
 
 	uint8_t x = btns::read();
 
@@ -35,8 +34,21 @@ void loop()
 	}
 
 	lcd::set_pos(0, 0);
-	lcd::write(itoa(i, buf, 10));
+	lcd::write(i);
 	lcd::write("            ");
+
+	if (++j > 200)
+	{
+		double y = rand() / 32768.0;
+		static double z = 0;
+
+		lcd::set_pos(1, 0);
+		lcd::write(y);
+		lcd::set_pos(1, 8);
+		lcd::write_e(y - z, 1);
+		j = 0;
+		z = y;
+	}
 
 	delay_ms(1);
 }
