@@ -9,7 +9,7 @@ typedef pin_t<PB, 1> LATCH;
 typedef pin_t<PB, 2> DATA;
 
 typedef lcd1602a_t<DATA, CLOCK, LATCH> lcd;
-typedef buttons_t<analog_input_t<3>> btns;
+typedef buttons_t<analog_input_t<0>> btns;
 
 void setup()
 {
