@@ -90,7 +90,7 @@ void loop()
 	uint8_t x = btns::read();
 
 	static bool d = false;
-	static uint16_t c = 10000;
+	static uint16_t c = 16000;
 	static a4988::micro_step_t ms = a4988::full_step;
 
 	switch (x)
@@ -99,8 +99,8 @@ void loop()
 			for (uint8_t j = 0; j < 10; ++j)
 			{
 				d = (random() & 1) != 0;
-				run_stepper(d, 200 << a4988::micro_shift(ms), c);
-				delay_ms(50);
+				run_stepper(d, 200 << a4988::micro_shift(ms), c >> a4988::micro_shift(ms));
+				delay_ms(200);
 			}
 			break;
 		case 2: d = !d; a4988::dir(d); break;
