@@ -4,12 +4,12 @@
 #include "Buttons.h"
 #include <stdlib.h>
 
-typedef pin_t<PC, 1> CLOCK;
-typedef pin_t<PC, 2> LATCH;
-typedef pin_t<PC, 3> DATA;
+typedef pin_t<PC, 3> CLOCK;
+typedef pin_t<PC, 4> LATCH;
+typedef pin_t<PC, 5> DATA;
 
 typedef lcd1602a_t<DATA, CLOCK, LATCH> lcd;
-typedef buttons_t<analog_input_t<0>> btns;
+typedef buttons_t<analog_input_t<2>> btns;
 
 void setup()
 {
