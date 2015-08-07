@@ -22,7 +22,11 @@ public:
 		set<RESET>();				// active low
 	}
 
-	static inline void enable() { clear<ENABLE>(); }
+	static inline void enable()
+	{
+		clear<ENABLE>();
+		delay_us(100);			// guessing, didn't find spec
+	}
 
 	static inline void disable() { set<ENABLE>(); }
 
@@ -68,6 +72,19 @@ public:
 			case eigth_step:  		return "1/8 ";
 			case sixteenth_step:	return "1/16";
 			default: return "illegal-step";
+		}
+	}
+
+	static uint8_t micro_shift(micro_step_t ms)
+	{
+		switch (ms)
+		{
+			case full_step:			return 0;
+			case half_step:			return 1;
+			case quarter_step:		return 2;
+			case eigth_step:  		return 3;
+			case sixteenth_step:	return 4;
+			default: 				return 0;
 		}
 	}
 

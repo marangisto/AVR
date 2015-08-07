@@ -38,15 +38,28 @@ void loop()
 
 	uint8_t x = btns::read();
 
-	static bool en = false;
 	static bool d = false;
 	static a4988::micro_step_t ms = a4988::full_step;
 
 	switch (x)
 	{
-		case 1: en ? a4988::disable() : a4988::enable(); en = !en; break;
+		case 1: break;
 		case 2: d = !d; a4988::dir(d); break;
-		case 3: a4988::step();; break;
+		case 3:
+			{
+				uint16_t n = 200 << a4988::micro_shift(ms);
+
+				a4988::enable();
+
+				for (uint16_t i = 0; i < n; ++i)
+				{
+					delay_us(1000);
+					a4988::step();
+				}
+
+				a4988::disable();
+			}
+			break;
 		case 4:
 			switch (ms)
 			{
