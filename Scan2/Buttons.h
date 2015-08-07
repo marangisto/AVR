@@ -1,6 +1,5 @@
 #ifndef BUTTONS_H
 #define BUTTONS_H
-#endif // BUTTONS_H
 
 #include "../AVR/ADC.h"
 
@@ -42,3 +41,4 @@ private:
 	}
 };
 
+#endif // BUTTONS_H
