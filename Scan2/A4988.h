@@ -58,6 +58,19 @@ public:
 		nop<4>();				// need 200ns, FIXME: delay based on F_CPU
 	}
 
+	static const char *to_string(micro_step_t ms)
+	{
+		switch (ms)
+		{
+			case full_step:			return "1/1 ";
+			case half_step:			return "1/2 ";
+			case quarter_step:		return "1/4 ";
+			case eigth_step:  		return "1/8 ";
+			case sixteenth_step:	return "1/16";
+			default: return "illegal-step";
+		}
+	}
+
 private:
 };
 

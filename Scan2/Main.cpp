@@ -57,6 +57,8 @@ void loop()
 			case a4988::sixteenth_step: ms = a4988::full_step; break;
 			}
 			a4988::micro_step(ms);
+			lcd::set_pos(1, 0);
+			lcd::write(a4988::to_string(ms));
 			break;
 		case 5: a4988::reset(); break;
 		default: ;
@@ -71,8 +73,6 @@ void loop()
 		double y = rand() / 32768.0;
 		static double z = 0;
 
-		lcd::set_pos(1, 0);
-		lcd::write(y);
 		lcd::set_pos(1, 8);
 		lcd::write_e(y - z, 1);
 		j = 0;
