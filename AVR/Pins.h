@@ -25,9 +25,9 @@ struct PB;
 struct PC;
 //#endif
 
-#if defined(PD)
+//#if defined(PD)
 struct PD;
-#endif
+//#endif
 
 #if defined(PE)
 struct PE;
@@ -51,7 +51,7 @@ template<> struct port_t<PC>
 };
 //#endif
 
-#if defined(PD)
+//#if defined(PD)
 template<> struct port_t<PD>
 {
 	typedef PD port;
@@ -59,7 +59,7 @@ template<> struct port_t<PD>
 	static inline volatile uint8_t& reg() { return PORTD; }
 	static inline volatile const uint8_t& pin() { return PIND; }
 };
-#endif
+//#endif
 
 #if defined(PE)
 template<> struct port_t<PE>
