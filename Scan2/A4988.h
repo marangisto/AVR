@@ -1,0 +1,65 @@
+#ifndef A4988_H
+#define A4988_H
+
+#include "../AVR/Pins.h"
+#include "../AVR/Bits.h"
+#include "../AVR/Delay.h"
+
+template<class DIR, class STEP, class RESET, class MS1, class MS2, class MS3, class ENABLE>
+class a4988_t
+{
+public:
+	static void setup()
+	{
+		digital_out<DIR>();
+		digital_out<STEP>();
+		digital_out<RESET>();
+		digital_out<MS1>();
+		digital_out<MS2>();
+		digital_out<MS3>();
+		digital_out<ENABLE>();
+		set<ENABLE>();				// active low
+		set<RESET>();				// active low
+	}
+
+	static inline void enable() { clear<ENABLE>(); }
+
+	static inline void disable() { set<ENABLE>(); }
+
+	static inline void dir(bool d) { write<DIR>(d); }
+
+	static inline void step()
+	{
+		set<STEP>();			// 2 cycles
+		nop<14>();				// need 1us so total 16 cycles FIXME: delay based on F_CPU
+		clear<STEP>();
+	}
+
+	static void reset()
+	{
+		clear<RESET>();			// 2 cycles
+		delay_us(10);			// 4us is shaky, so 10us should be reliable, didn't find spec
+		set<RESET>();
+	}
+
+	typedef bits_t<MS3, MS2, MS1> MS;
+
+	enum micro_step_t
+		{ full_step			= 0x0
+		, half_step			= 0x1
+		, quarter_step		= 0x2
+		, eigth_step		= 0x3
+		, sixteenth_step	= 0x7
+		};
+
+	static void micro_step(micro_step_t ms)
+	{
+		write_bits<MS>(ms);
+		nop<4>();				// need 200ns, FIXME: delay based on F_CPU
+	}
+
+private:
+};
+
+#endif // A4988_H
+
