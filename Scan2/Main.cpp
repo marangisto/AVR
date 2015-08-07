@@ -4,9 +4,9 @@
 #include "Buttons.h"
 #include <stdlib.h>
 
-typedef pin_t<PB, 0> CLOCK;
-typedef pin_t<PB, 1> LATCH;
-typedef pin_t<PB, 2> DATA;
+typedef pin_t<PC, 1> CLOCK;
+typedef pin_t<PC, 2> LATCH;
+typedef pin_t<PC, 3> DATA;
 
 typedef lcd1602a_t<DATA, CLOCK, LATCH> lcd;
 typedef buttons_t<analog_input_t<0>> btns;
