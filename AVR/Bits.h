@@ -94,7 +94,7 @@ static void write_bits(uint8_t bits)
 	write_bits_impl<PB, BITS, map_bits_impl<PB, BITS>::mask>::write_bits(PORTB, bits);
 	write_bits_impl<PC, BITS, map_bits_impl<PC, BITS>::mask>::write_bits(PORTC, bits);
 	write_bits_impl<PD, BITS, map_bits_impl<PD, BITS>::mask>::write_bits(PORTD, bits);
-	write_bits_impl<PE, BITS, map_bits_impl<PE, BITS>::mask>::write_bits(PORTE, bits);
+//	write_bits_impl<PE, BITS, map_bits_impl<PE, BITS>::mask>::write_bits(PORTE, bits);
 
 	// FIXME: introduce NOPIN to extend bits template to all pins
 }
