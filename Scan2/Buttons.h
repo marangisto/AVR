@@ -14,13 +14,33 @@ public:
 
 	static uint8_t read()
 	{
-		static uint8_t last_read = 0;
+		static uint8_t last_x = 0;
+		static uint8_t last_y = 0;
+		static uint8_t count = 0;
+
 		uint8_t x = raw_read();
 
-		if (x != last_read)
+		if (x == 0)
 		{
-			last_read = x;
-			return x;
+			if (last_y != 0)
+			{
+				uint8_t y = last_y;
+
+				last_y = 0;
+				return y;
+			}
+		}
+		else if (x == last_x)
+		{
+			if (count < 10)
+				++count;
+			else
+				last_y = x;
+		}
+		else
+		{
+			count = 0;
+			last_x = x;
 		}
 
 		return 0;
