@@ -3,6 +3,7 @@
 #include "../AVR/Timer1.h"
 #include "../AVR/LCD1602A.h"
 #include "Buttons.h"
+#include "Editor.h"
 #include "Accel.h"
 
 typedef pin_t<PC, 3> CLOCK;
@@ -36,70 +37,51 @@ void setup()
 
 void loop()
 {
-	static int i = 0, j = 0;
+	static item_t<bool> d("dir", false);
+	static item_t<uint16_t> c("tmax", 16000);
+	static item_t<micro_step_t::e> ms("u-step", micro_step_t::full_step);
+	static item_i *items[] = { &d, &c, &ms };
+	static editor_t editor(items, sizeof(items) / sizeof(*items));
+
+	static bool refresh = true;
+	static char buf[64];
 
 	uint8_t x = btns::read();
-
-	static bool d = false;
-	static uint16_t c = 16000;
-	static a4988::micro_step_t ms = a4988::full_step;
 
 	switch (x)
 	{
 		case 1: 
-			for (uint8_t j = 0; j < 10; ++j)
-			{
-				d = (random() & 1) != 0;
-				accel::run(d, 200 << a4988::micro_shift(ms), c >> a4988::micro_shift(ms));
-				delay_ms(200);
-			}
+			editor.next();
+			refresh = true;
 			break;
-		case 2: d = !d; a4988::dir(d); break;
+		case 2:
+			editor.decr();
+			refresh = true;
+			break;
 		case 3:
-			{
-				uint16_t n = 200 << a4988::micro_shift(ms);
-
-				a4988::enable();
-
-				for (uint16_t i = 0; i < n; ++i)
-				{
-					delay_us(1000);
-					a4988::step();
-				}
-
-				a4988::disable();
-			}
+			editor.incr();
+			refresh = true;
 			break;
 		case 4:
-			switch (ms)
+			for (uint8_t j = 0; j < 4; ++j)
 			{
-			case a4988::full_step: ms = a4988::half_step; break;
-			case a4988::half_step: ms = a4988::quarter_step; break;
-			case a4988::quarter_step: ms = a4988::eigth_step; break;
-			case a4988::eigth_step: ms = a4988::sixteenth_step; break;
-			case a4988::sixteenth_step: ms = a4988::full_step; break;
+				accel::run(d.value(), 200 << micro_step_t::shift(ms.value()), c.value() >> micro_step_t::shift(ms.value()));
+				d.incr();
 			}
-			a4988::micro_step(ms);
-			lcd::set_pos(1, 0);
-			lcd::write(a4988::to_string(ms));
 			break;
-		case 5: a4988::reset(); break;
+		case 5:
+			break;
 		default: ;
 	}
 
-	lcd::set_pos(0, 0);
-	lcd::write(i);
-	lcd::write("            ");
-
-	if (++j > 200)
+	if (refresh)
 	{
-		double y = rand() / 32768.0;
-		static double z = 0;
-
-		lcd::set_pos(1, 8);
-		lcd::write_e(y - z, 1);
-		j = 0;
-		z = y;
+		lcd::clear();
+		lcd::set_pos(0, 0);
+		lcd::write(editor.name());
+		lcd::set_pos(0, 8);
+		lcd::write(editor.show(buf));
+		refresh = false;
 	}
 
 	delay_ms(1);
