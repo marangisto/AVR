@@ -1,7 +1,7 @@
 #include "../AVR/Pins.h"
 #include "../AVR/Delay.h"
+#include "../AVR/Timer1.h"
 #include "../AVR/LCD1602A.h"
-#include <avr/interrupt.h>
 #include "Buttons.h"
 #include "A4988.h"
 #include <stdlib.h>
@@ -26,35 +26,39 @@ typedef pin_t<PB, 0> ENABLE;
 
 typedef a4988_t<DIR, STEP, RESET, MS1, MS2, MS3, ENABLE> a4988;
 
-enum prescale_t { prescale_1 = 1, prescale_8 = 8, prescale_64 = 64, prescale_256 = 256, prescale_1024 = 1024 };
-
-static void timer1_config(prescale_t s)
-{
-	uint8_t tccr1a = 0, tccr1b = 0;
-
-	switch (s)
-	{
-		case prescale_1:	tccr1b |= (1 << CS10);					break;
-		case prescale_8:	tccr1b |= (1 << CS11);					break;
-		case prescale_64:	tccr1b |= (1 << CS10) | (1 << CS11);	break;
-		case prescale_256:	tccr1b |= (1 << CS12);					break;
-		case prescale_1024:	tccr1b |= (1 << CS12) | (1 << CS10);	break;
-	}
-
-	TCCR1A = tccr1a;
-	TCCR1B = tccr1b;
-}
-
-static void timer1_enable()
-{
-	TIMSK1 |= (1 << TOIE1);     // enable timer overflow interrupt
-}
-
 static volatile uint16_t n_steps = 0;   // tell isr how many steps to run
 static volatile uint16_t n_accel = 0;	// max acceleration steps
 static volatile bool inflight = false;	// we are running stepper
 static volatile uint16_t step_i = 0;	// current step counter
 static volatile uint16_t step_t = 0;		// step length in timer cycles
+
+static inline uint16_t eq12(uint16_t c, uint16_t n, bool acc)
+{
+    uint16_t k = (c << 1) / ((n << 2) + 1);
+    return acc ? (c - k) : (c + k);
+}
+
+static void isr()
+{
+	if (step_i < n_steps)
+	{
+		a4988::step();
+		timer1_t::counter() = 65535 - step_t;
+
+        if (++step_i < n_accel)  // still time to accelerate
+        {
+            uint16_t step_t_ = eq12(step_t, step_i, true);
+            if (step_t_ == step_t)
+                n_accel = step_i;      // actual acceleration steps
+            else
+                step_t = step_t_;
+        }
+        else if (step_i + n_accel > n_steps) // time to decelerate
+            step_t = eq12(step_t, n_steps - step_i, false);
+	}
+	else
+		inflight = false;
+}
 
 void run_stepper(bool dir, uint16_t n, uint16_t c)
 {
@@ -67,8 +71,7 @@ void run_stepper(bool dir, uint16_t n, uint16_t c)
 	a4988::dir(dir);
 	a4988::reset();
 	a4988::enable();
-	timer1_config(prescale_8);
-	timer1_enable();
+	timer1_t::enable();
 	sei();
 	while (inflight)
 		delay_ms(1);
@@ -81,6 +84,8 @@ void setup()
 	lcd::setup();
 	btns::setup();
 	a4988::setup();
+	timer1_t::prescale(timer1_t::prescale_8);
+	timer1_t::isr(isr);
 }
 
 void loop()
@@ -152,35 +157,6 @@ void loop()
 	}
 
 	delay_ms(1);
-}
-
-
-static inline uint16_t eq12(uint16_t c, uint16_t n, bool acc)
-{
-    uint16_t k = (c << 1) / ((n << 2) + 1);
-    return acc ? (c - k) : (c + k);
-}
-
-ISR(TIMER1_OVF_vect)
-{
-	if (step_i < n_steps)
-	{
-		a4988::step();
-		TCNT1 = 65535 - step_t;
-
-        if (++step_i < n_accel)  // still time to accelerate
-        {
-            uint16_t step_t_ = eq12(step_t, step_i, true);
-            if (step_t_ == step_t)
-                n_accel = step_i;      // actual acceleration steps
-            else
-                step_t = step_t_;
-        }
-        else if (step_i + n_accel > n_steps) // time to decelerate
-            step_t = eq12(step_t, n_steps - step_i, false);
-	}
-	else
-		inflight = false;
 }
 
 
