@@ -16,7 +16,7 @@ public:
 		timer1_t::isr(isr);
 	}
 
-	static void run(bool dir, uint16_t n, uint16_t c)
+	static void run(bool dir, uint16_t n, uint16_t c, micro_step_t::e ms)
 	{
 		cli();					// disable global interrupts
 		inflight = true;
@@ -26,6 +26,7 @@ public:
 		step_t = c;
 		A4988::dir(dir);
 		A4988::reset();
+		A4988::micro_step(ms);
 		A4988::enable();
 		timer1_t::enable();
 		sei();
@@ -78,3 +79,4 @@ template<class A4988> volatile uint16_t accel_t<A4988>::step_t = 0;		// step len
 template<class A4988> volatile bool accel_t<A4988>::inflight = false;	// we are running stepper
 
 #endif // ACCEL_H
+

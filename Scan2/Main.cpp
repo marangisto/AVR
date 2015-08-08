@@ -65,7 +65,7 @@ void loop()
 		case 4:
 			for (uint8_t j = 0; j < 4; ++j)
 			{
-				accel::run(d.value(), 200 << micro_step_t::shift(ms.value()), c.value() >> micro_step_t::shift(ms.value()));
+				accel::run(d.value(), 200, c.value(), ms.value());
 				d.incr();
 			}
 			break;
