@@ -38,7 +38,7 @@ void setup()
 void loop()
 {
 	static item_t<bool> d("dir", false);
-	static item_t<uint16_t> c("tmax", 16000);
+	static item_t<uint16_t> c("tmax", 10000);
 	static item_t<micro_step_t::e> ms("u-step", micro_step_t::full_step);
 	static item_i *items[] = { &d, &c, &ms };
 	static editor_t editor(items, sizeof(items) / sizeof(*items));
@@ -65,9 +65,12 @@ void loop()
 		case 4:
 			for (uint8_t j = 0; j < 4; ++j)
 			{
-				accel::run(d.value(), 200, c.value(), ms.value());
+				accel::run(d.value(), 1000, c.value(), ms.value());
 				d.incr();
 			}
+			lcd::set_pos(1, 0);
+			lcd::write("min step = ");
+			lcd::write(accel::min_step());
 			break;
 		case 5:
 			break;

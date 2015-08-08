@@ -35,6 +35,8 @@ public:
 		A4988::disable();
 	}
 
+	static uint16_t min_step() { return min_t; }
+
 private:
 	static inline uint16_t eq12(uint16_t c, uint16_t n, bool acc)
 	{
@@ -53,9 +55,10 @@ private:
         	{
             	uint16_t step_t_ = eq12(step_t, step_i, true);
             	if (step_t_ == step_t)
-                	n_accel = step_i;      // actual acceleration steps
+                	n_accel = step_i;	// actual acceleration steps
             	else
                 	step_t = step_t_;
+				min_t = step_t;		// record minimum step length
         	}
         	else if (step_i + n_accel > n_steps) // time to decelerate
             	step_t = eq12(step_t, n_steps - step_i, false);
@@ -68,6 +71,7 @@ private:
 	static volatile uint16_t n_accel;	// max acceleration steps
 	static volatile uint16_t step_i;	// current step counter
 	static volatile uint16_t step_t;	// step length in timer cycles
+	static volatile uint16_t min_t;		// minimum step length achieved
 	static volatile bool inflight;		// we are running stepper
 };
 
@@ -76,6 +80,7 @@ template<class A4988> volatile uint16_t accel_t<A4988>::n_steps = 0;		// tell is
 template<class A4988> volatile uint16_t accel_t<A4988>::n_accel = 0;		// max acceleration steps
 template<class A4988> volatile uint16_t accel_t<A4988>::step_i = 0;		// current step counter
 template<class A4988> volatile uint16_t accel_t<A4988>::step_t = 0;		// step length in timer cycles
+template<class A4988> volatile uint16_t accel_t<A4988>::min_t = 0;		// minimum step length achieved
 template<class A4988> volatile bool accel_t<A4988>::inflight = false;	// we are running stepper
 
 #endif // ACCEL_H
