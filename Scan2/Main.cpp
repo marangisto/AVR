@@ -48,18 +48,18 @@ void loop()
 
 	uint8_t x = btns::read();
 
-	switch (x)
+	switch (x & btns::mask)
 	{
 		case 1: 
 			editor.next();
 			refresh = true;
 			break;
 		case 2:
-			editor.decr();
+			editor.decr((x & btns::fast) != 0);
 			refresh = true;
 			break;
 		case 3:
-			editor.incr();
+			editor.incr((x & btns::fast) != 0);
 			refresh = true;
 			break;
 		case 4:
