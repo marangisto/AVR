@@ -44,10 +44,9 @@ void loop()
 {
 	static item_t<bool> d("dir", false);
 	static item_t<uint16_t> c("tmax", 10000);
-	static item_t<micro_step_t::e> ms("u-step", micro_step_t::full_step);
+	static item_t<micro_step_t::e> ms("u-step", micro_step_t::quarter_step);
 	static item_i *items[] = { &d, &c, &ms };
 	static editor_t editor(items, sizeof(items) / sizeof(*items));
-	static bool last_liml = false, last_limr = false;
 
 	static bool refresh = true;
 	static char buf[64];
@@ -79,18 +78,13 @@ void loop()
 			lcd::write(accel::min_step());
 			break;
 		case 5:
+			lcd::set_pos(1, 0);
+			lcd::write("adj = ");
+			lcd::write(accel::calibrate());
+			lcd::write("       ");
 			break;
 		default: ;
 	}
-
-	bool liml = read<LIML>(), limr = read<LIMR>();
-
-	if (liml != last_liml || limr != last_limr)
-	{
-		last_liml = liml;
-		last_limr = limr;
-		refresh = true;
-	} 
 
 	if (refresh)
 	{
@@ -100,10 +94,6 @@ void loop()
 		lcd::set_pos(0, 8);
 		lcd::write(editor.show(buf));
 		refresh = false;
-		lcd::set_pos(1, 0);
-		lcd::write(liml);
-		lcd::write(" ");
-		lcd::write(limr);
 	}
 
 	delay_ms(1);

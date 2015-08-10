@@ -39,6 +39,51 @@ public:
 
 	static uint16_t min_step() { return min_t; }
 
+	static int16_t calibrate()
+	{
+		micro_step_t::e ms = micro_step_t::quarter_step;
+		const uint8_t nms = 1 << micro_step_t::shift(ms);
+		uint8_t t = 1;				// millisecs per (micro-) step
+		A4988::dir(true);			// reverse
+		A4988::reset();
+		A4988::micro_step(ms);
+		A4988::enable();
+
+		int16_t n_steps = 0;
+
+		while (!read<LIML>())
+		{
+			for (uint8_t s = 0; s < nms; ++s)
+			{
+				A4988::step();
+				delay_ms(t);
+			}
+
+			--n_steps;
+		}
+
+		delay_ms(100);
+
+		A4988::dir(false);
+
+		t = 15;				// millisecs per (micro-) step
+
+		while (read<LIML>())
+		{
+			for (uint8_t s = 0; s < nms; ++s)
+			{
+				A4988::step();
+				delay_ms(t);
+			}
+
+			++n_steps;
+		}
+
+		A4988::disable();
+
+		return n_steps;
+	}
+
 private:
 	static inline uint16_t eq12(uint16_t c, uint16_t n, bool acc)
 	{
