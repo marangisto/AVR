@@ -68,15 +68,27 @@ void loop()
 			refresh = true;
 			break;
 		case 4:
-			for (uint8_t j = 0; j < 4; ++j)
+		{
+			int16_t err = 0;
+			uint16_t c = 10000;
+
+			do
 			{
-				accel::run(d.value(), 1000, c.value(), ms.value());
-				d.incr();
-			}
-			lcd::set_pos(1, 0);
-			lcd::write("min step = ");
-			lcd::write(accel::min_step());
-			break;
+				lcd::clear();
+				lcd::set_pos(0, 0);
+				lcd::write(c);
+				accel::run(false, 1000, c, ms.value());
+				accel::run(true, 1000, c, ms.value());
+				err = accel::calibrate();
+				lcd::set_pos(0, 8);
+				lcd::write("adj = ");
+				lcd::write(err);
+				lcd::set_pos(1, 0);
+				lcd::write("min step = ");
+				lcd::write(accel::min_step());
+				c -= 250;
+			} while (abs(err) < 2);
+		} break;
 		case 5:
 			lcd::set_pos(1, 0);
 			lcd::write("adj = ");
