@@ -26,18 +26,18 @@ typedef pin_t<PB, 0> ENABLE;
 
 typedef a4988_t<DIR, STEP, RESET, MS1, MS2, MS3, ENABLE> a4988;
 
-typedef accel_t<a4988> accel;
-
 typedef pin_t<PD, 2> LIML;
 typedef pin_t<PD, 3> LIMR;
+
+typedef accel_t<a4988, LIML, LIMR> accel;
 
 void setup()
 {
 	lcd::setup();
 	btns::setup();
-	accel::setup();
 	digital_in<LIML, LIMR>();
 	set<LIML, LIMR>(); 			// pull-ups
+	accel::setup();
 }
 
 void loop()

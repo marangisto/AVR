@@ -5,7 +5,7 @@
 #include "../AVR/Timer1.h"
 #include "A4988.h"
 
-template<class A4988>
+template<class A4988, class LIML, class LIMR>
 class accel_t
 {
 public:
@@ -50,6 +50,12 @@ private:
 	{
 		if (step_i < n_steps)
 		{
+			if (read<LIML>() || read<LIMR>())
+			{
+				inflight = false;
+				return;
+			}
+
 			A4988::step();
 			timer1_t::counter() = 65535 - step_t;
 
@@ -78,12 +84,12 @@ private:
 };
 
 
-template<class A4988> volatile uint16_t accel_t<A4988>::n_steps = 0;		// tell isr how many steps to run
-template<class A4988> volatile uint16_t accel_t<A4988>::n_accel = 0;		// max acceleration steps
-template<class A4988> volatile uint16_t accel_t<A4988>::step_i = 0;		// current step counter
-template<class A4988> volatile uint16_t accel_t<A4988>::step_t = 0;		// step length in timer cycles
-template<class A4988> volatile uint16_t accel_t<A4988>::min_t = 0;		// minimum step length achieved
-template<class A4988> volatile bool accel_t<A4988>::inflight = false;	// we are running stepper
+template<class T0, class T1, class T2> volatile uint16_t accel_t<T0, T1, T2>::n_steps = 0;		// tell isr how many steps to run
+template<class T0, class T1, class T2> volatile uint16_t accel_t<T0, T1, T2>::n_accel = 0;		// max acceleration steps
+template<class T0, class T1, class T2> volatile uint16_t accel_t<T0, T1, T2>::step_i = 0;		// current step counter
+template<class T0, class T1, class T2> volatile uint16_t accel_t<T0, T1, T2>::step_t = 0;		// step length in timer cycles
+template<class T0, class T1, class T2> volatile uint16_t accel_t<T0, T1, T2>::min_t = 0;		// minimum step length achieved
+template<class T0, class T1, class T2> volatile bool accel_t<T0, T1, T2>::inflight = false;	// we are running stepper
 
 #endif // ACCEL_H
 
