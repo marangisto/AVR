@@ -13,26 +13,28 @@ public:
 	{
 		A4988::setup();
 		timer1_t::prescale(timer1_t::prescale_8);
-		timer1_t::isr(isr);
 	}
 
 	static void run(bool dir, uint16_t n, uint16_t c, micro_step_t::e ms)
 	{
 		cli();					// disable global interrupts
 		inflight = true;
-		n_steps = n;
-		n_accel = n >> 1;;		// max number of acceleration steps
+		n_steps = n << micro_step_t::shift(ms);
+		n_accel = n_steps >> 1;;		// max number of acceleration steps
 		step_i = 0;
 		step_t = c;
 		A4988::dir(dir);
 		A4988::reset();
 		A4988::micro_step(ms);
 		A4988::enable();
+		timer1_t::isr(accel_isr);
 		timer1_t::enable();
 		sei();
 		while (inflight)
 			delay_ms(1);
 		A4988::disable();
+		timer1_t::disable();
+		timer1_t::isr(timer1_t::dummy_isr);
 	}
 
 	static uint16_t min_step() { return min_t; }
@@ -44,7 +46,7 @@ private:
     	return acc ? (c - k) : (c + k);
 	}
 
-	static void isr()
+	static void accel_isr()
 	{
 		if (step_i < n_steps)
 		{
