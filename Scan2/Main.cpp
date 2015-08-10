@@ -28,11 +28,16 @@ typedef a4988_t<DIR, STEP, RESET, MS1, MS2, MS3, ENABLE> a4988;
 
 typedef accel_t<a4988> accel;
 
+typedef pin_t<PD, 2> LIML;
+typedef pin_t<PD, 3> LIMR;
+
 void setup()
 {
 	lcd::setup();
 	btns::setup();
 	accel::setup();
+	digital_in<LIML, LIMR>();
+	set<LIML, LIMR>(); 			// pull-ups
 }
 
 void loop()
@@ -42,6 +47,7 @@ void loop()
 	static item_t<micro_step_t::e> ms("u-step", micro_step_t::full_step);
 	static item_i *items[] = { &d, &c, &ms };
 	static editor_t editor(items, sizeof(items) / sizeof(*items));
+	static bool last_liml = false, last_limr = false;
 
 	static bool refresh = true;
 	static char buf[64];
@@ -77,6 +83,15 @@ void loop()
 		default: ;
 	}
 
+	bool liml = read<LIML>(), limr = read<LIMR>();
+
+	if (liml != last_liml || limr != last_limr)
+	{
+		last_liml = liml;
+		last_limr = limr;
+		refresh = true;
+	} 
+
 	if (refresh)
 	{
 		lcd::clear();
@@ -85,6 +100,10 @@ void loop()
 		lcd::set_pos(0, 8);
 		lcd::write(editor.show(buf));
 		refresh = false;
+		lcd::set_pos(1, 0);
+		lcd::write(liml);
+		lcd::write(" ");
+		lcd::write(limr);
 	}
 
 	delay_ms(1);
