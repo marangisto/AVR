@@ -8,7 +8,7 @@ data MCU = Atmega328p | Atmega32u4 | Attiny85 deriving Show
 data Board = BB328 | BB85 | DB328 | Leonardo deriving Show
 data Programmer = STK500v1 | AVR109 | AvrIspMk2 deriving Show
 
-board = DB328
+board = BB85
 
 mcu = case board of
     BB85     -> Attiny85
@@ -25,7 +25,7 @@ programmer = case board of
 freq mcu = case mcu of
     Atmega328p -> 16000000
     Atmega32u4 -> 16000000
-    Attiny85 -> 1000000
+    Attiny85 -> 8000000
 
 avrgcc = "avr-g++"
 avrcopy = "avr-objcopy"
