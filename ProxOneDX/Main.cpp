@@ -8,9 +8,9 @@ typedef pin_t<PB, 4> ECHO;
 void shoot()
 {
 	set<FOCUS>();
-	delay_ms(200);
+	delay_ms(10);
 	set<EXPOSE>();
-	delay_ms(100);
+	delay_ms(1000);
 	clear<EXPOSE>();
 	clear<FOCUS>();
 }
@@ -50,6 +50,7 @@ float distance()
 				more = true;
 			}
 	}
+
 	return (ws[1] + ws[2] + ws[3]) / (3 * 2 * 29.4);	// 340m/s -> 29.4us/cm
 }
 
@@ -68,7 +69,7 @@ void loop()
 	if (d > 95 && d < 105)
 	{
 		shoot();
-		delay_ms(250);
+		delay_ms(2000);
 	}
 
 	delay_ms(20);
