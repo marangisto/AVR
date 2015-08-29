@@ -1,4 +1,4 @@
-#include "../AVR/Pins.h"
+#include "../AVR/Bits.h"
 #include "../AVR/Delay.h"
 
 typedef pin_t<PD, 7> D0;
@@ -14,6 +14,8 @@ typedef pin_t<PD, 0> E;
 typedef pin_t<PC, 3> F;
 typedef pin_t<PD, 6> G;
 typedef pin_t<PD, 2> DP;
+
+typedef bits_t<A, B, C, D, E, F, G> digit_t;
 
 void setup()
 {
@@ -46,6 +48,17 @@ void setup()
 	set<DP>();
 }
 
+static void display(uint8_t x)
+{
+	write<A>((x & (1 << 0)) == 0);
+	write<B>((x & (1 << 1)) == 0);
+	write<C>((x & (1 << 2)) == 0);
+	write<D>((x & (1 << 3)) == 0);
+	write<E>((x & (1 << 4)) == 0);
+	write<F>((x & (1 << 5)) == 0);
+	write<G>((x & (1 << 6)) == 0);
+}
+
 void loop()
 {
 	static uint8_t j = 0, k = 0;
@@ -58,18 +71,13 @@ void loop()
 		case 3: set<D2>(); break;
 	}
 
-	switch (j++ & 0x7)
+	switch (k & 0x3)
 	{
-		case 0: set<DP>(); clear<A>(); break;
-		case 1: set<A>(); clear<B>(); break;
-		case 2: set<B>(); clear<C>(); break;
-		case 3: set<C>(); clear<D>(); break;
-		case 4: set<D>(); clear<E>(); break;
-		case 5: set<E>(); clear<F>(); break;
-		case 6: set<F>(); clear<G>(); break;
-		case 7: set<G>(); clear<DP>(); break;
+		case 0: write_bits<digit_t>(~0b11110001); break;
+		case 1: write_bits<digit_t>(~0b11111001); break;
+		case 2: write_bits<digit_t>(~0b11111001); break;
+		case 3: write_bits<digit_t>(~0b11111100); break;
 	}
-
 
 	switch (k & 0x3)
 	{
@@ -79,10 +87,9 @@ void loop()
 		case 3: clear<D3>(); break;
 	}
 
-	if ((j & 0x7) == 0)
-		++k;
+	++k;
 
-	delay_ms(100);
+	delay_ms(1);
 }
 
 int main()
