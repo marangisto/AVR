@@ -21,11 +21,11 @@ template<class PORT, unsigned PIN> struct pin_t : port_t<PORT>
 
 struct PB;
 
-#if defined(__AVR_ATmega328P__)
+#if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__)
 struct PC;
 #endif
 
-#if defined(__AVR_ATmega328P__)
+#if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__)
 struct PD;
 #endif
 
@@ -41,7 +41,7 @@ template<> struct port_t<PB>
 	static inline volatile const uint8_t& rpin() { return PINB; }
 };
 
-#if defined(__AVR_ATmega328P__)
+#if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__)
 template<> struct port_t<PC>
 {
 	typedef PC port;
@@ -51,7 +51,7 @@ template<> struct port_t<PC>
 };
 #endif
 
-#if defined(__AVR_ATmega328P__)
+#if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__)
 template<> struct port_t<PD>
 {
 	typedef PD port;
