@@ -84,7 +84,7 @@ public:
 		set<RESET>();
 	}
 
-	typedef bits_t<MS3, MS2, MS1> MS;
+	typedef bits_t<MS1, MS2, MS3> MS;
 
 	static void micro_step(micro_step_t::e ms)
 	{
