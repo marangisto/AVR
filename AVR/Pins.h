@@ -19,6 +19,15 @@ template<class PORT, unsigned BIT> struct pin_t : port_t<PORT>
 	static const uint8_t mask = 1 << BIT;
 };
 
+struct NO_PORT;
+
+template<> struct port_t<NO_PORT>
+{
+	typedef NO_PORT port;
+};
+
+typedef pin_t<NO_PORT, 0> no_pin_t;
+
 struct PB;
 
 #if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__)

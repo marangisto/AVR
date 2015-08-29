@@ -12,7 +12,16 @@ struct shift_impl<N, true> { static uint8_t shift(uint8_t x) { return x >> -N; }
 template<int N> 
 uint8_t shift(uint8_t x) { return shift_impl<N, N < 0>::shift(x); }
 
-template<class T0, class T1, class T2, class T3, class T4, class T5, class T6, class T7>	// LSB to MSB order
+template
+	< class T0
+	, class T1 = no_pin_t
+	, class T2 = no_pin_t
+	, class T3 = no_pin_t
+	, class T4 = no_pin_t
+	, class T5 = no_pin_t
+	, class T6 = no_pin_t
+	, class T7 = no_pin_t
+>							// LSB to MSB order
 struct bits_t
 {
 	typedef T0 BIT0;
