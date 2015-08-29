@@ -8,15 +8,15 @@ template<class PORT> struct port_t
 {
 	static inline volatile uint8_t& ddr();
 	static inline volatile uint8_t& port();
-	static inline const volatile uint8_t& rpin();
+	static inline const volatile uint8_t& pin();
 };
 
-template<class PORT, unsigned PIN> struct pin_t : port_t<PORT>
+template<class PORT, unsigned BIT> struct pin_t : port_t<PORT>
 {
-	static_assert(PIN < 8, "pin bit out of range");
+	static_assert(BIT < 8, "pin bit out of range");
 
-	static const int pin = PIN;
-	static const uint8_t mask = 1 << PIN;
+	static const int bit = BIT;
+	static const uint8_t mask = 1 << BIT;
 };
 
 struct PB;
@@ -38,7 +38,7 @@ template<> struct port_t<PB>
 	typedef PB port;
 	static inline volatile uint8_t& ddr() { return DDRB; }
 	static inline volatile uint8_t& reg() { return PORTB; }
-	static inline volatile const uint8_t& rpin() { return PINB; }
+	static inline volatile const uint8_t& pin() { return PINB; }
 };
 
 #if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__)
@@ -47,7 +47,7 @@ template<> struct port_t<PC>
 	typedef PC port;
 	static inline volatile uint8_t& ddr() { return DDRC; }
 	static inline volatile uint8_t& reg() { return PORTC; }
-	static inline volatile const uint8_t& rpin() { return PINC; }
+	static inline volatile const uint8_t& pin() { return PINC; }
 };
 #endif
 
@@ -57,7 +57,7 @@ template<> struct port_t<PD>
 	typedef PD port;
 	static inline volatile uint8_t& ddr() { return DDRD; }
 	static inline volatile uint8_t& reg() { return PORTD; }
-	static inline volatile const uint8_t& rpin() { return PIND; }
+	static inline volatile const uint8_t& pin() { return PIND; }
 };
 #endif
 
@@ -67,7 +67,7 @@ template<> struct port_t<PE>
 	typedef PE port;
 	static inline volatile uint8_t& ddr() { return DDRE; }
 	static inline volatile uint8_t& reg() { return PORTE; }
-	static inline volatile const uint8_t& rpin() { return PINE; }
+	static inline volatile const uint8_t& pin() { return PINE; }
 };
 #endif
 
@@ -136,7 +136,7 @@ static inline void write(bool x)
 template<class T0>
 static inline bool read()
 {
-	return (T0::rpin() & T0::mask) != 0;
+	return (T0::pin() & T0::mask) != 0;
 }
 
 template<class T0, class T1>
@@ -144,7 +144,7 @@ static inline void read(bool& b0, bool& b1)
 {
 	static_assert(std::is_same<typename T0::port, typename T1::port>(), "2nd pin on different port");
 
-	uint8_t x = T0::rpin();
+	uint8_t x = T0::pin();
 
 	b0 = (x & T0::mask) != 0;
 	b1 = (x & T1::mask) != 0;
@@ -156,7 +156,7 @@ static inline void read(bool& b0, bool& b1, bool& b2)
 	static_assert(std::is_same<typename T0::port, typename T1::port>(), "2nd pin on different port");
 	static_assert(std::is_same<typename T0::port, typename T2::port>(), "3rd pin on different port");
 
-	uint8_t x = T0::rpin();
+	uint8_t x = T0::pin();
 
 	b0 = (x & T0::mask) != 0;
 	b1 = (x & T1::mask) != 0;
@@ -170,7 +170,7 @@ static inline void read(bool& b0, bool& b1, bool& b2, bool& b3)
 	static_assert(std::is_same<typename T0::port, typename T2::port>(), "3rd pin on different port");
 	static_assert(std::is_same<typename T0::port, typename T3::port>(), "4th pin on different port");
 
-	uint8_t x = T0::rpin();
+	uint8_t x = T0::pin();
 
 	b0 = (x & T0::mask) != 0;
 	b1 = (x & T1::mask) != 0;
