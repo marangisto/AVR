@@ -7,12 +7,12 @@ template<int N, bool IS_NEGATIVE>
 struct shift_impl { static uint8_t shift(uint8_t x) { return x << N; } };
 
 template<int N>
-struct shift_impl<N, true> { static uint8_t shift(uint8_t x) { return x >> N; } };
+struct shift_impl<N, true> { static uint8_t shift(uint8_t x) { return x >> -N; } };
 
 template<int N> 
 uint8_t shift(uint8_t x) { return shift_impl<N, N < 0>::shift(x); }
 
-template<class T2, class T1, class T0>	// note natural bit ordering with LSB to the right
+template<class T0, class T1, class T2>	// LSB to MSB order
 struct bits_t
 {
 	typedef T0 BIT0;
@@ -36,7 +36,7 @@ struct map_bit_impl<PORT, PORT, PIN, BIT>
 {
 	static uint8_t map_bit(uint8_t x)
 	{
-		return shift<(PIN::pin - BIT)>(static_cast<uint8_t>(x & (1 << BIT)));
+		return shift<PIN::bit - BIT>(static_cast<uint8_t>(x & (1 << BIT)));
 	}
 
 	static const uint8_t mask = PIN::mask;
