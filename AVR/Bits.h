@@ -12,12 +12,17 @@ struct shift_impl<N, true> { static uint8_t shift(uint8_t x) { return x >> -N; }
 template<int N> 
 uint8_t shift(uint8_t x) { return shift_impl<N, N < 0>::shift(x); }
 
-template<class T0, class T1, class T2>	// LSB to MSB order
+template<class T0, class T1, class T2, class T3, class T4, class T5, class T6, class T7>	// LSB to MSB order
 struct bits_t
 {
 	typedef T0 BIT0;
 	typedef T1 BIT1;
 	typedef T2 BIT2;
+	typedef T3 BIT3;
+	typedef T4 BIT4;
+	typedef T5 BIT5;
+	typedef T6 BIT6;
+	typedef T7 BIT7;
 };
 
 template<class PORT, class PINPORT, class PIN, int BIT>
@@ -50,11 +55,11 @@ struct map_bits_impl
 		return map_bit_impl<PORT, typename BITS::BIT0::port, typename BITS::BIT0, 0>::map_bit(x)
 			 | map_bit_impl<PORT, typename BITS::BIT1::port, typename BITS::BIT1, 1>::map_bit(x)
 			 | map_bit_impl<PORT, typename BITS::BIT2::port, typename BITS::BIT2, 2>::map_bit(x)
-//			 | map_bit_impl<PORT, typename BITS::BIT3::port, typename BITS::BIT3, 3>::map_bit(x)
-//			 | map_bit_impl<PORT, typename BITS::BIT4::port, typename BITS::BIT4, 4>::map_bit(x)
-//			 | map_bit_impl<PORT, typename BITS::BIT5::port, typename BITS::BIT5, 5>::map_bit(x)
-//			 | map_bit_impl<PORT, typename BITS::BIT6::port, typename BITS::BIT6, 6>::map_bit(x)
-//			 | map_bit_impl<PORT, typename BITS::BIT7::port, typename BITS::BIT7, 7>::map_bit(x)
+			 | map_bit_impl<PORT, typename BITS::BIT3::port, typename BITS::BIT3, 3>::map_bit(x)
+			 | map_bit_impl<PORT, typename BITS::BIT4::port, typename BITS::BIT4, 4>::map_bit(x)
+			 | map_bit_impl<PORT, typename BITS::BIT5::port, typename BITS::BIT5, 5>::map_bit(x)
+			 | map_bit_impl<PORT, typename BITS::BIT6::port, typename BITS::BIT6, 6>::map_bit(x)
+			 | map_bit_impl<PORT, typename BITS::BIT7::port, typename BITS::BIT7, 7>::map_bit(x)
 			 ;
 	}
 
@@ -62,13 +67,12 @@ struct map_bits_impl
 		= map_bit_impl<PORT, typename BITS::BIT0::port, typename BITS::BIT0, 0>::mask
 		| map_bit_impl<PORT, typename BITS::BIT1::port, typename BITS::BIT1, 1>::mask
 		| map_bit_impl<PORT, typename BITS::BIT2::port, typename BITS::BIT2, 2>::mask
-//		| map_bit_impl<PORT, typename BITS::BIT3::port, typename BITS::BIT3, 3>::mask
-//		| map_bit_impl<PORT, typename BITS::BIT4::port, typename BITS::BIT4, 4>::mask
-//		| map_bit_impl<PORT, typename BITS::BIT5::port, typename BITS::BIT5, 5>::mask
-//		| map_bit_impl<PORT, typename BITS::BIT6::port, typename BITS::BIT6, 6>::mask
-//		| map_bit_impl<PORT, typename BITS::BIT7::port, typename BITS::BIT7, 7>::mask
-//		| map_bit_impl<PORT, typename BITS::BIT8::port, typename BITS::BIT8, 8>::mask
-		 ;
+		| map_bit_impl<PORT, typename BITS::BIT3::port, typename BITS::BIT3, 3>::mask
+		| map_bit_impl<PORT, typename BITS::BIT4::port, typename BITS::BIT4, 4>::mask
+		| map_bit_impl<PORT, typename BITS::BIT5::port, typename BITS::BIT5, 5>::mask
+		| map_bit_impl<PORT, typename BITS::BIT6::port, typename BITS::BIT6, 6>::mask
+		| map_bit_impl<PORT, typename BITS::BIT7::port, typename BITS::BIT7, 7>::mask
+	    ;
 };
 
 template<class PORT, class BITS, int MASK>
