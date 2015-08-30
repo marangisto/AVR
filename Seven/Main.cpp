@@ -18,26 +18,11 @@ typedef pin_t<PD, 2> H;
 
 typedef bits_t<D0, D1, D2, D3> digit_t;
 typedef bits_t<A, B, C, D, E, F, G, H> segment_t;
+typedef seg7_t<digit_t, segment_t> seg7;
 
 void setup()
 {
-	digital_out<D0>();
-	digital_out<D1>();
-	digital_out<D2>();
-	digital_out<D3>();
-
-	write_bits<digit_t>(~0);
-
-	digital_out<A>();
-	digital_out<B>();
-	digital_out<C>();
-	digital_out<D>();
-	digital_out<E>();
-	digital_out<F>();
-	digital_out<G>();
-	digital_out<H>();
-
-	write_bits<segment_t>(~0);
+	seg7::setup();
 }
 
 void loop()
@@ -46,28 +31,16 @@ void loop()
 	static uint8_t j = 0, k = 0;
 	static char chars[4] = { '4', '5', '6', '7' };
 	static const uint8_t nchar = sizeof(chars) / sizeof(*chars);
+	static char *s = " 0123456789ABCDEFGHIJKLMNOPQRSTUVXYZ    ";
 
-	if ((++j & 0x7f) == 0)
+	if ((++j & 0xff) == 0)
 	{
-		uint16_t a = i;
-
-		for (uint8_t c = 0; c < nchar; ++c)
-		{
-			chars[nchar - c - 1] = '0' + a % 10;
-			a /= 10;
-		}
-
-		chars[0] = (i & 0x7f) >= ' ' ? ;
-
-		++i;
+		seg7::write(s + i);
+		if (++i > 36)
+			i = 0;
 	}
 
-	write_bits<digit_t>(~0);
-	write_bits<segment_t>(~font_t::seg7(chars[k]));
-	write_bits<digit_t>(~(1 << k));
-
-	if (++k >= nchar)
-		k = 0;
+	seg7::refresh();
 
 	delay_ms(1);
 }

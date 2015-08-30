@@ -110,5 +110,14 @@ static void write_bits(uint8_t bits)
 //	write_bits_impl<PE, BITS, map_bits_impl<PE, BITS>::mask>::write_bits(PORTE, bits);
 }
 
+template<class BITS>
+static void setup_bits()
+{
+	write_bits_impl<PB, BITS, map_bits_impl<PB, BITS>::mask>::write_bits(DDRB, 0xff);
+	write_bits_impl<PC, BITS, map_bits_impl<PC, BITS>::mask>::write_bits(DDRC, 0xff);
+	write_bits_impl<PD, BITS, map_bits_impl<PD, BITS>::mask>::write_bits(DDRD, 0xff);
+//	write_bits_impl<PE, BITS, map_bits_impl<PE, BITS>::mask>::write_bits(DDRE, 0xff);
+}
+
 #endif
 

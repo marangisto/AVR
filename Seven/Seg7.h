@@ -1,19 +1,21 @@
 #ifndef SEG7_H
 #define SEG7_H
 
+#include "../AVR/Bits.h"
+
 class font_t
 {
 public:
 	static uint8_t seg7(char c)
 	{
-		return glyphs[(c > 'Z' ? c - 0x20 : c) - ' '];
+		return s_glyphs[(c > 'Z' ? c - 0x20 : c) - ' '];
 	}
 
 private:
-	static const uint8_t glyphs[];
+	static const uint8_t s_glyphs[];
 };
 
-const uint8_t font_t::glyphs[] =
+const uint8_t font_t::s_glyphs[] =
 	{ 0b0000000	// space
 	, 0b0000000	// !
 	, 0b0000000	// "
@@ -41,6 +43,7 @@ const uint8_t font_t::glyphs[] =
 	, 0b1111111	// 8
 	, 0b1101111	// 9
 	, 0b0000000	// :
+	, 0b0000000	// ;
 	, 0b0000000	// <
 	, 0b0000000	// =
 	, 0b0000000	// >
@@ -48,8 +51,8 @@ const uint8_t font_t::glyphs[] =
 	, 0b0000000	// @
 	, 0b1110111	// A
 	, 0b1111100	// B
-	, 0b0111000	// C
-	, 0b0111110	// D
+	, 0b1011000	// C
+	, 0b1011110	// D
 	, 0b1111001	// E
 	, 0b1110001	// F
 	, 0b0111101	// G
@@ -74,6 +77,46 @@ const uint8_t font_t::glyphs[] =
 	, 0b0011011	// Z
 	};
 
-#endif // SEG7_H
+template<class DIGITS, class SEGMENTS>
+class seg7_t
+{
+public:
+	static void setup()
+	{
+		setup_bits<DIGITS>();
+		write_bits<DIGITS>(~0);
+		setup_bits<SEGMENTS>();
+		write_bits<SEGMENTS>(~0);
 
+		for (uint8_t c = 0; c < nchars; ++c)
+			s_buf[c] = ' ';
+	}
+
+	static void write(const char *s)
+	{
+		for (uint8_t c = 0; c < nchars; ++c)
+			s_buf[c] = *s++;
+	}
+
+	static void refresh()
+	{
+		static uint8_t k = 0;
+
+		write_bits<DIGITS>(~0);
+		write_bits<SEGMENTS>(~font_t::seg7(s_buf[k]));
+		write_bits<DIGITS>(~(1 << k));
+
+		if (++k >= nchars)
+			k = 0;
+	}
+
+private:
+	static const uint8_t nchars = 4;	// FIXME: depend on DIGITS!
+	static char s_buf[nchars + 1];
+};
+
+template<class DIGITS, class SEGMENTS>
+char seg7_t<DIGITS, SEGMENTS>::s_buf[seg7_t<DIGITS, SEGMENTS>::nchars + 1];
+
+#endif // SEG7_H
 
