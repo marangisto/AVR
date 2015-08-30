@@ -1,6 +1,6 @@
 #include "../AVR/Bits.h"
 #include "../AVR/Delay.h"
-#include "Font.h"
+#include "Seg7.h"
 
 typedef pin_t<PD, 3> D0;
 typedef pin_t<PC, 2> D1;
@@ -56,6 +56,8 @@ void loop()
 			chars[nchar - c - 1] = '0' + a % 10;
 			a /= 10;
 		}
+
+		chars[0] = (i & 0x7f) >= ' ' ? ;
 
 		++i;
 	}
