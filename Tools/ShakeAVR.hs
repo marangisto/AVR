@@ -4,25 +4,28 @@ import Development.Shake.FilePath
 import Development.Shake.Util
 import Data.Char (toLower)
 
-data MCU = Atmega328p | Atmega32u4 | Attiny85 deriving Show
-data Board = BB328 | BB85 | DB328 | Leonardo deriving Show
+data MCU = Atmega328 | Atmega328p | Atmega32u4 | Attiny85 deriving Show
+data Board = BB328 | BB85 | DB328 | DB328p | Leonardo deriving Show
 data Programmer = STK500v1 | AVR109 | AvrIspMk2 deriving Show
 
-board = BB85
+board = DB328p
 
 mcu = case board of
     BB85     -> Attiny85
     BB328    -> Atmega328p
-    DB328    -> Atmega328p
+    DB328    -> Atmega328
+    DB328p   -> Atmega328p
     Leonardo -> Atmega32u4
 
 programmer = case board of
     BB85     -> AvrIspMk2
     DB328     -> AvrIspMk2
+    DB328p   -> AvrIspMk2
     BB328    -> STK500v1
     Leonardo -> AVR109
 
 freq mcu = case mcu of
+    Atmega328 -> 16000000
     Atmega328p -> 16000000
     Atmega32u4 -> 16000000
     Attiny85 -> 8000000
