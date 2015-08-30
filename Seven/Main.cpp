@@ -1,10 +1,11 @@
 #include "../AVR/Bits.h"
 #include "../AVR/Delay.h"
+#include "Font.h"
 
-typedef pin_t<PD, 7> D0;
-typedef pin_t<PB, 1> D1;
-typedef pin_t<PC, 2> D2;
-typedef pin_t<PD, 3> D3;
+typedef pin_t<PD, 3> D0;
+typedef pin_t<PC, 2> D1;
+typedef pin_t<PB, 1> D2;
+typedef pin_t<PD, 7> D3;
 
 typedef pin_t<PD, 4> A;
 typedef pin_t<PB, 2> B;
@@ -61,7 +62,19 @@ static void display(uint8_t x)
 
 void loop()
 {
+	static uint16_t i = 0;
 	static uint8_t j = 0, k = 0;
+	static char chars[4] = { '4', '5', '6', '7' };
+
+	if ((++j & 0xf) == 0)
+	{
+		chars[3] = '0' + i % 10;
+		chars[2] = '0' + (i / 10) % 10;
+		chars[1] = '0' + (i / 100) % 10;
+		chars[0] = '0' + (i / 1000) % 10;
+
+		++i;
+	}
 
 	switch (k & 0x3)
 	{
@@ -73,10 +86,10 @@ void loop()
 
 	switch (k & 0x3)
 	{
-		case 0: write_bits<digit_t>(~0b11110001); break;
-		case 1: write_bits<digit_t>(~0b11111001); break;
-		case 2: write_bits<digit_t>(~0b11111001); break;
-		case 3: write_bits<digit_t>(~0b11111100); break;
+		case 0: write_bits<digit_t>(~font_t::seg7(chars[0])); break;
+		case 1: write_bits<digit_t>(~font_t::seg7(chars[1])); break;
+		case 2: write_bits<digit_t>(~font_t::seg7(chars[2])); break;
+		case 3: write_bits<digit_t>(~font_t::seg7(chars[3])); break;
 	}
 
 	switch (k & 0x3)
