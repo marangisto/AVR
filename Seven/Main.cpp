@@ -34,17 +34,9 @@ void loop()
 	static const uint8_t nchar = sizeof(chars) / sizeof(*chars);
 	static char *s = " 0123456789ABCDEFGHIJKLMNOPQRSTUVXYZ    ";
 
-	if ((++j & 0xff) == 0)
-	{
-//		seg7::write(s + i);
-//		if (++i > 36)
-//			i = 0;
-		seg7::write(i++);
-	}
+	seg7::write(i++);
 
-//	seg7::refresh();
-
-	delay_ms(1);
+	delay_ms(5);
 }
 
 int main()
