@@ -35,9 +35,10 @@ void loop()
 
 	if ((++j & 0xff) == 0)
 	{
-		seg7::write(s + i);
-		if (++i > 36)
-			i = 0;
+//		seg7::write(s + i);
+//		if (++i > 36)
+//			i = 0;
+		seg7::write(i++);
 	}
 
 	seg7::refresh();

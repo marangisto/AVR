@@ -2,6 +2,8 @@
 #define SEG7_H
 
 #include "../AVR/Bits.h"
+#include <string.h>
+#include <stdlib.h>
 
 class font_t
 {
@@ -94,8 +96,33 @@ public:
 
 	static void write(const char *s)
 	{
-		for (uint8_t c = 0; c < nchars; ++c)
-			s_buf[c] = *s++;
+		uint8_t l = strlen(s), c = 0;
+
+		while (l + c < nchars)
+			s_enc[c++] = ~0;
+
+		while (c < nchars)
+			s_enc[c++] = ~font_t::seg7(*s++);
+	}
+
+	static void write(int x, int radix = 10)
+	{
+		write(itoa(x, s_buf, 10));
+	}
+
+	static void write(unsigned x, int radix = 10)
+	{
+		write(utoa(x, s_buf, 10));
+	}
+
+	static void write(long x, int radix = 10)
+	{
+		write(ltoa(x, s_buf, 10));
+	}
+
+	static void write(unsigned long x, int radix = 10)
+	{
+		write(ultoa(x, s_buf, 10));
 	}
 
 	static void refresh()
@@ -103,7 +130,7 @@ public:
 		static uint8_t k = 0;
 
 		write_bits<DIGITS>(~0);
-		write_bits<SEGMENTS>(~font_t::seg7(s_buf[k]));
+		write_bits<SEGMENTS>(s_enc[k]);
 		write_bits<DIGITS>(~(1 << k));
 
 		if (++k >= nchars)
@@ -112,11 +139,15 @@ public:
 
 private:
 	static const uint8_t nchars = 4;	// FIXME: depend on DIGITS!
-	static char s_buf[nchars + 1];
+	static uint8_t s_enc[nchars];		// encoded characters
+	static char s_buf[33];				// radix 2 on a 32-bit number plus terminator
 };
 
 template<class DIGITS, class SEGMENTS>
-char seg7_t<DIGITS, SEGMENTS>::s_buf[seg7_t<DIGITS, SEGMENTS>::nchars + 1];
+char seg7_t<DIGITS, SEGMENTS>::s_buf[33];
+
+template<class DIGITS, class SEGMENTS>
+uint8_t seg7_t<DIGITS, SEGMENTS>::s_enc[seg7_t<DIGITS, SEGMENTS>::nchars];
 
 #endif // SEG7_H
 
