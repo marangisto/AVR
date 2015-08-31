@@ -2,7 +2,7 @@
 #define SEG7_H
 
 #include "../AVR/Bits.h"
-#include "../AVR/Timer1.h"
+#include "../AVR/Timer0.h"
 #include <string.h>
 #include <stdlib.h>
 
@@ -137,9 +137,9 @@ public:
 
 	static void auto_refresh()
 	{
-		timer1_t::prescale(timer1_t::prescale_1);
-		timer1_t::isr(refresh);
-		timer1_t::enable();
+		timer0_t::prescale(timer0_t::prescale_256);
+		timer0_t::isr(refresh);
+		timer0_t::enable();
 		sei();
 	}
 
