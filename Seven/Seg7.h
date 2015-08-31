@@ -2,6 +2,7 @@
 #define SEG7_H
 
 #include "../AVR/Bits.h"
+#include "../AVR/Timer1.h"
 #include <string.h>
 #include <stdlib.h>
 
@@ -89,9 +90,6 @@ public:
 		write_bits<DIGITS>(~0);
 		setup_bits<SEGMENTS>();
 		write_bits<SEGMENTS>(~0);
-
-		for (uint8_t c = 0; c < nchars; ++c)
-			s_buf[c] = ' ';
 	}
 
 	static void write(const char *s)
@@ -135,6 +133,14 @@ public:
 
 		if (++k >= nchars)
 			k = 0;
+	}
+
+	static void auto_refresh()
+	{
+		timer1_t::prescale(timer1_t::prescale_1);
+		timer1_t::isr(refresh);
+		timer1_t::enable();
+		sei();
 	}
 
 private:

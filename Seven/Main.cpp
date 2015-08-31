@@ -23,6 +23,7 @@ typedef seg7_t<digit_t, segment_t> seg7;
 void setup()
 {
 	seg7::setup();
+	seg7::auto_refresh();
 }
 
 void loop()
@@ -41,7 +42,7 @@ void loop()
 		seg7::write(i++);
 	}
 
-	seg7::refresh();
+//	seg7::refresh();
 
 	delay_ms(1);
 }
