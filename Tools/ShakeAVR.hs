@@ -1,39 +1,13 @@
 import Development.Shake
 import Development.Shake.Command
 import Development.Shake.FilePath
+import Development.Shake.Config
 import Development.Shake.Util
-import Data.Char (toLower)
-
-data MCU = Atmega328 | Atmega328p | Atmega32u4 | Attiny85 deriving Show
-data Board = BB328 | BB85 | DB328 | DB328p | Leonardo deriving Show
-data Programmer = STK500v1 | AVR109 | AvrIspMk2 deriving Show
-
-board = DB328p
-
-mcu = case board of
-    BB85     -> Attiny85
-    BB328    -> Atmega328p
-    DB328    -> Atmega328
-    DB328p   -> Atmega328p
-    Leonardo -> Atmega32u4
-
-programmer = case board of
-    BB85     -> AvrIspMk2
-    DB328     -> AvrIspMk2
-    DB328p   -> AvrIspMk2
-    BB328    -> STK500v1
-    Leonardo -> AVR109
-
-freq mcu = case mcu of
-    Atmega328 -> 16000000
-    Atmega328p -> 16000000
-    Atmega32u4 -> 16000000
-    Attiny85 -> 8000000
+import Data.Maybe (fromMaybe)
 
 avrgcc = "avr-g++"
 avrcopy = "avr-objcopy"
 avrdump = "avr-objdump"
-avrdude = "avrdude"
 atprogram = "atprogram"
 
 ccflags =
@@ -47,14 +21,11 @@ ccflags =
     , "-fdata-sections"
     , "-fno-threadsafe-statics"
     , "-MMD"
-    , "-mmcu=" ++ showLower mcu
-    , "-DF_CPU=" ++ show (freq mcu) ++"L"
     ]
 
 ldflags =
     [ "-Os"
     , "-Wl,--gc-sections"
-    , "-mmcu=" ++ showLower mcu
     ]
 
 copyflags =
@@ -62,19 +33,10 @@ copyflags =
     , "-R.eeprom"
     ]
 
-dudeflags =
-    [ "-C$AVRDUDE_CONF"
-    , "-P/dev/cu.usbmodem1d11"
-    , "-v"
-    , "-c" ++ showLower programmer
-    , "-p" ++ showLower mcu
-    ] ++ case programmer of
-        STK500v1   -> [ "-b19200", "-i25", "-u" ]
-        AVR109     -> [ "-b57600", "-D" ]
-        AvrIspMk2  -> [ "-Pusb" ]
-
 main :: IO ()
 main = shakeArgs shakeOptions{ shakeFiles = buildDir } $ do
+    usingConfigFile "build.mk"
+
     want [ buildDir </> "image" <.> "hex", buildDir </> "image" <.> "s" ]
 
     phony "clean" $ do
@@ -83,9 +45,10 @@ main = shakeArgs shakeOptions{ shakeFiles = buildDir } $ do
 
     buildDir </> "image" <.> "elf" %> \out -> do
         cs <- getDirectoryFiles "" [ "//*.c", "//*.cpp" ]
+        mcu <- getMCU
         let os = [ buildDir </> c -<.> "o" | c <- cs ]
         need os
-        cmd avrgcc ldflags "-o" [ out ] os
+        cmd avrgcc ldflags ("-mmcu=" ++ mcu) "-o" [ out ] os
 
     buildDir </> "image" <.> "hex" %> \out -> do
         let elf = out -<.> ".elf"
@@ -101,20 +64,25 @@ main = shakeArgs shakeOptions{ shakeFiles = buildDir } $ do
     buildDir </> "//*.o" %> \out -> do
         let c = dropDirectory1 $ out -<.> "cpp"
             m = out -<.> "m"
-        () <- cmd avrgcc ccflags [ c ] "-o" [ out ] "-MMD -MF" [ m ]
+        mcu <- getMCU
+        freq <- fmap (fromMaybe "16000000") $ getConfig "F_CPU"
+        putNormal $ "MCU=" ++ mcu ++ ", F_CPU=" ++ freq
+        () <- cmd avrgcc ccflags ("-mmcu=" ++ mcu) ("-DF_CPU=" ++ freq ++ "L")
+                         [ c ] "-o" [ out ] "-MMD -MF" [ m ]
         needMakefileDependencies m
 
     phony "upload" $ do
         let hex = buildDir </> "image" <.> "hex"
         need [ hex ]
---        cmd avrdude dudeflags ("-Uflash:w:" ++ hex ++ ":i")
-        cmd atprogram [ "-t", showLower programmer ]
-                      [ "-d", showLower mcu ]
+        mcu <- getMCU
+        programmer <- fmap (fromMaybe "avrispmk2") $ getConfig "PROGRAMMER"
+        putNormal $ "PROGRAMMER=" ++ programmer
+        cmd atprogram [ "-t", programmer ]
+                      [ "-d", mcu ]
                       [ "-i", "isp" ]
                       [ "program", "-c", "--verify", "-f", hex ]
 
 buildDir = "_build"
 
-showLower :: (Show a) => a -> [Char]
-showLower = map toLower . show
+getMCU = fmap (fromMaybe "atmega328p") $ getConfig "MCU"
 
