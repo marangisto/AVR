@@ -1,8 +1,8 @@
 #ifndef SEG7_H
 #define SEG7_H
 
-#include "../AVR/Bits.h"
-#include "../AVR/Timer0.h"
+#include "Bits.h"
+#include "Timer0.h"
 #include <string.h>
 #include <stdlib.h>
 
