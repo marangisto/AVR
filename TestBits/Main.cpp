@@ -1,5 +1,5 @@
-#include "../AVR/Bits.h"
-#include "../AVR/Delay.h"
+#include <AVR/Bits.h>
+#include <AVR/Delay.h>
 
 typedef pin_t<PD, 0> A;
 typedef pin_t<PD, 1> B;

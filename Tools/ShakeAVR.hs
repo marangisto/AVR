@@ -21,6 +21,7 @@ ccflags =
     , "-fdata-sections"
     , "-fno-threadsafe-statics"
     , "-MMD"
+    , "-I.."
     ]
 
 ldflags =

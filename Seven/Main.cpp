@@ -1,6 +1,6 @@
-#include "../AVR/Bits.h"
-#include "../AVR/Delay.h"
-#include "../AVR/Seg7.h"
+#include <AVR/Bits.h>
+#include <AVR/Delay.h>
+#include <AVR/Seg7.h>
 
 typedef pin_t<PD, 3> D0;
 typedef pin_t<PC, 2> D1;
