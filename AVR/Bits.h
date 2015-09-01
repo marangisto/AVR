@@ -1,5 +1,4 @@
-#ifndef BITS_H
-#define BITS_H
+#pragma once
 
 #include "Pins.h"
 
@@ -118,6 +117,4 @@ static void setup_bits()
 	write_bits_impl<PD, BITS, map_bits_impl<PD, BITS>::mask>::write_bits(DDRD, 0xff);
 //	write_bits_impl<PE, BITS, map_bits_impl<PE, BITS>::mask>::write_bits(DDRE, 0xff);
 }
-
-#endif
 

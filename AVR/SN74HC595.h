@@ -1,5 +1,4 @@
-#ifndef SN75HC595_H
-#define SN75HC595_H
+#pragma once
 
 #include "../AVR/Pins.h"
 
@@ -54,6 +53,4 @@ struct sn74hc595_t
 		set<LT>();
 	}
 };
-
-#endif // SN75HC595_H
 

@@ -1,5 +1,4 @@
-#ifndef TRAITS_H
-#define TRAITS_H
+#pragma once
 
 // coz of missing <type_traits> on avr-g++?
 
@@ -23,6 +22,4 @@ namespace std
 	template<class T>
 	struct is_same<T, T> : true_type {};
 }
-
-#endif // TRAITS_H
 

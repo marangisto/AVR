@@ -1,5 +1,4 @@
-#ifndef TIMER1_H
-#define TIMER1_H
+#pragma once
 
 #include <avr/interrupt.h>
 
@@ -65,6 +64,4 @@ ISR(TIMER1_OVF_vect)
 {
 	timer1_t::g_isr();
 }
-
-#endif // TIMER1_H
 

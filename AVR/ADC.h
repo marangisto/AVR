@@ -1,5 +1,4 @@
-#ifndef ADC_H
-#define ADC_H
+#pragma once
 
 enum ref_source_t
 #if defined(__AVR_ATtiny85__)
@@ -58,6 +57,4 @@ struct adc
 		return adc::read<analog_input_t<15, ref_source_1_1>>() - 273;
 	}
 };
-
-#endif // ADC_H
 

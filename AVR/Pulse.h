@@ -1,5 +1,4 @@
-#ifndef PULSE_H
-#define PULSE_H
+#pragma once
 
 #include "Pins.h"
 #include "Delay.h"
@@ -24,6 +23,4 @@ uint32_t pulse_width(uint32_t timeout_us)
 
     return (w * 17 + 16) / clocks_per_us;
 }
-
-#endif PULSE_H
 

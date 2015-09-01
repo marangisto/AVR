@@ -1,5 +1,4 @@
-#ifndef LCD1602A_H
-#define LCD1602A_H
+#pragma once
 
 #include "Pins.h"
 #include "Delay.h"
@@ -125,6 +124,4 @@ private:
 
 template<class DT, class CK, class LT>
 char lcd1602a_t<DT, CK, LT>::buf[33];
-
-#endif // LCD1602A_H
 

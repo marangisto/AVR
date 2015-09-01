@@ -1,5 +1,4 @@
-#ifndef PINS_H
-#define PINS_H
+#pragma once
 
 #include <avr/io.h>
 #include "Traits.h"
@@ -186,6 +185,4 @@ static inline void read(bool& b0, bool& b1, bool& b2, bool& b3)
 	b2 = (x & T2::mask) != 0;
 	b3 = (x & T3::mask) != 0;
 }
-
-#endif // PINS_H
 

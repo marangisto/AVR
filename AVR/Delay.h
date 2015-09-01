@@ -1,5 +1,4 @@
-#ifndef DELAY_H
-#define DELAY_H
+#pragma once
 
 #include <util/delay.h>
 
@@ -38,6 +37,4 @@ static inline void delay_us(uint16_t t)
 }
 
 static const uint32_t clocks_per_us = F_CPU / 1000000L;
-
-#endif DELAY_H
 

@@ -1,5 +1,4 @@
-#ifndef SEG7_H
-#define SEG7_H
+#pragma once
 
 #include "Bits.h"
 #include "Timer0.h"
@@ -154,6 +153,4 @@ char seg7_t<DIGITS, SEGMENTS>::s_buf[33];
 
 template<class DIGITS, class SEGMENTS>
 uint8_t seg7_t<DIGITS, SEGMENTS>::s_enc[seg7_t<DIGITS, SEGMENTS>::nchars];
-
-#endif // SEG7_H
 
