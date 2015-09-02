@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Bits.h"
-#include "Timer0.h"
+#include "Timer.h"
 #include <string.h>
 #include <stdlib.h>
 
@@ -136,9 +136,11 @@ public:
 
 	static void auto_refresh()
 	{
-		timer0_t::prescale(timer0_t::prescale_256);
-		timer0_t::isr(refresh);
-		timer0_t::enable();
+		typedef timer_t<0> timer;
+
+		timer::prescale(timer::prescale_256);
+		timer::isr(refresh);
+		timer::enable();
 		sei();
 	}
 

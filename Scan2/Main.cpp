@@ -1,6 +1,5 @@
 #include "../AVR/Pins.h"
 #include "../AVR/Delay.h"
-#include "../AVR/Timer1.h"
 #include "../AVR/LCD1602A.h"
 #include "Buttons.h"
 #include "Editor.h"

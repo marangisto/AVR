@@ -2,7 +2,7 @@
 #define ACCEL_H
 
 #include "../AVR/Delay.h"
-#include "../AVR/Timer1.h"
+#include "../AVR/Timer.h"
 #include "A4988.h"
 
 template<class A4988, class LIML, class LIMR>
@@ -12,7 +12,7 @@ public:
 	static void setup()
 	{
 		A4988::setup();
-		timer1_t::prescale(timer1_t::prescale_8);
+		timer::prescale(timer::prescale_8);
 	}
 
 	static void run(bool dir, uint16_t n, uint16_t c, micro_step_t::e ms)
@@ -27,14 +27,14 @@ public:
 		A4988::reset();
 		A4988::micro_step(ms);
 		A4988::enable();
-		timer1_t::isr(accel_isr);
-		timer1_t::enable();
+		timer::isr(accel_isr);
+		timer::enable();
 		sei();
 		while (inflight)
 			delay_ms(1);
 		A4988::disable();
-		timer1_t::disable();
-		timer1_t::isr(timer1_t::dummy_isr);
+		timer::disable();
+		timer::isr(timer::dummy_isr);
 	}
 
 	static uint16_t min_step() { return min_t; }
@@ -85,6 +85,8 @@ public:
 	}
 
 private:
+	typedef timer_t<1> timer;
+
 	static inline uint16_t eq12(uint16_t c, uint16_t n, bool acc)
 	{
     	uint16_t k = (c << 1) / ((n << 2) + 1);
@@ -102,7 +104,7 @@ private:
 			}
 
 			A4988::step();
-			timer1_t::counter() = 65535 - step_t;
+			timer::counter() = 65535 - step_t;
 
         	if (++step_i < n_accel)  // still time to accelerate
         	{

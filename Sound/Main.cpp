@@ -1,6 +1,6 @@
 #include "../AVR/Pins.h"
 #include "../AVR/Delay.h"
-#include "../AVR/Timer1.h"
+#include "../AVR/Timer.h"
 
 typedef pin_t<PC, 0> LED;
 typedef pin_t<PC, 1> AUDIO;
@@ -53,9 +53,9 @@ public:
 	{
 		digital_out<LED>();
 		digital_out<AUDIO>();
-		timer1_t::prescale(timer1_t::prescale_8);
-		timer1_t::isr(isr);
-		timer1_t::enable();
+		timer::prescale(timer::prescale_8);
+		timer::isr(isr);
+		timer::enable();
 		period(2000);
 		sei();
 	}
@@ -81,9 +81,11 @@ public:
 	}
 
 private:
+	typedef timer_t<1> timer;
+
 	static void isr()
 	{
-		timer1_t::counter() = s_count;
+		timer::counter() = s_count;
 		if (s_on)
 			toggle<AUDIO>();
 	}
