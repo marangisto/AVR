@@ -62,7 +62,6 @@ void loop()
 //	static const uint8_t sla = 0x68;		// DS1307 address
 	static const uint8_t sla = 0xA0;		// 24C32 address
 	static uint8_t i = 0;
-	static uint8_t rw = 0;
 
 	seg7::write("go");
 
@@ -71,27 +70,13 @@ void loop()
 	uint8_t sts = 0;
 
 	TWCR = (1 << TWINT) | (1 << TWSTA) | (1 << TWEN);		// start condition
+	if ((sts = twi_wait_int(0)) != TW_START)
+		goto err;
 
-	switch (sts = twi_wait_int(0))
-	{
-		case TW_START: break;
-		default: goto err;
-	}
-
-	rw = 0;	// 0 = write, 1 = read
-
-	TWDR = sla | rw;						// SLA+R/W
-
+	TWDR = sla | 0;						// SLA+R/W
 	TWCR = (1 << TWINT) | (1 << TWEN);		// write
-
-	switch (sts = twi_wait_int(1)) // assert TWSR ==
-	{
-		case TW_MT_SLA_ACK: break;
-//		case TW_MR_SLA_ACK: break;
-//		case TW_MT_SLA_NACK: ;
-//		case TW_MR_SLA_NACK: ;
-		default: goto err;
-	}
+	if ((sts = twi_wait_int(1)) != TW_MT_SLA_ACK)
+		goto err;
 
 	TWDR = 0;								// address byte 1
 	TWCR = (1 << TWINT) | (1 << TWEN);		// write
