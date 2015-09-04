@@ -104,22 +104,22 @@ public:
 
 	static void write(int x, int radix = 10)
 	{
-		write(itoa(x, s_buf, 10));
+		write(itoa(x, s_buf, radix));
 	}
 
 	static void write(unsigned x, int radix = 10)
 	{
-		write(utoa(x, s_buf, 10));
+		write(utoa(x, s_buf, radix));
 	}
 
 	static void write(long x, int radix = 10)
 	{
-		write(ltoa(x, s_buf, 10));
+		write(ltoa(x, s_buf, radix));
 	}
 
 	static void write(unsigned long x, int radix = 10)
 	{
-		write(ultoa(x, s_buf, 10));
+		write(ultoa(x, s_buf, radix));
 	}
 
 	static void refresh()
