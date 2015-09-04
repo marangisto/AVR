@@ -2,6 +2,7 @@
 #include <AVR/Bits.h>
 #include <AVR/Delay.h>
 #include <AVR/Seg7.h>
+#include <util/twi.h>
 
 typedef pin_t<PD, 3> D0;
 typedef pin_t<PC, 2> D1;
@@ -37,42 +38,97 @@ void setup()
 	TWCR = (1 << TWEN); // (1 << TWIE)		// FIXME: use interrupts too
 }
 
+
+// wait for TWINT and return TWSR status
+
+static inline uint8_t twi_wait_int(uint8_t e)
+{
+	uint16_t i = 0;
+
+	while ((TWCR & (1 << TWINT)) == 0)
+		if (i++ > 10000)
+			return 0xE0 | e;	// time-out
+	return TWSR & 0xf8;
+}
+
+static void trace(uint8_t i)
+{
+	seg7::write(i);
+	delay_ms(1000);
+}
+
 void loop()
 {
-	static const uint8_t sla = 0x68;		// DS1307 address
+//	static const uint8_t sla = 0x68;		// DS1307 address
+	static const uint8_t sla = 0xA0;		// 24C32 address
 	static uint8_t i = 0;
 	static uint8_t rw = 0;
 
-//	rw = rw ? 0 : 1;
+	seg7::write("go");
 
-	delay_ms(1);
+	delay_ms(50);
 
-	TWCR |= (1 << TWSTA);					// start condition
+	uint8_t sts = 0;
 
-	while ((TWCR & (1 << TWINT)) == 0)
-		/* wait */ ;
+	TWCR = (1 << TWINT) | (1 << TWSTA) | (1 << TWEN);		// start condition
 
-	// assert TWSR == 0x08 - start transmitted
+	switch (sts = twi_wait_int(0))
+	{
+		case TW_START: break;
+		default: goto err;
+	}
 
-	rw = 0;	// write
+	rw = 0;	// 0 = write, 1 = read
 
-	TWDR = (sla << 1) | rw;					// SLA+R/W
+	TWDR = sla | rw;						// SLA+R/W
 
-	TWCR |= (1 << TWINT);					// write
+	TWCR = (1 << TWINT) | (1 << TWEN);		// write
 
-	while ((TWCR & (1 << TWINT)) == 0)
-		/* wait */ ;
+	switch (sts = twi_wait_int(1)) // assert TWSR ==
+	{
+		case TW_MT_SLA_ACK: break;
+//		case TW_MR_SLA_ACK: break;
+//		case TW_MT_SLA_NACK: ;
+//		case TW_MR_SLA_NACK: ;
+		default: goto err;
+	}
 
-	// assert TWSR ==
-	// 		0x20 - nack on SLA+W
-	//      0x48 - nack on SLA+R
+	TWDR = 0;								// address byte 1
+	TWCR = (1 << TWINT) | (1 << TWEN);		// write
+	if ((sts = twi_wait_int(2)) != TW_MT_DATA_ACK)
+		goto err;
 
-	seg7::write(TWSR, 16);
+	TWDR = i++;								// address byte 0
+	TWCR = (1 << TWINT) | (1 << TWEN);		// write
+	if ((sts = twi_wait_int(3)) != TW_MT_DATA_ACK)
+		goto err;
 
-	TWCR &= ~(1 << TWSTA);					// clear start condition (otherwise we get repeat start)
-	TWCR |= (1 << TWSTO);					// stop condition
+	TWDR = ~i;								// data byte
+	TWCR = (1 << TWINT) | (1 << TWEN);		// write
+	if ((sts = twi_wait_int(4)) != TW_MT_DATA_ACK)
+		goto err;
 
-	delay_ms(250);
+	TWCR = (1 << TWINT) | (1 << TWSTO) | (1 << TWEN);	// stop condition
+
+	seg7::write("done");
+
+	delay_ms(50);
+
+	return;
+
+err:
+	for (uint8_t i = 0; i < 5; ++i)
+	{
+		seg7::write(sts | 0xE000, 16);
+		delay_ms(250);
+		seg7::write("");
+		delay_ms(100);
+	}
+
+	// reset TWI subsystem
+
+	TWCR = 0;
+	TWCR = (1 << TWEN); // (1 << TWIE)		// FIXME: use interrupts too
 }
 
 int main()
