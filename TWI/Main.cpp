@@ -63,28 +63,63 @@ void loop()
 	static const uint8_t sla = 0xA0;		// 24C32 address
 	static uint8_t i = 0;
 
-	seg7::write("go");
+//	seg7::write("go");
 
-	delay_ms(50);
+	delay_ms(100);
 
 	uint8_t sts = 0;
 
 	TWCR = (1 << TWINT) | (1 << TWSTA) | (1 << TWEN);		// start condition
 	if ((sts = twi_wait_int(0)) != TW_START)
 		goto err;
+#if 1
 
-	TWDR = sla | 0;						// SLA+R/W
-	TWCR = (1 << TWINT) | (1 << TWEN);		// write
+	TWDR = sla | 0;							// SLA+W
+	TWCR = (1 << TWINT) | (1 << TWEN);		// send
 	if ((sts = twi_wait_int(1)) != TW_MT_SLA_ACK)
 		goto err;
 
 	TWDR = 0;								// address byte 1
-	TWCR = (1 << TWINT) | (1 << TWEN);		// write
+	TWCR = (1 << TWINT) | (1 << TWEN);		// send
 	if ((sts = twi_wait_int(2)) != TW_MT_DATA_ACK)
 		goto err;
 
 	TWDR = i++;								// address byte 0
-	TWCR = (1 << TWINT) | (1 << TWEN);		// write
+	TWCR = (1 << TWINT) | (1 << TWEN);		// send
+	if ((sts = twi_wait_int(3)) != TW_MT_DATA_ACK)
+		goto err;
+
+	TWCR = (1 << TWINT) | (1 << TWSTA) | (1 << TWEN);		// start condition
+	if ((sts = twi_wait_int(4)) != TW_REP_START)
+		goto err;
+
+
+	TWDR = sla | 1;							// SLA+R
+	TWCR = (1 << TWINT) | (1 << TWEN);		// send
+	if ((sts = twi_wait_int(5)) != TW_MR_SLA_ACK)
+		goto err;
+
+	TWCR = (1 << TWINT) | (1 << TWEN);		// read
+	if ((sts = twi_wait_int(6)) != TW_MR_DATA_NACK)
+		goto err;
+
+	seg7::write(TWDR);
+
+#endif
+
+#if 0
+	TWDR = sla | 0;							// SLA+W
+	TWCR = (1 << TWINT) | (1 << TWEN);		// send
+	if ((sts = twi_wait_int(1)) != TW_MT_SLA_ACK)
+		goto err;
+
+	TWDR = 0;								// address byte 1
+	TWCR = (1 << TWINT) | (1 << TWEN);		// send
+	if ((sts = twi_wait_int(2)) != TW_MT_DATA_ACK)
+		goto err;
+
+	TWDR = i++;								// address byte 0
+	TWCR = (1 << TWINT) | (1 << TWEN);		// send
 	if ((sts = twi_wait_int(3)) != TW_MT_DATA_ACK)
 		goto err;
 
@@ -93,9 +128,11 @@ void loop()
 	if ((sts = twi_wait_int(4)) != TW_MT_DATA_ACK)
 		goto err;
 
+#endif
+
 	TWCR = (1 << TWINT) | (1 << TWSTO) | (1 << TWEN);	// stop condition
 
-	seg7::write("done");
+//	seg7::write("done");
 
 	delay_ms(50);
 
