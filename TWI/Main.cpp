@@ -31,7 +31,7 @@ void setup()
 
 	delay_ms(250);
 
-	uint32_t twi_freq = 50000;
+	uint32_t twi_freq = 100000;
 
 	TWSR = 0;								// set prescaler to 1
 	TWBR = ((F_CPU / twi_freq) - 16) / 2;	// assuming prescaler 1
@@ -89,7 +89,7 @@ void loop()
 	if ((sts = twi_wait_int(3)) != TW_MT_DATA_ACK)
 		goto err;
 
-	TWCR = (1 << TWINT) | (1 << TWSTA) | (1 << TWEN);		// start condition
+	TWCR = (1 << TWINT) | (1 << TWSTA) | (1 << TWEN);		// repeated start condition
 	if ((sts = twi_wait_int(4)) != TW_REP_START)
 		goto err;
 
