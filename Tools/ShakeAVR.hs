@@ -105,16 +105,19 @@ getMCU = do
     mcu <- getConfig "MCU"
     board <- getConfig "BOARD"
     return $ fromMaybe (error "don't know ow to determine MCU") $ mcu <|> join (fmap f board)
-    where f = fmap (\(x, _, _) -> x) . flip lookup arduinos
+    where f = fmap fst . flip lookup boards
 
-getF_CPU = fmap (fromMaybe "16000000") $ getConfig "F_CPU"
+getF_CPU = do
+    freq <- getConfig "F_CPU"
+    board <- getConfig "BOARD"
+    return $ fromMaybe "16000000" $ freq <|> join (fmap f board)
+    where f = fmap snd . flip lookup boards
 
 getProgrammer = fmap (fromMaybe "avrispmk2") $ getConfig "PROGRAMMER"
 
-arduinos :: [(String, (String, String, String))]
-arduinos =
-    [ ("uno",         ("atmega328p",   "arduino",  "16000000"))
-    , ("leonardo",    ("atmega32u4",   "avr109",   "16000000"))
-    , ("trinket-pro", ("atmega328p",   "usbtiny",  "16000000"))
+boards =
+    [ ("uno",         ("atmega328p",   "16000000"))
+    , ("leonardo",    ("atmega32u4",   "16000000"))
+    , ("trinket-pro", ("atmega328p",   "16000000"))
     ]
 
