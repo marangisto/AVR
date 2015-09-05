@@ -5,12 +5,6 @@ import Development.Shake.Config
 import Development.Shake.Util
 import Data.Maybe (fromMaybe)
 
-avrgcc = "avr-g++"
-avrcopy = "avr-objcopy"
-avrdump = "avr-objdump"
-atprogram = "atprogram"
-avrdude = "avrdude"
-
 ccflags =
     [ "-c"
     , "-g"
@@ -30,11 +24,6 @@ ldflags =
     , "-Wl,--gc-sections"
     ]
 
-copyflags =
-    [ "-Oihex"
-    , "-R.eeprom"
-    ]
-
 main :: IO ()
 main = shakeArgs shakeOptions{ shakeFiles = buildDir } $ do
     usingConfigFile "build.mk"
@@ -50,17 +39,17 @@ main = shakeArgs shakeOptions{ shakeFiles = buildDir } $ do
         mcu <- getMCU
         let os = [ buildDir </> c -<.> "o" | c <- cs ]
         need os
-        cmd avrgcc ldflags ("-mmcu=" ++ mcu) "-o" [ out ] os
+        cmd "avr-g++" ldflags ("-mmcu=" ++ mcu) "-o" [ out ] os
 
     buildDir </> "image" <.> "hex" %> \out -> do
         let elf = out -<.> ".elf"
         need [ elf ]
-        cmd avrcopy copyflags [ elf ] [ out ]
+        cmd "avr-objcopy" [ "-Oihex" , "-R.eeprom" ] [ elf ] [ out ]
 
     buildDir </> "image" <.> "s" %> \out -> do
         let elf = out -<.> ".elf"
         need [ elf ]
-        Stdout res <- cmd avrdump "-S" [ elf ]
+        Stdout res <- cmd "avr-objdump" "-S" [ elf ]
         writeFile' out res
 
     buildDir </> "//*.o" %> \out -> do
@@ -69,8 +58,9 @@ main = shakeArgs shakeOptions{ shakeFiles = buildDir } $ do
         mcu <- getMCU
         freq <- fmap (fromMaybe "16000000") $ getConfig "F_CPU"
         putNormal $ "MCU=" ++ mcu ++ ", F_CPU=" ++ freq
-        () <- cmd avrgcc ccflags ("-mmcu=" ++ mcu) ("-DF_CPU=" ++ freq ++ "L")
-                         [ c ] "-o" [ out ] "-MMD -MF" [ m ]
+        () <- cmd "avr-g++" ccflags
+            ("-mmcu=" ++ mcu) ("-DF_CPU=" ++ freq ++ "L")
+            [ c ] "-o" [ out ] "-MMD -MF" [ m ]
         needMakefileDependencies m
 
     phony "upload" $ do
@@ -79,16 +69,20 @@ main = shakeArgs shakeOptions{ shakeFiles = buildDir } $ do
         mcu <- getMCU
         programmer <- fmap (fromMaybe "avrispmk2") $ getConfig "PROGRAMMER"
         case programmer of
-            "avrispmk2" -> cmd atprogram
-                 [ "-t", programmer ]
-                 [ "-d", mcu ]
-                 [ "-i", "isp" ]
+            "avrispmk2" -> cmd "atprogram"
+                 [ "-t", programmer, "-d", mcu, "-i", "isp" ]
                  [ "program", "-c", "--verify", "-f", hex ]
             "arduino" -> do
                  port <- fmap (fromMaybe "COM3") $ getConfig "PORT"
-                 cmd avrdude
+                 cmd "avrdude"
                      [ "-c" ++ programmer, "-p" ++ mcu, "-P" ++ port ]
-                     [ "-b" ++ "115200", "-v", "-D" ]
+                     [ "-b" ++ "115200", "-D" ]
+                     ("-Uflash:w:" ++ hex ++ ":i")
+            "avr109" -> do
+                 port <- fmap (fromMaybe "COM4") $ getConfig "PORT"
+                 cmd "avrdude"
+                     [ "-c" ++ programmer, "-p" ++ mcu, "-P" ++ port ]
+                     [ "-b" ++ "57600", "-D" ]
                      ("-Uflash:w:" ++ hex ++ ":i")
 
 buildDir = "_build"
