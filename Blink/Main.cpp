@@ -1,7 +1,11 @@
 #include "../AVR/Pins.h"
 #include "../AVR/Delay.h"
 
-typedef pin_t<PB, 3> LED;
+#if defined(__AVR_ATmega32U4__)
+typedef pin_t<PC, 7> LED;			// leonardo
+#else
+typedef pin_t<PB, 5> LED;			// uno
+#endif
 
 void setup()
 {
@@ -11,7 +15,7 @@ void setup()
 void loop()
 {
 	toggle<LED>();
-	delay_ms(250);
+	delay_ms(50);
 }
 
 int main()

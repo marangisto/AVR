@@ -5,7 +5,9 @@ import Development.Shake.Config
 import Development.Shake.Util
 import Data.Maybe (fromMaybe)
 import System.Hardware.Serialport
+import Control.Applicative
 import Control.Concurrent
+import Control.Monad
 
 ccflags =
     [ "-c"
@@ -58,7 +60,7 @@ main = shakeArgs shakeOptions{ shakeFiles = buildDir } $ do
         let c = dropDirectory1 $ out -<.> "cpp"
             m = out -<.> "m"
         mcu <- getMCU
-        freq <- fmap (fromMaybe "16000000") $ getConfig "F_CPU"
+        freq <- getF_CPU
         putNormal $ "MCU=" ++ mcu ++ ", F_CPU=" ++ freq
         () <- cmd "avr-g++" ccflags
             ("-mmcu=" ++ mcu) ("-DF_CPU=" ++ freq ++ "L")
@@ -69,24 +71,23 @@ main = shakeArgs shakeOptions{ shakeFiles = buildDir } $ do
         let hex = buildDir </> "image" <.> "hex"
         need [ hex ]
         mcu <- getMCU
-        programmer <- fmap (fromMaybe "avrispmk2") $ getConfig "PROGRAMMER"
-        case programmer of
-            "avrispmk2" -> cmd "atprogram"
-                 [ "-t", programmer, "-d", mcu, "-i", "isp" ]
-                 [ "program", "-c", "--verify", "-f", hex ]
-            "arduino" -> do
-                 port <- fmap (fromMaybe "COM3") $ getConfig "PORT"
-                 cmd "avrdude"
-                     [ "-c" ++ programmer, "-p" ++ mcu, "-P" ++ port ]
-                     [ "-b" ++ "115200", "-D" ]
-                     ("-Uflash:w:" ++ hex ++ ":i")
-            "avr109" -> do
-                 port <- fmap (fromMaybe "COM3") $ getConfig "PORT"
-                 port' <- liftIO $ leonardoBootPort port
-                 cmd "avrdude"
-                     [ "-c" ++ programmer, "-p" ++ mcu, "-P" ++ port' ]
-                     [ "-b" ++ "57600", "-D" ]
-                     ("-Uflash:w:" ++ hex ++ ":i")
+        port <- fmap (fromMaybe "COM3") $ getConfig "PORT"
+        board <- getConfig "BOARD"
+        case board of
+            Nothing -> cmd "atprogram"
+                [ "-t", "avrispmk2", "-d", mcu, "-i", "isp" ]
+                [ "program", "-c", "--verify", "-f", hex ]
+            Just "uno" -> cmd "avrdude"
+                [ "-c" ++ "arduino", "-p" ++ mcu, "-P" ++ port ]
+                [ "-b" ++ "115200", "-D" ]
+                ("-Uflash:w:" ++ hex ++ ":i")
+            Just "leonardo" -> do
+                port <- liftIO $ leonardoBootPort port
+                cmd "avrdude"
+                    [ "-c" ++ "avr109", "-p" ++ mcu, "-P" ++ port ]
+                    [ "-b" ++ "57600", "-D" ]
+                    ("-Uflash:w:" ++ hex ++ ":i")
+            Just b -> error $ "don't know BOARD: " ++ b
 
 leonardoBootPort :: FilePath -> IO FilePath
 leonardoBootPort port = do
@@ -97,5 +98,19 @@ leonardoBootPort port = do
 
 buildDir = "_build"
 
-getMCU = fmap (fromMaybe "atmega328p") $ getConfig "MCU"
+getMCU = do
+    mcu <- getConfig "MCU"
+    board <- getConfig "BOARD"
+    return $ fromMaybe (error "don't know ow to determine MCU") $ mcu <|> join (fmap f board)
+    where f = fmap (\(x, _, _) -> x) . flip lookup arduinos
+
+getF_CPU = fmap (fromMaybe "16000000") $ getConfig "F_CPU"
+
+getProgrammer = fmap (fromMaybe "avrispmk2") $ getConfig "PROGRAMMER"
+
+arduinos :: [(String, (String, String, String))]
+arduinos =
+    [ ("uno",      ("atmega328p",   "arduino",  "16000000"))
+    , ("leonardo", ("atmega32u4",   "avr109",   "16000000"))
+    ]
 
