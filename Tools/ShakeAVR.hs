@@ -87,7 +87,10 @@ main = shakeArgs shakeOptions{ shakeFiles = buildDir } $ do
                     [ "-c" ++ "avr109", "-p" ++ mcu, "-P" ++ port ]
                     [ "-b" ++ "57600", "-D" ]
                     ("-Uflash:w:" ++ hex ++ ":i")
-            Just b -> error $ "don't know BOARD: " ++ b
+            Just "trinket-pro" -> cmd "avrdude"
+                [ "-c" ++ "usbtiny", "-p" ++ mcu, "-D" ]
+                ("-Uflash:w:" ++ hex ++ ":i")
+            Just b -> error $ "don't know how to program BOARD: " ++ b
 
 leonardoBootPort :: FilePath -> IO FilePath
 leonardoBootPort port = do
@@ -110,7 +113,8 @@ getProgrammer = fmap (fromMaybe "avrispmk2") $ getConfig "PROGRAMMER"
 
 arduinos :: [(String, (String, String, String))]
 arduinos =
-    [ ("uno",      ("atmega328p",   "arduino",  "16000000"))
-    , ("leonardo", ("atmega32u4",   "avr109",   "16000000"))
+    [ ("uno",         ("atmega328p",   "arduino",  "16000000"))
+    , ("leonardo",    ("atmega32u4",   "avr109",   "16000000"))
+    , ("trinket-pro", ("atmega328p",   "usbtiny",  "16000000"))
     ]
 

@@ -1,2 +1,1 @@
-BOARD=uno
-PORT=COM7
+BOARD=trinket-pro
