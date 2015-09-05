@@ -78,17 +78,18 @@ main = shakeArgs shakeOptions{ shakeFiles = buildDir } $ do
         need [ hex ]
         mcu <- getMCU
         programmer <- fmap (fromMaybe "avrispmk2") $ getConfig "PROGRAMMER"
-        putNormal $ "PROGRAMMER=" ++ programmer
         case programmer of
             "avrispmk2" -> cmd atprogram
                  [ "-t", programmer ]
                  [ "-d", mcu ]
                  [ "-i", "isp" ]
                  [ "program", "-c", "--verify", "-f", hex ]
-            "arduino" -> cmd avrdude
-                 [ "-c" ++ programmer, "-p" ++ mcu, "-P" ++ "COM7" ]
-                 [ "-b" ++ "115200", "-v", "-D" ]
-                 ("-Uflash:w:" ++ hex ++ ":i")
+            "arduino" -> do
+                 port <- fmap (fromMaybe "COM3") $ getConfig "PORT"
+                 cmd avrdude
+                     [ "-c" ++ programmer, "-p" ++ mcu, "-P" ++ port ]
+                     [ "-b" ++ "115200", "-v", "-D" ]
+                     ("-Uflash:w:" ++ hex ++ ":i")
 
 buildDir = "_build"
 
