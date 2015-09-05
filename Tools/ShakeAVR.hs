@@ -4,6 +4,8 @@ import Development.Shake.FilePath
 import Development.Shake.Config
 import Development.Shake.Util
 import Data.Maybe (fromMaybe)
+import System.Hardware.Serialport
+import Control.Concurrent
 
 ccflags =
     [ "-c"
@@ -79,11 +81,19 @@ main = shakeArgs shakeOptions{ shakeFiles = buildDir } $ do
                      [ "-b" ++ "115200", "-D" ]
                      ("-Uflash:w:" ++ hex ++ ":i")
             "avr109" -> do
-                 port <- fmap (fromMaybe "COM4") $ getConfig "PORT"
+                 port <- fmap (fromMaybe "COM3") $ getConfig "PORT"
+                 port' <- liftIO $ leonardoBootPort port
                  cmd "avrdude"
-                     [ "-c" ++ programmer, "-p" ++ mcu, "-P" ++ port ]
+                     [ "-c" ++ programmer, "-p" ++ mcu, "-P" ++ port' ]
                      [ "-b" ++ "57600", "-D" ]
                      ("-Uflash:w:" ++ hex ++ ":i")
+
+leonardoBootPort :: FilePath -> IO FilePath
+leonardoBootPort port = do
+    putStrLn $ "resetting " ++ port
+    closeSerial =<<  openSerial port defaultSerialSettings { commSpeed = CS1200 }
+    threadDelay 4000000 -- FIXME: wait for device change
+    return "COM4" -- FIXME: look at device changes
 
 buildDir = "_build"
 
