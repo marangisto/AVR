@@ -9,6 +9,7 @@ avrgcc = "avr-g++"
 avrcopy = "avr-objcopy"
 avrdump = "avr-objdump"
 atprogram = "atprogram"
+avrdude = "avrdude"
 
 ccflags =
     [ "-c"
@@ -78,10 +79,16 @@ main = shakeArgs shakeOptions{ shakeFiles = buildDir } $ do
         mcu <- getMCU
         programmer <- fmap (fromMaybe "avrispmk2") $ getConfig "PROGRAMMER"
         putNormal $ "PROGRAMMER=" ++ programmer
-        cmd atprogram [ "-t", programmer ]
-                      [ "-d", mcu ]
-                      [ "-i", "isp" ]
-                      [ "program", "-c", "--verify", "-f", hex ]
+        case programmer of
+            "avrispmk2" -> cmd atprogram
+                 [ "-t", programmer ]
+                 [ "-d", mcu ]
+                 [ "-i", "isp" ]
+                 [ "program", "-c", "--verify", "-f", hex ]
+            "arduino" -> cmd avrdude
+                 [ "-c" ++ programmer, "-p" ++ mcu, "-P" ++ "COM7" ]
+                 [ "-b" ++ "115200", "-v", "-D" ]
+                 ("-Uflash:w:" ++ hex ++ ":i")
 
 buildDir = "_build"
 
