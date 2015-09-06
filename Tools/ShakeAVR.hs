@@ -61,9 +61,9 @@ main = shakeArgs shakeOptions{ shakeFiles = buildDir } $ do
             m = out -<.> "m"
         mcu <- getMCU
         freq <- getF_CPU
-        putNormal $ "MCU=" ++ mcu ++ ", F_CPU=" ++ freq
+        putNormal $ "MCU=" ++ mcu ++ ", F_CPU=" ++ show freq
         () <- cmd "avr-g++" ccflags
-            ("-mmcu=" ++ mcu) ("-DF_CPU=" ++ freq ++ "L")
+            ("-mmcu=" ++ mcu) ("-DF_CPU=" ++ show (round freq) ++ "L")
             [ c ] "-o" [ out ] "-MMD -MF" [ m ]
         needMakefileDependencies m
 
@@ -110,14 +110,14 @@ getMCU = do
 getF_CPU = do
     freq <- getConfig "F_CPU"
     board <- getConfig "BOARD"
-    return $ fromMaybe "16000000" $ freq <|> join (fmap f board)
+    return $ fromMaybe 16e6 $ fmap read freq <|> join (fmap f board)
     where f = fmap snd . flip lookup boards
 
 getProgrammer = fmap (fromMaybe "avrispmk2") $ getConfig "PROGRAMMER"
 
 boards =
-    [ ("uno",         ("atmega328p",   "16000000"))
-    , ("leonardo",    ("atmega32u4",   "16000000"))
-    , ("trinket-pro", ("atmega328p",   "16000000"))
+    [ ("uno",         ("atmega328p",   16e6))
+    , ("leonardo",    ("atmega32u4",   16e6))
+    , ("trinket-pro", ("atmega328p",   16e6))
     ]
 
