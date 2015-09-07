@@ -22,6 +22,110 @@ typedef bits_t<D0, D1, D2, D3> digit_t;
 typedef bits_t<A, B, C, D, E, F, G, H> segment_t;
 typedef seg7_t<digit_t, segment_t> seg7;
 
+class twi_t
+{
+public:
+	static bool write_read(uint8_t addr, volatile const uint8_t *src, uint8_t nw, volatile uint8_t *dst, uint8_t nr)
+	{
+		if (s_busy)
+			return false;
+
+		s_busy = true;
+		s_addr = addr;
+		s_nw = nw;
+		s_nr = nr;
+		s_src = src;
+		s_dst = dst;
+
+		TWCR = (1 << TWINT) | (1 << TWSTA) | (1 << TWEN) | (1 << TWIE);		// start condition
+	}
+
+	static void wait_idle()
+	{
+		while (s_busy)
+			delay_us(10);
+	}
+
+	static void isr()
+	{
+		switch (TWSR & 0xf8)
+		{
+		case TW_START:
+			TWDR = s_addr | (s_nw ? 0 : 1);			// SLA+R/W
+			TWCR = (1 << TWINT) | (1 << TWEN) | (1 << TWIE);		// send
+			break;
+		case TW_MT_SLA_ACK:							// from SLA+W
+			TWDR = *s_src++;						// data
+			TWCR = (1 << TWINT) | (1 << TWEN) | (1 << TWIE);		// send
+			break;
+		case TW_MT_DATA_ACK:										// from data write
+			if (--s_nw)
+			{
+				TWDR = *s_src++;									// data
+				TWCR = (1 << TWINT) | (1 << TWEN) | (1 << TWIE);	// send
+			}
+			else if (s_nr)
+				TWCR = (1 << TWINT) | (1 << TWSTA) | (1 << TWEN) | (1 << TWIE);	// repeated start condition
+			else
+			{
+				TWCR = (1 << TWINT) | (1 << TWSTO) | (1 << TWEN) | (1 << TWIE);	// stop condition
+				s_busy = false;
+			}
+			break;
+		case TW_REP_START:
+			TWDR = s_addr | 1;						// SLA+R
+			TWCR = (1 << TWINT) | (1 << TWEN) | (1 << TWIE);		// send
+			break;
+		case TW_MR_SLA_ACK:
+			TWCR = (1 << TWINT) | (1 << TWEN) | (1 << TWIE);		// read
+			break;
+		case TW_MR_DATA_NACK:
+			*s_dst++ = TWDR;
+			if (--s_nr)
+				TWCR = (1 << TWINT) | (1 << TWEN) | (1 << TWIE);	// read
+			else
+			{
+				TWCR = (1 << TWINT) | (1 << TWSTO) | (1 << TWEN);	// stop condition
+				s_busy = false;
+			}
+			break;
+		default:
+			for (uint8_t i = 0; i < 5; ++i)
+			{
+				seg7::write(TWSR & 0xf8);
+				delay_ms(250);
+				seg7::write("");
+				delay_ms(100);
+			}
+
+			// reset TWI subsystem
+
+			TWCR = 0;
+			s_busy = false;
+		}
+	}
+
+private:
+	static volatile bool			s_busy;
+	static volatile uint8_t			s_addr;
+	static volatile uint8_t			s_nw;
+	static volatile uint8_t			s_nr;
+	static volatile const uint8_t	*s_src;
+	static volatile uint8_t			*s_dst;
+};
+
+volatile bool twi_t::s_busy = false;
+volatile uint8_t twi_t::s_addr;
+volatile uint8_t twi_t::s_nw;
+volatile uint8_t twi_t::s_nr;
+volatile const uint8_t *twi_t::s_src;
+volatile uint8_t *twi_t::s_dst;
+
+ISR(TWI_vect)
+{
+	twi_t::isr();
+}
+
 void setup()
 {
 	seg7::setup();
@@ -57,15 +161,31 @@ static void trace(uint8_t i)
 	delay_ms(1000);
 }
 
+static void twi_write(uint8_t addr, uint8_t d0)
+{
+	// check twi not busy
+	// store the address
+	// place bytes in buffer
+	// start sequence
+}
+
+
 void loop()
 {
 //	static const uint8_t sla = 0x68;		// DS1307 address
 	static const uint8_t sla = 0xA0;		// 24C32 address
 	static uint8_t i = 0;
 
-//	seg7::write("go");
+	uint8_t adr[2] = { 0, i++ }, x;
 
-	delay_ms(100);
+	twi_t::write_read(sla, adr, sizeof(adr), &x, 1);
+
+	twi_t::wait_idle();
+
+	seg7::write(x);
+
+	delay_ms(1);
+/*
 
 	uint8_t sts = 0;
 
@@ -151,6 +271,7 @@ err:
 
 	TWCR = 0;
 	TWCR = (1 << TWEN); // (1 << TWIE)		// FIXME: use interrupts too
+*/
 }
 
 int main()
