@@ -93,18 +93,19 @@ public:
 			TWDR = s_addr | 1;										// SLA+R
 			TWCR = TWINT_TWEN_TWIE;									// send
 			break;
+		case TW_MR_DATA_ACK:
+			*s_dst++ = TWDR;
+			// fall through, same code as SLA_ACK
 		case TW_MR_SLA_ACK:
-			TWCR = TWINT_TWEN_TWIE;									// read
+			if (--s_nr)
+				TWCR = TWINT_TWEN_TWIE | (1 << TWEA);				// read + ack
+			else
+				TWCR = TWINT_TWEN_TWIE;								// read + nack
 			break;
 		case TW_MR_DATA_NACK:
 			*s_dst++ = TWDR;
-			if (--s_nr)
-				TWCR = TWINT_TWEN_TWIE;								// read
-			else
-			{
-				TWCR = (1 << TWINT) | (1 << TWSTO) | (1 << TWEN);	// stop condition
-				s_busy = false;
-			}
+			TWCR = (1 << TWINT) | (1 << TWSTO) | (1 << TWEN);		// stop condition
+			s_busy = false;
 			break;
 		default:
 			TWCR = 0; // reset TWI subsystem
@@ -155,7 +156,7 @@ void loop()
 
 	if (i < 250)
 	{
-		uint8_t buf[] = { 0, i, 255 - i, 1, 2, 3 };
+		uint8_t buf[] = { 0, i,  i, i + 1, i + 2, i + 3 };
 
 		twi_t::write(0xA0, buf, sizeof(buf));
 		delay_ms(10);
@@ -164,12 +165,16 @@ void loop()
 	}
 	else
 	{
-		uint8_t adr[2] = { 0, j++ }, x;
+		uint8_t adr[2] = { 0, j++ }, xs[8];
 
-		twi_t::write_read(sla, adr, sizeof(adr), &x, 1);
+		twi_t::write_read(sla, adr, sizeof(adr), xs, sizeof(xs));
 		twi_t::wait_idle();
-		seg7::write(x);
-		delay_ms(100);
+		for (uint8_t k = 0; k < sizeof(xs); ++k)
+		{
+			seg7::write(xs[k]);
+			delay_ms(100);
+		}
+		delay_ms(250);
 	}
 }
 
