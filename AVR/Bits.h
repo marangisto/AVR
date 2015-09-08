@@ -13,13 +13,13 @@ uint8_t shift(uint8_t x) { return shift_impl<N, N < 0>::shift(x); }
 
 template
 	< class T0
-	, class T1 = no_pin_t
-	, class T2 = no_pin_t
-	, class T3 = no_pin_t
-	, class T4 = no_pin_t
-	, class T5 = no_pin_t
-	, class T6 = no_pin_t
-	, class T7 = no_pin_t
+	, class T1 = no_output_t
+	, class T2 = no_output_t
+	, class T3 = no_output_t
+	, class T4 = no_output_t
+	, class T5 = no_output_t
+	, class T6 = no_output_t
+	, class T7 = no_output_t
 >							// LSB to MSB order
 struct bits_t
 {

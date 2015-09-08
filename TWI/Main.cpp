@@ -4,19 +4,19 @@
 #include <AVR/Seg7.h>
 #include <util/twi.h>
 
-typedef pin_t<PD, 3> D0;
-typedef pin_t<PC, 2> D1;
-typedef pin_t<PB, 1> D2;
-typedef pin_t<PD, 7> D3;
+typedef output_t<PD, 3> D0;
+typedef output_t<PC, 2> D1;
+typedef output_t<PB, 1> D2;
+typedef output_t<PD, 7> D3;
 
-typedef pin_t<PD, 4> A;
-typedef pin_t<PB, 2> B;
-typedef pin_t<PD, 5> C;
-typedef pin_t<PD, 1> D;
-typedef pin_t<PD, 0> E;
-typedef pin_t<PC, 3> F;
-typedef pin_t<PD, 6> G;
-typedef pin_t<PD, 2> H;
+typedef output_t<PD, 4> A;
+typedef output_t<PB, 2> B;
+typedef output_t<PD, 5> C;
+typedef output_t<PD, 1> D;
+typedef output_t<PD, 0> E;
+typedef output_t<PC, 3> F;
+typedef output_t<PD, 6> G;
+typedef output_t<PD, 2> H;
 
 typedef bits_t<D0, D1, D2, D3> digit_t;
 typedef bits_t<A, B, C, D, E, F, G, H> segment_t;

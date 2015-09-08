@@ -10,12 +10,59 @@ template<class PORT> struct port_t
 	static inline const volatile uint8_t& pin();
 };
 
-template<class PORT, unsigned BIT> struct pin_t : port_t<PORT>
+static const bool enable_pullup = true;
+
+template<class PORT, unsigned BIT, bool PULLUP = false> struct input_t : port_t<PORT>
 {
-	static_assert(BIT < 8, "pin bit out of range");
+	static_assert(BIT < 8, "bit out of range");
 
 	static const int bit = BIT;
 	static const uint8_t mask = 1 << BIT;
+
+	static void setup()
+	{
+		port_t<PORT>::ddr() &= ~mask;
+		if (PULLUP)
+			port_t<PORT>::reg() |= mask;
+	}
+
+	static bool read()
+	{
+		return (port_t<PORT>::pin() & mask) != 0;
+	}
+};
+
+template<class PORT, unsigned BIT> struct output_t : port_t<PORT>
+{
+	static_assert(BIT < 8, "bit out of range");
+
+	static const int bit = BIT;
+	static const uint8_t mask = 1 << BIT;
+
+	static inline void setup()
+	{
+		port_t<PORT>::ddr() |= mask;
+	}
+
+	static inline void set()
+	{
+		port_t<PORT>::reg() |= mask;
+	}
+
+	static inline void clear()
+	{
+		port_t<PORT>::reg() &= ~mask;
+	}
+
+	static inline void write(bool x)
+	{
+		x ? set() : clear();
+	}
+
+	static inline void toggle()
+	{
+		port_t<PORT>::reg() ^= mask;
+	}
 };
 
 struct NO_PORT;
@@ -25,7 +72,7 @@ template<> struct port_t<NO_PORT>
 	typedef NO_PORT port;
 };
 
-typedef pin_t<NO_PORT, 0> no_pin_t;
+typedef output_t<NO_PORT, 0> no_output_t;
 
 struct PB;
 
@@ -78,111 +125,4 @@ template<> struct port_t<PE>
 	static inline volatile const uint8_t& pin() { return PINE; }
 };
 #endif
-
-template<class T0, class T1, class T2, class T3, class T4, class T5, class T6, class T7>
-static inline void check_union_mask()
-{
-	static_assert(std::is_same<typename T0::port, typename T1::port>(), "2nd pin on different port");
-	static_assert(std::is_same<typename T0::port, typename T2::port>(), "3rd pin on different port");
-	static_assert(std::is_same<typename T0::port, typename T3::port>(), "4th pin on different port");
-	static_assert(std::is_same<typename T0::port, typename T4::port>(), "5th pin on different port");
-	static_assert(std::is_same<typename T0::port, typename T5::port>(), "6th pin on different port");
-	static_assert(std::is_same<typename T0::port, typename T6::port>(), "7th pin on different port");
-	static_assert(std::is_same<typename T0::port, typename T7::port>(), "8th pin on different port");
-}
-
-template<class T0, class T1, class T2, class T3, class T4, class T5, class T6, class T7>
-static inline uint8_t union_mask()
-{
-	check_union_mask<T0, T1, T2, T3, T4, T5, T6, T7>();
-	return T0::mask | T1::mask | T2::mask | T3::mask | T4::mask | T5::mask | T6::mask | T7::mask;
-}
-
-template<class T0, class T1, class T2, class T3, class T4, class T5, class T6, class T7>
-static inline uint8_t invert_union_mask()
-{
-	check_union_mask<T0, T1, T2, T3, T4, T5, T6, T7>();
-	return 0xff ^ (T0::mask | T1::mask | T2::mask | T3::mask | T4::mask | T5::mask | T6::mask | T7::mask);
-}
-
-template<class T0, class T1 = T0, class T2 = T0, class T3 = T0, class T4 = T0, class T5 = T0, class T6 = T0, class T7 = T0>
-static inline void digital_in()
-{
-	T0::ddr() &= invert_union_mask<T0, T1, T2, T3, T4, T5, T6, T7>();
-}
-
-template<class T0, class T1 = T0, class T2 = T0, class T3 = T0, class T4 = T0, class T5 = T0, class T6 = T0, class T7 = T0>
-static inline void digital_out()
-{
-	T0::ddr() |= union_mask<T0, T1, T2, T3, T4, T5, T6, T7>();
-}
-
-template<class T0, class T1 = T0, class T2 = T0, class T3 = T0, class T4 = T0, class T5 = T0, class T6 = T0, class T7 = T0>
-static inline void set()
-{
-	T0::reg() |= union_mask<T0, T1, T2, T3, T4, T5, T6, T7>();
-}
-
-template<class T0, class T1 = T0, class T2 = T0, class T3 = T0, class T4 = T0, class T5 = T0, class T6 = T0, class T7 = T0>
-static inline void clear()
-{
-	T0::reg() &= invert_union_mask<T0, T1, T2, T3, T4, T5, T6, T7>();
-}
-
-template<class T0, class T1 = T0, class T2 = T0, class T3 = T0, class T4 = T0, class T5 = T0, class T6 = T0, class T7 = T0>
-static inline void toggle()
-{
-	T0::reg() ^= union_mask<T0, T1, T2, T3, T4, T5, T6, T7>();
-}
-
-template<class T0, class T1 = T0, class T2 = T0, class T3 = T0, class T4 = T0, class T5 = T0, class T6 = T0, class T7 = T0>
-static inline void write(bool x)
-{
-	x ? set<T0, T1, T2, T3, T4, T5, T6, T7>() : clear<T0, T1, T2, T3, T4, T5, T6, T7>();
-}
-
-template<class T0>
-static inline bool read()
-{
-	return (T0::pin() & T0::mask) != 0;
-}
-
-template<class T0, class T1>
-static inline void read(bool& b0, bool& b1)
-{
-	static_assert(std::is_same<typename T0::port, typename T1::port>(), "2nd pin on different port");
-
-	uint8_t x = T0::pin();
-
-	b0 = (x & T0::mask) != 0;
-	b1 = (x & T1::mask) != 0;
-}
-
-template<class T0, class T1, class T2>
-static inline void read(bool& b0, bool& b1, bool& b2)
-{
-	static_assert(std::is_same<typename T0::port, typename T1::port>(), "2nd pin on different port");
-	static_assert(std::is_same<typename T0::port, typename T2::port>(), "3rd pin on different port");
-
-	uint8_t x = T0::pin();
-
-	b0 = (x & T0::mask) != 0;
-	b1 = (x & T1::mask) != 0;
-	b2 = (x & T2::mask) != 0;
-}
-
-template<class T0, class T1, class T2, class T3>
-static inline void read(bool& b0, bool& b1, bool& b2, bool& b3)
-{
-	static_assert(std::is_same<typename T0::port, typename T1::port>(), "2nd pin on different port");
-	static_assert(std::is_same<typename T0::port, typename T2::port>(), "3rd pin on different port");
-	static_assert(std::is_same<typename T0::port, typename T3::port>(), "4th pin on different port");
-
-	uint8_t x = T0::pin();
-
-	b0 = (x & T0::mask) != 0;
-	b1 = (x & T1::mask) != 0;
-	b2 = (x & T2::mask) != 0;
-	b3 = (x & T3::mask) != 0;
-}
 

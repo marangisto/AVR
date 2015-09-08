@@ -2,20 +2,23 @@
 #include "../AVR/Delay.h"
 
 #if defined(__AVR_ATmega32U4__)
-typedef pin_t<PC, 7> LED;			// leonardo
+typedef output_t<PC, 7> LED;			// leonardo
 #else
-typedef pin_t<PB, 5> LED;			// uno
+typedef output_t<PB, 5> LED;			// uno
 #endif
 
 void setup()
 {
-	digital_out<LED>();
+	LED::setup();
 }
 
 void loop()
 {
-	toggle<LED>();
-	delay_ms(50);
+	static bool x = false;
+
+	x = !x;
+	LED::write(x);
+	delay_ms(150);
 }
 
 int main()
