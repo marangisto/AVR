@@ -67,14 +67,15 @@ public:
 	{
 		switch (TWSR & 0xf8)
 		{
-		case TW_START:
+		case TW_START: ;
+		case TW_REP_START:
 			TWDR = s_addr | (s_nw ? 0 : 1);							// SLA+R/W
 			TWCR = TWINT_TWEN_TWIE;									// send
-			break;
+			return;
 		case TW_MT_SLA_ACK:											// from SLA+W
 			TWDR = *s_src++;										// data
 			TWCR = TWINT_TWEN_TWIE;									// send
-			break;
+			return;
 		case TW_MT_DATA_ACK:										// from data write
 			if (--s_nw)
 			{
@@ -84,33 +85,21 @@ public:
 			else if (s_nr)
 				TWCR = TWINT_TWEN_TWIE | (1 << TWSTA); 				// repeated start condition
 			else
-			{
-				TWCR = (1 << TWINT) | (1 << TWSTO) | (1 << TWEN);	// stop condition
-				s_busy = false;
-			}
-			break;
-		case TW_REP_START:
-			TWDR = s_addr | 1;										// SLA+R
-			TWCR = TWINT_TWEN_TWIE;									// send
-			break;
+				break;												// stop
+			return;
 		case TW_MR_DATA_ACK:
-			*s_dst++ = TWDR;
-			// fall through, same code as SLA_ACK
+			*s_dst++ = TWDR; 										// fall through, same code as SLA_ACK
 		case TW_MR_SLA_ACK:
-			if (--s_nr)
-				TWCR = TWINT_TWEN_TWIE | (1 << TWEA);				// read + ack
-			else
-				TWCR = TWINT_TWEN_TWIE;								// read + nack
-			break;
+			TWCR = TWINT_TWEN_TWIE |  (--s_nr ? (1 << TWEA) : 0);	// ack if more to read
+			return;
 		case TW_MR_DATA_NACK:
 			*s_dst++ = TWDR;
-			TWCR = (1 << TWINT) | (1 << TWSTO) | (1 << TWEN);		// stop condition
-			s_busy = false;
-			break;
-		default:
-			TWCR = 0; // reset TWI subsystem
-			s_busy = false;
+			break;													// stop
+		default: ;													// stop
 		}
+
+		TWCR = (1 << TWINT) | (1 << TWSTO) | (1 << TWEN);			// stop condition
+		s_busy = false;
 	}
 
 private:
