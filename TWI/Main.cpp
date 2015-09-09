@@ -1,5 +1,4 @@
 #include <AVR/Pins.h>
-#include <AVR/Bits.h>
 #include <AVR/Delay.h>
 #include <AVR/Seg7.h>
 #include <util/twi.h>

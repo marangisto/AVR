@@ -7,9 +7,9 @@ enum shift_order_t { LSB_FIRST = 0, MSB_FIRST = 1};
 template<class DT, class CK>
 static inline void clock_out_bit(uint8_t x, int i)
 {
-	clear<CK>();
-	write<DT>(((x >> i) & 0x01) != 0);
-	set<CK>();
+	CK::clear();
+	DT::write(((x >> i) & 0x01) != 0);
+	CK::set();
 }
 
 template<class DT, class CK, shift_order_t SD>
@@ -43,14 +43,16 @@ struct sn74hc595_t
 {
 	static void setup()
 	{
-		digital_out<DT, CK, LT>();
+		DT::setup();
+		CK::setup();
+		LT::setup();
 	}
 
 	static void write(uint8_t x)
 	{
-		clear<LT>();
+		LT::clear();
 		shift_out<DT, CK, SD>(x);
-		set<LT>();
+		LT::set();
 	}
 };
 

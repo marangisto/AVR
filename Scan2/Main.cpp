@@ -5,9 +5,9 @@
 #include "Editor.h"
 #include "Accel.h"
 
-typedef pin_t<PC, 3> CLOCK;
-typedef pin_t<PC, 4> LATCH;
-typedef pin_t<PC, 5> DATA;
+typedef output_t<PC, 3> CLOCK;
+typedef output_t<PC, 4> LATCH;
+typedef output_t<PC, 5> DATA;
 
 typedef lcd1602a_t<DATA, CLOCK, LATCH> lcd;
 
@@ -15,18 +15,18 @@ typedef analog_input_t<2> A2;
 
 typedef buttons_t<A2> btns;
 
-typedef pin_t<PB, 1> DIR;
-typedef pin_t<PB, 2> STEP;
-typedef pin_t<PD, 4> RESET;
-typedef pin_t<PD, 5> MS3;
-typedef pin_t<PD, 6> MS2;
-typedef pin_t<PD, 7> MS1;
-typedef pin_t<PB, 0> ENABLE;
+typedef output_t<PB, 1> DIR;
+typedef output_t<PB, 2> STEP;
+typedef output_t<PD, 4> RESET;
+typedef output_t<PD, 5> MS3;
+typedef output_t<PD, 6> MS2;
+typedef output_t<PD, 7> MS1;
+typedef output_t<PB, 0> ENABLE;
 
 typedef a4988_t<DIR, STEP, RESET, MS1, MS2, MS3, ENABLE> a4988;
 
-typedef pin_t<PD, 2> LIML;
-typedef pin_t<PD, 3> LIMR;
+typedef input_t<PD, 2, enable_pullup> LIML;
+typedef input_t<PD, 3, enable_pullup> LIMR;
 
 typedef accel_t<a4988, LIML, LIMR> accel;
 
@@ -34,8 +34,8 @@ void setup()
 {
 	lcd::setup();
 	btns::setup();
-	digital_in<LIML, LIMR>();
-	set<LIML, LIMR>(); 			// pull-ups
+	LIML::setup();
+	LIMR::setup();
 	accel::setup();
 }
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Bits.h"
+#include "Pins.h"
 #include "Timer.h"
 #include <string.h>
 #include <stdlib.h>

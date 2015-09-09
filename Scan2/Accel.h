@@ -51,7 +51,7 @@ public:
 
 		int16_t n_steps = 0;
 
-		while (!read<LIML>())
+		while (!LIML::read())
 		{
 			for (uint8_t s = 0; s < nms; ++s)
 			{
@@ -68,7 +68,7 @@ public:
 
 		t = 15;				// millisecs per (micro-) step
 
-		while (read<LIML>())
+		while (LIML::read())
 		{
 			for (uint8_t s = 0; s < nms; ++s)
 			{
@@ -97,7 +97,7 @@ private:
 	{
 		if (step_i < n_steps)
 		{
-			if (read<LIML>() || read<LIMR>())
+			if (LIML::read() || LIMR::read())
 			{
 				inflight = false;
 				return;
