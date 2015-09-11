@@ -60,9 +60,9 @@ struct timer_t
 	enum prescale_t
 		{ prescale_1 = 1
 		, prescale_8 = 8
-		, prescale_32 = 32
+//		, prescale_32 = 32
 		, prescale_64 = 64
-		, prescale_128 = 128
+//		, prescale_128 = 128
 		, prescale_256 = 256
 		, prescale_1024 = 1024
 		};
