@@ -26,10 +26,7 @@ template<class PORT, unsigned BIT, bool PULLUP = false> struct input_t : port_t<
 			port_t<PORT>::reg() |= mask;
 	}
 
-	static bool read()
-	{
-		return (port_t<PORT>::pin() & mask) != 0;
-	}
+	static bool read() { return (port_t<PORT>::pin() & mask) != 0; }
 };
 
 template<class PORT, unsigned BIT> struct output_t : port_t<PORT>
@@ -39,30 +36,11 @@ template<class PORT, unsigned BIT> struct output_t : port_t<PORT>
 	static const int bit = BIT;
 	static const uint8_t mask = 1 << BIT;
 
-	static inline void setup()
-	{
-		port_t<PORT>::ddr() |= mask;
-	}
-
-	static inline void set()
-	{
-		port_t<PORT>::reg() |= mask;
-	}
-
-	static inline void clear()
-	{
-		port_t<PORT>::reg() &= ~mask;
-	}
-
-	static inline void write(bool x)
-	{
-		x ? set() : clear();
-	}
-
-	static inline void toggle()
-	{
-		port_t<PORT>::reg() ^= mask;
-	}
+	static inline void setup() { port_t<PORT>::ddr() |= mask; }
+	static inline void set() { port_t<PORT>::reg() |= mask; }
+	static inline void clear() { port_t<PORT>::reg() &= ~mask; }
+	static inline void write(bool x) { x ? set() : clear(); }
+	static inline void toggle() { port_t<PORT>::reg() ^= mask; }
 };
 
 struct NO_PORT;
@@ -126,22 +104,14 @@ uint8_t shift(uint8_t x) { return shift_impl<N, N < 0>::shift(x); }
 template<class PORT, class PINPORT, class PIN, int BIT>
 struct map_bit_impl
 {
-	static uint8_t map_bit(uint8_t x)
-	{
-		return 0;
-	}
-
+	static uint8_t map_bit(uint8_t x) { return 0; }
 	static const uint8_t mask = 0;
 };
 
 template<class PORT, class PIN, int BIT>
 struct map_bit_impl<PORT, PORT, PIN, BIT>
 {
-	static uint8_t map_bit(uint8_t x)
-	{
-		return shift<PIN::bit - BIT>(static_cast<uint8_t>(x & (1 << BIT)));
-	}
-
+	static uint8_t map_bit(uint8_t x) { return shift<PIN::bit - BIT>(static_cast<uint8_t>(x & (1 << BIT))); }
 	static const uint8_t mask = PIN::mask;
 };
 
@@ -185,9 +155,7 @@ struct write_bits_impl2
 template<class PORT, class T0, class T1, class T2, class T3, class T4, class T5, class T6, class T7>
 struct write_bits_impl2<PORT, T0, T1, T2, T3, T4, T5, T6, T7, 0>
 {
-	static void write_bits(volatile uint8_t& reg, uint8_t x)
-	{
-	}
+	static void write_bits(volatile uint8_t& reg, uint8_t x) {}
 };
 
 template<class T0, class T1 = no_output_t, class T2 = no_output_t, class T3 = no_output_t,
