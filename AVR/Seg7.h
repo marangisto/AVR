@@ -85,10 +85,10 @@ class seg7_t
 public:
 	static void setup()
 	{
-		setup_bits<DIGITS>();
-		write_bits<DIGITS>(~0);
-		setup_bits<SEGMENTS>();
-		write_bits<SEGMENTS>(~0);
+		DIGITS::setup();
+		DIGITS::write(~0);
+		SEGMENTS::setup();
+		SEGMENTS::write(~0);
 	}
 
 	static void write(const char *s)
@@ -126,9 +126,9 @@ public:
 	{
 		static uint8_t k = 0;
 
-		write_bits<DIGITS>(~0);
-		write_bits<SEGMENTS>(s_enc[k]);
-		write_bits<DIGITS>(~(1 << k));
+		DIGITS::write(~0);
+		SEGMENTS::write(s_enc[k]);
+		DIGITS::write(~(1 << k));
 
 		if (++k >= nchars)
 			k = 0;

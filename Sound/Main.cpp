@@ -2,9 +2,6 @@
 #include "../AVR/Delay.h"
 #include "../AVR/Timer.h"
 
-typedef pin_t<PC, 0> LED;
-typedef pin_t<PC, 1> AUDIO;
-
 enum note_t
 	{ C = 1911
 	, C1 = 1804
@@ -46,13 +43,13 @@ static uint8_t _natal[] = {12, 4, 8, 16, 12, 4, 8, 16, 12, 4, 16, 12, 4, 16, 12,
 static note_t LTS[] = { Bb, G, G, Bb, G, G, Bb, G, G, Bb, G, G, Bb, G, C, G, Bb, G, G, Bb, G, G, Bb, G, G, Bb, G, G, Bb, G, F, D, F, D, G, F, D, C, Bb, G, Bb, C, C1, C, Bb, F, D, Bb, G, F, D, C, Bb, D, C, Bb, G };
 static uint8_t _LTS[] = {4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4};
 
+template<class AUDIO>
 class sound_t
 {
 public:
 	static void setup()
 	{
-		digital_out<LED>();
-		digital_out<AUDIO>();
+		AUDIO::setup();
 		timer::prescale(timer::prescale_8);
 		timer::isr(isr);
 		timer::enable();
@@ -87,30 +84,36 @@ private:
 	{
 		timer::counter() = s_count;
 		if (s_on)
-			toggle<AUDIO>();
+			AUDIO::toggle();
 	}
 
 	static volatile bool s_on;
 	static volatile uint16_t s_count;
 };
 
-volatile bool sound_t::s_on = false;
-volatile uint16_t sound_t::s_count = 0;
+template<class AUDIO>
+volatile bool sound_t<AUDIO>::s_on = false;
+
+template<class AUDIO>
+volatile uint16_t sound_t<AUDIO>::s_count = 0;
+
+typedef output_t<PC, 0> LED;
+typedef output_t<PC, 1> AUDIO;
+typedef sound_t<AUDIO> SOUND;
 
 void setup()
 {
-	digital_out<LED>();
-	digital_out<AUDIO>();
-	sound_t::setup();
+	LED::setup();
+	SOUND::setup();
 }
 
 void loop()
 {
 	static uint8_t i = 0;
 
-	toggle<LED>();
+	LED::toggle();
 	
-	sound_t::play(LTS[i]);
+	SOUND::play(LTS[i]);
 
 	for (uint8_t j = 0; j < _LTS[i]; ++j)
 		delay_ms(50);

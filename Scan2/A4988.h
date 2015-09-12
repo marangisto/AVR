@@ -51,9 +51,7 @@ public:
 		DIR::setup();
 		STEP::setup();
 		RESET::setup();
-		MS1::setup();
-		MS2::setup();
-		MS3::setup();
+		MS::setup();
 		ENABLE::setup();
 		ENABLE::set();				// active low
 		RESET::set();				// active low
@@ -87,7 +85,7 @@ public:
 
 	static void micro_step(micro_step_t::e ms)
 	{
-		write_bits<MS>(ms);
+		MS::write(ms);
 		nop<4>();				// need 200ns, FIXME: delay based on F_CPU
 	}
 

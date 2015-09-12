@@ -10,26 +10,19 @@ typedef output_t<PD, 5> F;
 typedef output_t<PD, 6> G;
 typedef output_t<PD, 7> H;
 
-typedef bits_t<H, G, F, E, D, C, B, A> digit_t;
+typedef bits_t<H, G, F, E, D, C, B, A> bits;
 
 void setup()
 {
-	A::setup();
-	B::setup();
-	C::setup();
-	D::setup();
-	E::setup();
-	F::setup();
-	G::setup();
-	H::setup();
+	bits::setup();
 }
 
 void loop()
 {
 	static uint8_t i = 0;
 
-	write_bits<digit_t>(i++);
-	delay_ms(100);
+	bits::write(i++);
+	delay_ms(250);
 }
 
 int main()
