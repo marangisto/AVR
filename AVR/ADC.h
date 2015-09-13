@@ -3,14 +3,14 @@
 enum ref_source_t
 #if defined(__AVR_ATtiny85__)
 	{ ref_source_vcc		= 0
-	, ref_source_aref		= (1 << REFS0)
-	, ref_source_1_1		= (1 << REFS1)
-	, ref_source_2_56		= (1 << REFS2) | (1 << REFS1)
-	, ref_source_2_56_cap	= (1 << REFS2) | (1 << REFS1) | (1 << REFS0)
+	, ref_source_aref		= _BV(REFS0)
+	, ref_source_1_1		= _BV(REFS1)
+	, ref_source_2_56		= _BV(REFS2) | _BV(REFS1)
+	, ref_source_2_56_cap	= _BV(REFS2) | _BV(REFS1) | _BV(REFS0)
 #elif defined(__AVR_ATmega328P__)
 	{ ref_source_aref		= 0
-	, ref_source_vcc		= (1 << REFS0)
-	, ref_source_1_1		= (1 << REFS0) | (1 << REFS1)
+	, ref_source_vcc		= _BV(REFS0)
+	, ref_source_1_1		= _BV(REFS0) | _BV(REFS1)
 #endif
 	};
 
@@ -28,11 +28,11 @@ struct adc
 	static void setup()
 	{
 #if defined(__AVR_ATtiny85__)
-		ADCSRA |= ((1 << ADPS1) | (1 << ADPS0));	// ADC prescale 8 (1MHz / 8 = 125kHz)
+		ADCSRA |= _BV(ADPS1) | _BV(ADPS0);	// ADC prescale 8 (1MHz / 8 = 125kHz)
 #elif defined(__AVR_ATmega328P__)
-		ADCSRA |= ((1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0));	// ADC prescale 128 (16MHz / 128 = 125kHz)
+		ADCSRA |= _BV(ADPS2) | _BV(ADPS1) | _BV(ADPS0);	// ADC prescale 128 (16MHz / 128 = 125kHz)
 #endif
-		ADCSRA |= ((1 << ADEN) | (1 << ADSC));		// start ADC and make initial conversion
+		ADCSRA |= _BV(ADEN) | _BV(ADSC);		// start ADC and make initial conversion
 	}
 
 	template<class CH>
@@ -44,8 +44,8 @@ struct adc
 
 		for (uint8_t i = 0; i < n; ++i)
 		{
-			ADCSRA |= (1 << ADSC);	// start conversion
-			while (ADCSRA & (1 << ADSC))
+			ADCSRA |= _BV(ADSC);	// start conversion
+			while (ADCSRA & _BV(ADSC))
 				/* wait for conversion */ ;
 		}
 

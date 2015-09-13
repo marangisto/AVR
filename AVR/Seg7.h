@@ -128,7 +128,7 @@ public:
 
 		DIGITS::write(~0);
 		SEGMENTS::write(s_enc[k]);
-		DIGITS::write(~(1 << k));
+		DIGITS::write(~_BV(k));
 
 		if (++k >= nchars)
 			k = 0;

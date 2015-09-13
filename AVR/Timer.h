@@ -76,19 +76,19 @@ struct timer_t
 		switch (s)
 		{
 			case prescale_1:
-				timer_traits<TNO>::tccrb() |= (1 << timer_traits<TNO>::cs0);
+				timer_traits<TNO>::tccrb() |= _BV(timer_traits<TNO>::cs0);
 				break;
 			case prescale_8:
-				timer_traits<TNO>::tccrb() |= (1 << timer_traits<TNO>::cs1);
+				timer_traits<TNO>::tccrb() |= _BV(timer_traits<TNO>::cs1);
 				break;
 			case prescale_64:
-				timer_traits<TNO>::tccrb() |= (1 << timer_traits<TNO>::cs1) | (1 << timer_traits<TNO>::cs0);
+				timer_traits<TNO>::tccrb() |= _BV(timer_traits<TNO>::cs1) | _BV(timer_traits<TNO>::cs0);
 				break;
 			case prescale_256:
-				timer_traits<TNO>::tccrb() |= (1 << timer_traits<TNO>::cs2);
+				timer_traits<TNO>::tccrb() |= _BV(timer_traits<TNO>::cs2);
 				break;
 			case prescale_1024:
-				timer_traits<TNO>::tccrb() |= (1 << timer_traits<TNO>::cs2) | (1 << timer_traits<TNO>::cs0);
+				timer_traits<TNO>::tccrb() |= _BV(timer_traits<TNO>::cs2) | _BV(timer_traits<TNO>::cs0);
 				break;
 		}
 	}
@@ -100,12 +100,12 @@ struct timer_t
 
 	static void enable()
 	{
-		timer_traits<TNO>::timsk() |= (1 << timer_traits<TNO>::toie);	// enable timer overflow interrupt
+		timer_traits<TNO>::timsk() |= _BV(timer_traits<TNO>::toie);		// enable timer overflow interrupt
 	}
 
 	static void disable()
 	{
-		timer_traits<TNO>::timsk() &= ~(1 << timer_traits<TNO>::toie);	// disable timer overflow interrupt
+		timer_traits<TNO>::timsk() &= ~_BV(timer_traits<TNO>::toie);	// disable timer overflow interrupt
 	}
 
 	static void isr(isr_t f)

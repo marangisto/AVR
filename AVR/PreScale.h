@@ -16,7 +16,7 @@ enum system_clock_prescale_t
 
 void set_system_clock_prescale(system_clock_prescale_t s)
 {
-	CLKPR = (1 << 7);	// clock prescaler change enable
+	CLKPR = _BV(7);	// clock prescaler change enable
 	CLKPR = static_cast<uint8_t>(s);
 }
 

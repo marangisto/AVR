@@ -28,7 +28,7 @@ public:
 	{
 		TWSR = 0;								// set prescaler to 1
 		TWBR = ((F_CPU / twi_freq) - 16) / 2;	// assuming prescaler 1
-		TWCR = (1 << TWEN); 					// enable TWI
+		TWCR = _BV(TWEN); 						// enable TWI
 	}
 
 	static bool write(uint8_t addr, volatile const uint8_t *src, uint8_t nw)
@@ -53,7 +53,7 @@ public:
 		s_src = src;
 		s_dst = dst;
 
-		TWCR = TWINT_TWEN_TWIE | (1 << TWSTA); 						// start condition
+		TWCR = TWINT_TWEN_TWIE | _BV(TWSTA); 						// start condition
 	}
 
 	static void wait_idle()
@@ -82,14 +82,14 @@ public:
 				TWCR = TWINT_TWEN_TWIE;								// send
 			}
 			else if (s_nr)
-				TWCR = TWINT_TWEN_TWIE | (1 << TWSTA); 				// repeated start condition
+				TWCR = TWINT_TWEN_TWIE | _BV(TWSTA); 				// repeated start condition
 			else
 				break;												// stop
 			return;
 		case TW_MR_DATA_ACK:
 			*s_dst++ = TWDR; 										// fall through, same code as SLA_ACK
 		case TW_MR_SLA_ACK:
-			TWCR = TWINT_TWEN_TWIE |  (--s_nr ? (1 << TWEA) : 0);	// ack if more to read
+			TWCR = TWINT_TWEN_TWIE |  (--s_nr ? _BV(TWEA) : 0);		// ack if more to read
 			return;
 		case TW_MR_DATA_NACK:
 			*s_dst++ = TWDR;
@@ -97,12 +97,12 @@ public:
 		default: ;													// stop
 		}
 
-		TWCR = (1 << TWINT) | (1 << TWSTO) | (1 << TWEN);			// stop condition
+		TWCR = _BV(TWINT) | _BV(TWSTO) | _BV(TWEN);					// stop condition
 		s_busy = false;
 	}
 
 private:
-	static const uint8_t TWINT_TWEN_TWIE = (1 << TWINT) | (1 << TWEN) | (1 << TWIE);
+	static const uint8_t TWINT_TWEN_TWIE = _BV(TWINT) | _BV(TWEN) | _BV(TWIE);
 
 	static volatile bool			s_busy;
 	static volatile uint8_t			s_addr;

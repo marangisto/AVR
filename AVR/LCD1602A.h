@@ -86,7 +86,7 @@ public:
 
 	static void set_pos(uint8_t r, uint8_t c)
 	{
-		uint8_t w = (1 << 7) | (r ? 0x40 : 0) | (c & 0x1f);	// set ddram address + address
+		uint8_t w = _BV(7) | (r ? 0x40 : 0) | (c & 0x1f);	// set ddram address + address
 		send((w >> 4) & 0xf);
 		send(w & 0xf);
 	}
@@ -107,9 +107,9 @@ public:
 private:
 	typedef sn74hc595_t<DT, CK, LT, LSB_FIRST> sr;
 
-	static const uint8_t RS = (1 << 4);
-	static const uint8_t E  = (1 << 5);
-	static const uint8_t L  = (1 << 6);
+	static const uint8_t RS = _BV(4);
+	static const uint8_t E  = _BV(5);
+	static const uint8_t L  = _BV(6);
 
 	static void send(uint8_t w)
 	{

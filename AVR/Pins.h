@@ -17,7 +17,7 @@ template<class PORT, unsigned BIT, bool PULLUP = false> struct input_t : port_t<
 	static_assert(BIT < 8, "bit out of range");
 
 	static const int bit = BIT;
-	static const uint8_t mask = 1 << BIT;
+	static const uint8_t mask = _BV(BIT);
 
 	static void setup()
 	{
@@ -34,7 +34,7 @@ template<class PORT, unsigned BIT> struct output_t : port_t<PORT>
 	static_assert(BIT < 8, "bit out of range");
 
 	static const int bit = BIT;
-	static const uint8_t mask = 1 << BIT;
+	static const uint8_t mask = _BV(BIT);
 
 	static inline void setup() { port_t<PORT>::ddr() |= mask; }
 	static inline void set() { port_t<PORT>::reg() |= mask; }
@@ -111,7 +111,7 @@ struct map_bit_impl
 template<class PORT, class PIN, int BIT>
 struct map_bit_impl<PORT, PORT, PIN, BIT>
 {
-	static uint8_t map_bit(uint8_t x) { return shift<PIN::bit - BIT>(static_cast<uint8_t>(x & (1 << BIT))); }
+	static uint8_t map_bit(uint8_t x) { return shift<PIN::bit - BIT>(static_cast<uint8_t>(x & _BV(BIT))); }
 	static const uint8_t mask = PIN::mask;
 };
 
