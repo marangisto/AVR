@@ -116,7 +116,7 @@ struct map_bit_impl<PORT, PORT, PIN, BIT>
 };
 
 template<class PORT, class T0, class T1, class T2, class T3, class T4, class T5, class T6, class T7>
-struct map_bits_impl2
+struct map_bits_impl
 {
 	static uint8_t map_bits(uint8_t x)
 	{
@@ -144,36 +144,36 @@ struct map_bits_impl2
 };
 
 template<class PORT, class T0, class T1, class T2, class T3, class T4, class T5, class T6, class T7, int MASK>
-struct write_bits_impl2
+struct write_bits_impl
 {
 	static void write_bits(volatile uint8_t& reg, uint8_t x)
 	{
-		reg = map_bits_impl2<PORT, T0, T1, T2, T3, T4, T5, T6, T7>::map_bits(x) | (reg & ~MASK);
+		reg = map_bits_impl<PORT, T0, T1, T2, T3, T4, T5, T6, T7>::map_bits(x) | (reg & ~MASK);
 	}
 };
 
 template<class PORT, class T0, class T1, class T2, class T3, class T4, class T5, class T6, class T7>
-struct write_bits_impl2<PORT, T0, T1, T2, T3, T4, T5, T6, T7, 0>
+struct write_bits_impl<PORT, T0, T1, T2, T3, T4, T5, T6, T7, 0>
 {
 	static void write_bits(volatile uint8_t& reg, uint8_t x) {}
 };
 
 template<class T0, class T1 = no_output_t, class T2 = no_output_t, class T3 = no_output_t,
 		 class T4 = no_output_t, class T5 = no_output_t, class T6 = no_output_t, class T7 = no_output_t>	// LSB to MSB order
-struct bits_t
+struct outputs_t
 {
 	static void setup()
 	{
-		write_bits_impl2<PB, T0, T1, T2, T3, T4, T5, T6, T7, map_bits_impl2<PB, T0, T1, T2, T3, T4, T5, T6, T7>::mask>::write_bits(DDRB, 0xff);
-		write_bits_impl2<PC, T0, T1, T2, T3, T4, T5, T6, T7, map_bits_impl2<PC, T0, T1, T2, T3, T4, T5, T6, T7>::mask>::write_bits(DDRC, 0xff);
-		write_bits_impl2<PD, T0, T1, T2, T3, T4, T5, T6, T7, map_bits_impl2<PD, T0, T1, T2, T3, T4, T5, T6, T7>::mask>::write_bits(DDRD, 0xff);
+		write_bits_impl<PB, T0, T1, T2, T3, T4, T5, T6, T7, map_bits_impl<PB, T0, T1, T2, T3, T4, T5, T6, T7>::mask>::write_bits(DDRB, 0xff);
+		write_bits_impl<PC, T0, T1, T2, T3, T4, T5, T6, T7, map_bits_impl<PC, T0, T1, T2, T3, T4, T5, T6, T7>::mask>::write_bits(DDRC, 0xff);
+		write_bits_impl<PD, T0, T1, T2, T3, T4, T5, T6, T7, map_bits_impl<PD, T0, T1, T2, T3, T4, T5, T6, T7>::mask>::write_bits(DDRD, 0xff);
 	}
 
 	static void write(uint8_t x)
 	{
-		write_bits_impl2<PB, T0, T1, T2, T3, T4, T5, T6, T7, map_bits_impl2<PB, T0, T1, T2, T3, T4, T5, T6, T7>::mask>::write_bits(PORTB, x);
-		write_bits_impl2<PC, T0, T1, T2, T3, T4, T5, T6, T7, map_bits_impl2<PC, T0, T1, T2, T3, T4, T5, T6, T7>::mask>::write_bits(PORTC, x);
-		write_bits_impl2<PD, T0, T1, T2, T3, T4, T5, T6, T7, map_bits_impl2<PD, T0, T1, T2, T3, T4, T5, T6, T7>::mask>::write_bits(PORTD, x);
+		write_bits_impl<PB, T0, T1, T2, T3, T4, T5, T6, T7, map_bits_impl<PB, T0, T1, T2, T3, T4, T5, T6, T7>::mask>::write_bits(PORTB, x);
+		write_bits_impl<PC, T0, T1, T2, T3, T4, T5, T6, T7, map_bits_impl<PC, T0, T1, T2, T3, T4, T5, T6, T7>::mask>::write_bits(PORTC, x);
+		write_bits_impl<PD, T0, T1, T2, T3, T4, T5, T6, T7, map_bits_impl<PD, T0, T1, T2, T3, T4, T5, T6, T7>::mask>::write_bits(PORTD, x);
 	}
 };
 

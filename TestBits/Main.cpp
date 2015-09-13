@@ -10,7 +10,7 @@ typedef output_t<PD, 5> F;
 typedef output_t<PD, 6> G;
 typedef output_t<PD, 7> H;
 
-typedef bits_t<H, G, F, E, D, C, B, A> bits;
+typedef outputs_t<H, G, F, E, D, C, B, A> bits;
 
 void setup()
 {

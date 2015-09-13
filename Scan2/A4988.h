@@ -1,8 +1,8 @@
 #ifndef A4988_H
 #define A4988_H
 
-#include "../AVR/Pins.h"
-#include "../AVR/Delay.h"
+#include <AVR/Pins.h>
+#include <AVR/Delay.h>
 
 struct micro_step_t
 {
@@ -81,7 +81,7 @@ public:
 		RESET::set();
 	}
 
-	typedef bits_t<MS1, MS2, MS3> MS;
+	typedef outputs_t<MS1, MS2, MS3> MS;
 
 	static void micro_step(micro_step_t::e ms)
 	{

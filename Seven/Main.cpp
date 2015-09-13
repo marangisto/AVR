@@ -16,8 +16,8 @@ typedef output_t<PC, 3> F;
 typedef output_t<PD, 6> G;
 typedef output_t<PD, 2> H;
 
-typedef bits_t<D0, D1, D2, D3> digit_t;
-typedef bits_t<A, B, C, D, E, F, G, H> segment_t;
+typedef outputs_t<D0, D1, D2, D3> digit_t;
+typedef outputs_t<A, B, C, D, E, F, G, H> segment_t;
 typedef seg7_t<digit_t, segment_t> seg7;
 
 void setup()
