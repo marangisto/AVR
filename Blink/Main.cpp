@@ -1,5 +1,5 @@
-#include "../AVR/Pins.h"
-#include "../AVR/Delay.h"
+#include <AVR/Pins.h>
+#include <AVR/Delay.h>
 
 #if defined(__AVR_ATmega32U4__)
 typedef output_t<PC, 7> LED;			// leonardo
@@ -14,11 +14,8 @@ void setup()
 
 void loop()
 {
-	static bool x = false;
-
-	x = !x;
-	LED::write(x);
-	delay_ms(150);
+	LED::toggle();
+	delay_ms(1000);
 }
 
 int main()
