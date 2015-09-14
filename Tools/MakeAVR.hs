@@ -53,8 +53,7 @@ main = shakeArgs shakeOptions{ shakeFiles = buildDir } $ do
     buildDir </> "image" <.> "s" %> \out -> do
         let elf = out -<.> ".elf"
         need [ elf ]
-        Stdout res <- cmd "avr-objdump" "-S" [ elf ]
-        writeFile' out res
+        cmd (FileStdout out) "avr-objdump" "-S" [ elf ]
 
     buildDir <//> "*.o" %> \out -> do
         let c = dropDirectory1 $ out -<.> "cpp"
