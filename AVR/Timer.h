@@ -15,11 +15,20 @@ struct timer_traits<0>
 	static inline volatile uint8_t& tccra() { return TCCR0A; }
 	static inline volatile uint8_t& tccrb() { return TCCR0B; }
 	static inline volatile uint8_t& timsk() { return TIMSK0; }
+	static inline volatile count_t& ocra() { return OCR0A; }
+	static inline volatile count_t& ocrb() { return OCR0B; }
 	static inline volatile count_t& tcnt() { return TCNT0; }
 	static const uint8_t cs0 = CS00;
 	static const uint8_t cs1 = CS01;
 	static const uint8_t cs2 = CS02;
 	static const uint8_t toie = TOIE0;
+    static const uint8_t coma0 = COM0A0;
+    static const uint8_t coma1 = COM0A1;
+    static const uint8_t comb0 = COM0B0;
+    static const uint8_t comb1 = COM0B1;
+    static const uint8_t wgm0 = WGM00;
+    static const uint8_t wgm1 = WGM01;
+    static const uint8_t wgm2 = WGM02;
 };
 
 template<>
@@ -30,11 +39,20 @@ struct timer_traits<1>
 	static inline volatile uint8_t& tccra() { return TCCR1A; }
 	static inline volatile uint8_t& tccrb() { return TCCR1B; }
 	static inline volatile uint8_t& timsk() { return TIMSK1; }
+	static inline volatile count_t& ocra() { return OCR1A; }
+	static inline volatile count_t& ocrb() { return OCR1B; }
 	static inline volatile count_t& tcnt() { return TCNT1; }
 	static const uint8_t cs0 = CS10;
 	static const uint8_t cs1 = CS11;
 	static const uint8_t cs2 = CS12;
 	static const uint8_t toie = TOIE1;
+    static const uint8_t coma0 = COM1A0;
+    static const uint8_t coma1 = COM1A1;
+    static const uint8_t comb0 = COM1B0;
+    static const uint8_t comb1 = COM1B1;
+    static const uint8_t wgm0 = WGM10;
+    static const uint8_t wgm1 = WGM11;
+    static const uint8_t wgm2 = WGM12;
 };
 
 template<>
@@ -45,11 +63,20 @@ struct timer_traits<2>
 	static inline volatile uint8_t& tccra() { return TCCR2A; }
 	static inline volatile uint8_t& tccrb() { return TCCR2B; }
 	static inline volatile uint8_t& timsk() { return TIMSK2; }
+	static inline volatile count_t& ocra() { return OCR2A; }
+	static inline volatile count_t& ocrb() { return OCR2B; }
 	static inline volatile count_t& tcnt() { return TCNT2; }
 	static const uint8_t cs0 = CS20;
 	static const uint8_t cs1 = CS21;
 	static const uint8_t cs2 = CS22;
 	static const uint8_t toie = TOIE2;
+    static const uint8_t coma0 = COM2A0;
+    static const uint8_t coma1 = COM2A1;
+    static const uint8_t comb0 = COM2B0;
+    static const uint8_t comb1 = COM2B1;
+    static const uint8_t wgm0 = WGM20;
+    static const uint8_t wgm1 = WGM21;
+    static const uint8_t wgm2 = WGM22;
 };
 
 template<int TNO>
@@ -93,10 +120,27 @@ struct timer_t
 		}
 	}
 
+	static inline volatile typename timer_traits<TNO>::count_t& ocra()
+	{
+		return timer_traits<TNO>::ocra();
+	}
+
+	static inline volatile typename timer_traits<TNO>::count_t& ocrb()
+	{
+		return timer_traits<TNO>::ocrb();
+	}
+
 	static inline volatile typename timer_traits<TNO>::count_t& counter()
 	{
 		return timer_traits<TNO>::tcnt();
 	}
+
+    static void pwma()
+    {
+		timer_traits<TNO>::tccra() |= _BV(timer_traits<TNO>::coma1)	    // clear on match, set at bottom
+		                            | _BV(timer_traits<TNO>::wgm1)	    // fast pwm mode
+		                            | _BV(timer_traits<TNO>::wgm0);	    // fast pwm mode
+    }
 
 	static void enable()
 	{
