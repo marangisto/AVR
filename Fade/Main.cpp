@@ -14,17 +14,21 @@ void setup()
 
 void loop()
 {
-    static const int max_dc = 1023; // max duty-cycle
-    static int d_dc = 8;            // duty-cycle increment
-    static int dc = 0;              // duty-cycle
+    static const int max_dc = 0x3ff;    // max duty-cycle
+    static bool dir = false;            // scan direction
+    static int dc = 0;                  // duty-cycle
 
     T::ocra() = dc;
 
-    if (dc + d_dc < 0 || dc + d_dc > max_dc)
-        d_dc = -d_dc;
-    dc += d_dc;
+    if (dc <= 0 || dc >= max_dc)
+        dir = !dir;
+    
+    if (dir)
+        dc = (dc << 1) | 1;
+    else
+        dc = dc >> 1;
 
-	delay_ms(25);
+	delay_ms(100);
 }
 
 int main()
