@@ -14,21 +14,20 @@ void setup()
 
 void loop()
 {
-    static const int max_dc = 0x3ff;    // max duty-cycle
+    //  map ((\x -> x - 1) . round . (2**) . (/3)) [0..30] -- adjust final element to be one less than TOP
+    static const int dcs[] = { 0,0,1,1,2,2,3,4,5,7,9,12,15,19,24,31,39,50,63,80,101,127,160,202,255,322,405,511,644,812,1022 };
+    static const unsigned dcs_size = sizeof(dcs) / sizeof(*dcs);
+    static unsigned i = 0;
     static bool dir = false;            // scan direction
-    static int dc = 0;                  // duty-cycle
 
-    T::ocra() = dc;
+    T::ocra() = dcs[i];
 
-    if (dc <= 0 || dc >= max_dc)
+    if (i == 0 || (i + 1) == dcs_size)
         dir = !dir;
     
-    if (dir)
-        dc = (dc << 1) | 1;
-    else
-        dc = dc >> 1;
+    i += dir ? 1 : -1;
 
-	delay_ms(100);
+	delay_ms(25);
 }
 
 int main()
