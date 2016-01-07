@@ -1,0 +1,6 @@
+text eol=lf
+*.c text
+*.h text
+*.cpp text
+*.hs text
+*.mk text
