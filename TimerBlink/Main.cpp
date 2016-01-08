@@ -1,4 +1,3 @@
-#include <AVR/Pins.h>
 #include <AVR/Timer.h>
 #include <AVR/Delay.h>
 

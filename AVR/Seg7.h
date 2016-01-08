@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Pins.h"
 #include "Timer.h"
 #include <string.h>
 #include <stdlib.h>

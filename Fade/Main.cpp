@@ -1,15 +1,13 @@
-#include <AVR/Pins.h>
 #include <AVR/Delay.h>
 #include <AVR/Timer.h>
 
-typedef output_t<PB, 1> LED;
 typedef timer_t<1> T;
 
 void setup()
 {
-	LED::setup();
     T::setup<fast_pwm, top_0x3ff>();
     T::clock_select<1>();
+    T::output_pin<channel_a>::setup();
     T::compare_output_mode<channel_a, clear_on_compare_match>();
 }
 

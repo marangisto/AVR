@@ -1,6 +1,7 @@
 #pragma once
 
 #include <avr/interrupt.h>
+#include "Pins.h"
 
 enum wg_mode { normal_mode, ctc_mode, fast_pwm, pwm_phase_correct, pwm_phase_frequency_correct };
 enum wg_top { top_default, top_0xff, top_0x1ff, top_0x3ff, top_ocra, top_icr };
@@ -27,11 +28,15 @@ struct timer_traits<0>
 
 template<> struct channel_traits<0, channel_a>
 {
+    typedef output_t<PD, 6> pin_t;
+
 	static inline volatile timer_traits<0>::count_t& ocr() { return OCR0A; }
 };
 
 template<> struct channel_traits<0, channel_b>
 {
+    typedef output_t<PD, 5> pin_t;
+
 	static inline volatile timer_traits<0>::count_t& ocr() { return OCR0B; }
 };
 
@@ -158,11 +163,15 @@ struct timer_traits<1>
 
 template<> struct channel_traits<1, channel_a>
 {
+    typedef output_t<PB, 1> pin_t;
+
 	static inline volatile timer_traits<1>::count_t& ocr() { return OCR1A; }
 };
 
 template<> struct channel_traits<1, channel_b>
 {
+    typedef output_t<PB, 2> pin_t;
+
 	static inline volatile timer_traits<1>::count_t& ocr() { return OCR1B; }
 };
 
@@ -343,11 +352,15 @@ struct timer_traits<2>
 
 template<> struct channel_traits<2, channel_a>
 {
+    typedef output_t<PB, 3> pin_t;
+
 	static inline volatile timer_traits<2>::count_t& ocr() { return OCR2A; }
 };
 
 template<> struct channel_traits<2, channel_b>
 {
+    typedef output_t<PD, 3> pin_t;
+
 	static inline volatile timer_traits<2>::count_t& ocr() { return OCR2B; }
 };
 
@@ -474,6 +487,9 @@ template<int TNO>
 struct timer_t
 {
 	typedef void (*isr_t)();
+
+    template<tm_channel CH>
+    using output_pin = typename channel_traits<TNO, CH>::pin_t;
 
     template<wg_mode MODE, wg_top TOP = top_default>
     static inline void setup()
