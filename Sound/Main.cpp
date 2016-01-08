@@ -50,7 +50,8 @@ public:
 	static void setup()
 	{
 		AUDIO::setup();
-		timer::prescale(timer::prescale_8);
+		timer::setup<normal_mode, top_default>();
+		timer::start<8>();
 		timer::isr(isr);
 		timer::enable();
 		period(2000);

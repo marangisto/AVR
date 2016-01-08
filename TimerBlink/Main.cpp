@@ -19,7 +19,7 @@ void setup()
 {
 	LED::setup();
 
-	timer::setup();
+	timer::setup<normal_mode, top_default>();
 	timer::start<64>();
 	timer::isr(isr);
 	timer::enable();

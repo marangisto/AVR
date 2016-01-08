@@ -138,7 +138,8 @@ public:
 	{
 		typedef timer_t<0> timer;
 
-		timer::prescale(timer::prescale_256);
+		timer::setup<normal_mode, top_default>();
+		timer::start<256>();
 		timer::isr(refresh);
 		timer::enable();
 		sei();
