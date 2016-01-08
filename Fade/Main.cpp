@@ -9,21 +9,23 @@ void setup()
 {
 	LED::setup();
     T::setup<fast_pwm, top_0x3ff>();
-    T::start<1>();
-    T::output<channel_a, clear_on_compare_match>();
+    T::clock_select<1>();
+    T::compare_output_mode<channel_a, clear_on_compare_match>();
 }
 
 void loop()
 {
     //  map ((\x -> x - 1) . round . (2**) . (/3)) [0..30] -- adjust final element to be one less than TOP
-    static const int dcs[] = { 0,0,1,1,2,2,3,4,5,7,9,12,15,19,24,31,39,50,63,80,101,127,160,202,255,322,405,511,644,812,1022 };
-    static const unsigned dcs_size = sizeof(dcs) / sizeof(*dcs);
+    static const int dcs[] = { 0, 0, 1, 1, 2, 2, 3, 4, 5, 7, 9, 12, 15
+                             , 19, 24 , 31, 39, 50, 63, 80, 101, 127, 160
+                             , 202, 255 , 322, 405, 511, 644, 812, 1022
+                             };
     static unsigned i = 0;
     static bool dir = false;            // scan direction
 
-    T::ocra() = dcs[i];
+    T::output_compare_register<channel_a>() = dcs[i];
 
-    if (i == 0 || (i + 1) == dcs_size)
+    if (i == 0 || (i + 1) == sizeof(dcs) / sizeof(*dcs))
         dir = !dir;
     
     i += dir ? 1 : -1;

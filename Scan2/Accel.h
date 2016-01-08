@@ -12,8 +12,8 @@ public:
 	static void setup()
 	{
 		A4988::setup();
-		timer::setup<normal_mode, top_default>();
-		timer::start<8>();
+		timer::setup<normal_mode>();
+		timer::clock_select<8>();
 	}
 
 	static void run(bool dir, uint16_t n, uint16_t c, micro_step_t::e ms)

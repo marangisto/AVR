@@ -2,15 +2,15 @@
 
 #include <avr/interrupt.h>
 
-template<int TNO> struct timer_traits {};
-
 enum wg_mode { normal_mode, ctc_mode, fast_pwm, pwm_phase_correct, pwm_phase_frequency_correct };
 enum wg_top { top_default, top_0xff, top_0x1ff, top_0x3ff, top_ocra, top_icr };
 enum cm_mode { normal_port, toggle_on_compare_match, clear_on_compare_match, set_on_compare_match };
 enum tm_channel { channel_a, channel_b };
 
+template<int TNO> struct timer_traits {};
+template<int TNO, tm_channel CH> struct channel_traits {};
 template<int TNO, wg_mode MODE, wg_top TOP> struct waveform_generator_traits {};
-template<int TNO, int PRESCALE = 0> struct clock_source_traits {};
+template<int TNO, int PRESCALE = 0> struct clock_select_traits {};
 template<int TNO, tm_channel CH, cm_mode MODE = normal_port> struct compare_match_traits {};
 
 template<>
@@ -25,6 +25,16 @@ struct timer_traits<0>
 	static inline volatile count_t& ocrb() { return OCR0B; }
 	static inline volatile count_t& tcnt() { return TCNT0; }
 	static const uint8_t toie = TOIE0;
+};
+
+template<> struct channel_traits<0, channel_a>
+{
+	static inline volatile timer_traits<0>::count_t& ocr() { return OCR0A; }
+};
+
+template<> struct channel_traits<0, channel_b>
+{
+	static inline volatile timer_traits<0>::count_t& ocr() { return OCR0B; }
 };
 
 template<> struct waveform_generator_traits<0, normal_mode, top_default>
@@ -63,32 +73,33 @@ template<> struct waveform_generator_traits<0, fast_pwm, top_ocra>
     static const uint8_t bitsb = _BV(WGM02);
 };
 
-template<> struct clock_source_traits<0, 0>
+template<> struct clock_select_traits<0, 0>
 {
     static const uint8_t mask = _BV(CS02) | _BV(CS01) | _BV(CS00);
+    static const uint8_t bits = 0;
 };
 
-template<> struct clock_source_traits<0, 1>
+template<> struct clock_select_traits<0, 1>
 {
     static const uint8_t bits = _BV(CS00);
 };
 
-template<> struct clock_source_traits<0, 8>
+template<> struct clock_select_traits<0, 8>
 {
     static const uint8_t bits = _BV(CS01);
 };
 
-template<> struct clock_source_traits<0, 64>
+template<> struct clock_select_traits<0, 64>
 {
     static const uint8_t bits = _BV(CS01) | _BV(CS00);
 };
 
-template<> struct clock_source_traits<0, 256>
+template<> struct clock_select_traits<0, 256>
 {
     static const uint8_t bits = _BV(CS02);
 };
 
-template<> struct clock_source_traits<0, 1024>
+template<> struct clock_select_traits<0, 1024>
 {
     static const uint8_t bits = _BV(CS02) | _BV(CS00);
 };
@@ -147,6 +158,16 @@ struct timer_traits<1>
 	static inline volatile count_t& ocrb() { return OCR1B; }
 	static inline volatile count_t& tcnt() { return TCNT1; }
 	static const uint8_t toie = TOIE1;
+};
+
+template<> struct channel_traits<1, channel_a>
+{
+	static inline volatile timer_traits<1>::count_t& ocr() { return OCR1A; }
+};
+
+template<> struct channel_traits<1, channel_b>
+{
+	static inline volatile timer_traits<1>::count_t& ocr() { return OCR1B; }
 };
 
 template<> struct waveform_generator_traits<1, normal_mode, top_default>
@@ -239,32 +260,33 @@ template<> struct waveform_generator_traits<1, fast_pwm, top_ocra>
     static const uint8_t bitsb = _BV(WGM13) | _BV(WGM12);
 };
 
-template<> struct clock_source_traits<1, 0>
+template<> struct clock_select_traits<1, 0>
 {
     static const uint8_t mask = _BV(CS12) | _BV(CS11) | _BV(CS10);
+    static const uint8_t bits = 0;
 };
 
-template<> struct clock_source_traits<1, 1>
+template<> struct clock_select_traits<1, 1>
 {
     static const uint8_t bits = _BV(CS10);
 };
 
-template<> struct clock_source_traits<1, 8>
+template<> struct clock_select_traits<1, 8>
 {
     static const uint8_t bits = _BV(CS11);
 };
 
-template<> struct clock_source_traits<1, 64>
+template<> struct clock_select_traits<1, 64>
 {
     static const uint8_t bits = _BV(CS11) | _BV(CS10);
 };
 
-template<> struct clock_source_traits<1, 256>
+template<> struct clock_select_traits<1, 256>
 {
     static const uint8_t bits = _BV(CS12);
 };
 
-template<> struct clock_source_traits<1, 1024>
+template<> struct clock_select_traits<1, 1024>
 {
     static const uint8_t bits = _BV(CS12) | _BV(CS10);
 };
@@ -325,6 +347,16 @@ struct timer_traits<2>
 	static const uint8_t toie = TOIE2;
 };
 
+template<> struct channel_traits<2, channel_a>
+{
+	static inline volatile timer_traits<2>::count_t& ocr() { return OCR2A; }
+};
+
+template<> struct channel_traits<2, channel_b>
+{
+	static inline volatile timer_traits<2>::count_t& ocr() { return OCR2B; }
+};
+
 template<> struct waveform_generator_traits<2, normal_mode, top_default>
 { 
     static const uint8_t bitsa = 0;
@@ -361,42 +393,43 @@ template<> struct waveform_generator_traits<2, fast_pwm, top_ocra>
     static const uint8_t bitsb = _BV(WGM22);
 };
 
-template<> struct clock_source_traits<2, 0>
+template<> struct clock_select_traits<2, 0>
 {
     static const uint8_t mask = _BV(CS22) | _BV(CS21) | _BV(CS20);
+    static const uint8_t bits = 0;
 };
 
-template<> struct clock_source_traits<2, 1>
+template<> struct clock_select_traits<2, 1>
 {
     static const uint8_t bits = _BV(CS20);
 };
 
-template<> struct clock_source_traits<2, 8>
+template<> struct clock_select_traits<2, 8>
 {
     static const uint8_t bits = _BV(CS21);
 };
 
-template<> struct clock_source_traits<2, 32>
+template<> struct clock_select_traits<2, 32>
 {
     static const uint8_t bits = _BV(CS21) | _BV(CS20);
 };
 
-template<> struct clock_source_traits<2, 64>
+template<> struct clock_select_traits<2, 64>
 {
     static const uint8_t bits = _BV(CS22);
 };
 
-template<> struct clock_source_traits<2, 128>
+template<> struct clock_select_traits<2, 128>
 {
     static const uint8_t bits = _BV(CS22) | _BV(CS20);
 };
 
-template<> struct clock_source_traits<2, 256>
+template<> struct clock_select_traits<2, 256>
 {
     static const uint8_t bits = _BV(CS22) | _BV(CS21);
 };
 
-template<> struct clock_source_traits<2, 1024>
+template<> struct clock_select_traits<2, 1024>
 {
     static const uint8_t bits = _BV(CS22) | _BV(CS21) | _BV(CS20);
 };
@@ -448,7 +481,7 @@ struct timer_t
 {
 	typedef void (*isr_t)();
 
-    template<wg_mode MODE, wg_top TOP>
+    template<wg_mode MODE, wg_top TOP = top_default>
     static inline void setup()
     {
 		timer_traits<TNO>::tccra() = waveform_generator_traits<TNO, MODE, TOP>::bitsa;
@@ -456,35 +489,26 @@ struct timer_t
     }
 
     template<int PRESCALE>
-    static inline void start()
+    static inline void clock_select()
     {
-		timer_traits<TNO>::tccrb() = (timer_traits<TNO>::tccrb() & ~clock_source_traits<TNO>::mask)
-                                   | clock_source_traits<TNO, PRESCALE>::bits
+		timer_traits<TNO>::tccrb() = (timer_traits<TNO>::tccrb() & ~clock_select_traits<TNO>::mask)
+                                   | clock_select_traits<TNO, PRESCALE>::bits
                                    ;
     }
 
-    static inline void stop()
-    {
-		timer_traits<TNO>::tccrb() = timer_traits<TNO>::tccrb() & ~clock_source_traits<TNO>::mask;
-    }
-
     template<tm_channel CH, cm_mode MODE>
-    static inline void output()
+    static inline void compare_output_mode()
     {
 		timer_traits<TNO>::tccra() = (timer_traits<TNO>::tccra() & ~compare_match_traits<TNO, CH>::mask)
                                    | compare_match_traits<TNO, CH, MODE>::bits
                                    ;
     }
 
-	static inline volatile typename timer_traits<TNO>::count_t& ocra()
-	{
-		return timer_traits<TNO>::ocra();
-	}
-
-	static inline volatile typename timer_traits<TNO>::count_t& ocrb()
-	{
-		return timer_traits<TNO>::ocrb();
-	}
+    template<tm_channel CH>
+	static inline volatile typename timer_traits<TNO>::count_t& output_compare_register()
+    {
+		return channel_traits<TNO, CH>::ocr();
+    }
 
 	static inline volatile typename timer_traits<TNO>::count_t& counter()
 	{

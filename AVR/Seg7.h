@@ -138,8 +138,8 @@ public:
 	{
 		typedef timer_t<0> timer;
 
-		timer::setup<normal_mode, top_default>();
-		timer::start<256>();
+		timer::setup<normal_mode>();
+		timer::clock_select<256>();
 		timer::isr(refresh);
 		timer::enable();
 		sei();

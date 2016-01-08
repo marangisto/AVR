@@ -19,8 +19,8 @@ void setup()
 {
 	LED::setup();
 
-	timer::setup<normal_mode, top_default>();
-	timer::start<64>();
+	timer::setup<normal_mode>();
+	timer::clock_select<64>();
 	timer::isr(isr);
 	timer::enable();
 	sei();
