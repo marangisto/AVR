@@ -10,7 +10,7 @@ enum cm_mode { normal_port, toggle_on_compare_match, clear_on_compare_match, set
 enum tm_channel { channel_a, channel_b };
 
 template<int TNO, wg_mode MODE, wg_top TOP> struct waveform_generator_traits {};
-template<int TNO, int PRESCALE> struct clock_source_traits {};
+template<int TNO, int PRESCALE = 0> struct clock_source_traits {};
 template<int TNO, tm_channel CH, cm_mode MODE = normal_port> struct compare_match_traits {};
 
 template<>
@@ -25,7 +25,6 @@ struct timer_traits<0>
 	static inline volatile count_t& ocrb() { return OCR0B; }
 	static inline volatile count_t& tcnt() { return TCNT0; }
 	static const uint8_t toie = TOIE0;
-    static const uint8_t clock_source_mask = _BV(CS02) | _BV(CS01) | _BV(CS00);
 };
 
 template<> struct waveform_generator_traits<0, normal_mode, top_default>
@@ -64,11 +63,35 @@ template<> struct waveform_generator_traits<0, fast_pwm, top_ocra>
     static const uint8_t bitsb = _BV(WGM02);
 };
 
-template<> struct clock_source_traits<0, 1> { static const uint8_t bits = _BV(CS00); };
-template<> struct clock_source_traits<0, 8> { static const uint8_t bits = _BV(CS01); };
-template<> struct clock_source_traits<0, 64> { static const uint8_t bits = _BV(CS01) | _BV(CS00); };
-template<> struct clock_source_traits<0, 256> { static const uint8_t bits = _BV(CS02); };
-template<> struct clock_source_traits<0, 1024> { static const uint8_t bits = _BV(CS02) | _BV(CS00); };
+template<> struct clock_source_traits<0, 0>
+{
+    static const uint8_t mask = _BV(CS02) | _BV(CS01) | _BV(CS00);
+};
+
+template<> struct clock_source_traits<0, 1>
+{
+    static const uint8_t bits = _BV(CS00);
+};
+
+template<> struct clock_source_traits<0, 8>
+{
+    static const uint8_t bits = _BV(CS01);
+};
+
+template<> struct clock_source_traits<0, 64>
+{
+    static const uint8_t bits = _BV(CS01) | _BV(CS00);
+};
+
+template<> struct clock_source_traits<0, 256>
+{
+    static const uint8_t bits = _BV(CS02);
+};
+
+template<> struct clock_source_traits<0, 1024>
+{
+    static const uint8_t bits = _BV(CS02) | _BV(CS00);
+};
 
 template<> struct compare_match_traits<0, channel_a, normal_port>
 {
@@ -124,7 +147,6 @@ struct timer_traits<1>
 	static inline volatile count_t& ocrb() { return OCR1B; }
 	static inline volatile count_t& tcnt() { return TCNT1; }
 	static const uint8_t toie = TOIE1;
-    static const uint8_t clock_source_mask = _BV(CS12) | _BV(CS11) | _BV(CS10);
 };
 
 template<> struct waveform_generator_traits<1, normal_mode, top_default>
@@ -217,11 +239,35 @@ template<> struct waveform_generator_traits<1, fast_pwm, top_ocra>
     static const uint8_t bitsb = _BV(WGM13) | _BV(WGM12);
 };
 
-template<> struct clock_source_traits<1, 1> { static const uint8_t bits = _BV(CS10); };
-template<> struct clock_source_traits<1, 8> { static const uint8_t bits = _BV(CS11); };
-template<> struct clock_source_traits<1, 64> { static const uint8_t bits = _BV(CS11) | _BV(CS10); };
-template<> struct clock_source_traits<1, 256> { static const uint8_t bits = _BV(CS12); };
-template<> struct clock_source_traits<1, 1024> { static const uint8_t bits = _BV(CS12) | _BV(CS10); };
+template<> struct clock_source_traits<1, 0>
+{
+    static const uint8_t mask = _BV(CS12) | _BV(CS11) | _BV(CS10);
+};
+
+template<> struct clock_source_traits<1, 1>
+{
+    static const uint8_t bits = _BV(CS10);
+};
+
+template<> struct clock_source_traits<1, 8>
+{
+    static const uint8_t bits = _BV(CS11);
+};
+
+template<> struct clock_source_traits<1, 64>
+{
+    static const uint8_t bits = _BV(CS11) | _BV(CS10);
+};
+
+template<> struct clock_source_traits<1, 256>
+{
+    static const uint8_t bits = _BV(CS12);
+};
+
+template<> struct clock_source_traits<1, 1024>
+{
+    static const uint8_t bits = _BV(CS12) | _BV(CS10);
+};
 
 template<> struct compare_match_traits<1, channel_a, normal_port>
 {
@@ -277,7 +323,6 @@ struct timer_traits<2>
 	static inline volatile count_t& ocrb() { return OCR2B; }
 	static inline volatile count_t& tcnt() { return TCNT2; }
 	static const uint8_t toie = TOIE2;
-    static const uint8_t clock_source_mask = _BV(CS22) | _BV(CS21) | _BV(CS20);
 };
 
 template<> struct waveform_generator_traits<2, normal_mode, top_default>
@@ -316,13 +361,45 @@ template<> struct waveform_generator_traits<2, fast_pwm, top_ocra>
     static const uint8_t bitsb = _BV(WGM22);
 };
 
-template<> struct clock_source_traits<2, 1> { static const uint8_t bits = _BV(CS20); };
-template<> struct clock_source_traits<2, 8> { static const uint8_t bits = _BV(CS21); };
-template<> struct clock_source_traits<2, 32> { static const uint8_t bits = _BV(CS21) | _BV(CS20); };
-template<> struct clock_source_traits<2, 64> { static const uint8_t bits = _BV(CS22); };
-template<> struct clock_source_traits<2, 128> { static const uint8_t bits = _BV(CS22) | _BV(CS20); };
-template<> struct clock_source_traits<2, 256> { static const uint8_t bits = _BV(CS22) | _BV(CS21); };
-template<> struct clock_source_traits<2, 1024> { static const uint8_t bits = _BV(CS22) | _BV(CS21) | _BV(CS20); };
+template<> struct clock_source_traits<2, 0>
+{
+    static const uint8_t mask = _BV(CS22) | _BV(CS21) | _BV(CS20);
+};
+
+template<> struct clock_source_traits<2, 1>
+{
+    static const uint8_t bits = _BV(CS20);
+};
+
+template<> struct clock_source_traits<2, 8>
+{
+    static const uint8_t bits = _BV(CS21);
+};
+
+template<> struct clock_source_traits<2, 32>
+{
+    static const uint8_t bits = _BV(CS21) | _BV(CS20);
+};
+
+template<> struct clock_source_traits<2, 64>
+{
+    static const uint8_t bits = _BV(CS22);
+};
+
+template<> struct clock_source_traits<2, 128>
+{
+    static const uint8_t bits = _BV(CS22) | _BV(CS20);
+};
+
+template<> struct clock_source_traits<2, 256>
+{
+    static const uint8_t bits = _BV(CS22) | _BV(CS21);
+};
+
+template<> struct clock_source_traits<2, 1024>
+{
+    static const uint8_t bits = _BV(CS22) | _BV(CS21) | _BV(CS20);
+};
 
 template<> struct compare_match_traits<2, channel_a, normal_port>
 {
@@ -381,14 +458,14 @@ struct timer_t
     template<int PRESCALE>
     static inline void start()
     {
-		timer_traits<TNO>::tccrb() = (timer_traits<TNO>::tccrb() & ~timer_traits<TNO>::clock_source_mask)
+		timer_traits<TNO>::tccrb() = (timer_traits<TNO>::tccrb() & ~clock_source_traits<TNO>::mask)
                                    | clock_source_traits<TNO, PRESCALE>::bits
                                    ;
     }
 
     static inline void stop()
     {
-		timer_traits<TNO>::tccrb() = timer_traits<TNO>::tccrb() & ~timer_traits<TNO>::clock_source_mask;
+		timer_traits<TNO>::tccrb() = timer_traits<TNO>::tccrb() & ~clock_source_traits<TNO>::mask;
     }
 
     template<tm_channel CH, cm_mode MODE>
