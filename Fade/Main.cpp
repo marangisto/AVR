@@ -10,7 +10,7 @@ void setup()
 	LED::setup();
     T::setup<fast_pwm, top_0x3ff>();
     T::start<1>();
-    T::pwma();
+    T::output<channel_a, clear_on_compare_match>();
 }
 
 void loop()

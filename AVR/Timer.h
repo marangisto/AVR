@@ -2,17 +2,16 @@
 
 #include <avr/interrupt.h>
 
-template<int TNO>
-struct timer_traits
-{
-};
+template<int TNO> struct timer_traits {};
 
 enum wg_mode { normal_mode, ctc_mode, fast_pwm, pwm_phase_correct, pwm_phase_frequency_correct };
 enum wg_top { top_default, top_0xff, top_0x1ff, top_0x3ff, top_ocra, top_icr };
+enum cm_mode { normal_port, toggle_on_compare_match, clear_on_compare_match, set_on_compare_match };
+enum tm_channel { channel_a, channel_b };
 
 template<int TNO, wg_mode MODE, wg_top TOP> struct waveform_generator_traits {};
-
 template<int TNO, int PRESCALE> struct clock_source_traits {};
+template<int TNO, tm_channel CH, cm_mode MODE = normal_port> struct compare_match_traits {};
 
 template<>
 struct timer_traits<0>
@@ -31,6 +30,8 @@ struct timer_traits<0>
     static const uint8_t comb0 = COM0B0;
     static const uint8_t comb1 = COM0B1;
     static const uint8_t clock_source_mask = _BV(CS02) | _BV(CS01) | _BV(CS00);
+    static const uint8_t compare_match_a_mask = _BV(COM0A1) | _BV(COM0A0);
+    static const uint8_t compare_match_b_mask = _BV(COM0B1) | _BV(COM0B0);
 };
 
 template<> struct waveform_generator_traits<0, normal_mode, top_default>
@@ -74,6 +75,48 @@ template<> struct clock_source_traits<0, 8> { static const uint8_t bits = _BV(CS
 template<> struct clock_source_traits<0, 64> { static const uint8_t bits = _BV(CS01) | _BV(CS00); };
 template<> struct clock_source_traits<0, 256> { static const uint8_t bits = _BV(CS02); };
 template<> struct clock_source_traits<0, 1024> { static const uint8_t bits = _BV(CS02) | _BV(CS00); };
+
+template<> struct compare_match_traits<0, channel_a, normal_port>
+{
+    static const uint8_t mask = _BV(COM0A1) | _BV(COM0A0);
+    static const uint8_t bits = 0;
+};
+
+template<> struct compare_match_traits<0, channel_a, toggle_on_compare_match>
+{
+    static const uint8_t bits = _BV(COM0A0);
+};
+
+template<> struct compare_match_traits<0, channel_a, clear_on_compare_match>
+{
+    static const uint8_t bits = _BV(COM0A1);
+};
+
+template<> struct compare_match_traits<0, channel_a, set_on_compare_match>
+{
+    static const uint8_t bits = _BV(COM0A1) | _BV(COM0A0);
+};
+
+template<> struct compare_match_traits<0, channel_b, normal_port>
+{
+    static const uint8_t mask = _BV(COM0B1) | _BV(COM0B0);
+    static const uint8_t bits = 0;
+};
+
+template<> struct compare_match_traits<0, channel_b, toggle_on_compare_match>
+{
+    static const uint8_t bits = _BV(COM0B0);
+};
+
+template<> struct compare_match_traits<0, channel_b, clear_on_compare_match>
+{
+    static const uint8_t bits = _BV(COM0B1);
+};
+
+template<> struct compare_match_traits<0, channel_b, set_on_compare_match>
+{
+    static const uint8_t bits = _BV(COM0B1) | _BV(COM0B0);
+};
 
 template<>
 struct timer_traits<1>
@@ -190,6 +233,48 @@ template<> struct clock_source_traits<1, 64> { static const uint8_t bits = _BV(C
 template<> struct clock_source_traits<1, 256> { static const uint8_t bits = _BV(CS12); };
 template<> struct clock_source_traits<1, 1024> { static const uint8_t bits = _BV(CS12) | _BV(CS10); };
 
+template<> struct compare_match_traits<1, channel_a, normal_port>
+{
+    static const uint8_t mask = _BV(COM1A1) | _BV(COM1A0);
+    static const uint8_t bits = 0;
+};
+
+template<> struct compare_match_traits<1, channel_a, toggle_on_compare_match>
+{
+    static const uint8_t bits = _BV(COM1A0);
+};
+
+template<> struct compare_match_traits<1, channel_a, clear_on_compare_match>
+{
+    static const uint8_t bits = _BV(COM1A1);
+};
+
+template<> struct compare_match_traits<1, channel_a, set_on_compare_match>
+{
+    static const uint8_t bits = _BV(COM1A1) | _BV(COM1A0);
+};
+
+template<> struct compare_match_traits<1, channel_b, normal_port>
+{
+    static const uint8_t mask = _BV(COM1B1) | _BV(COM1B0);
+    static const uint8_t bits = 0;
+};
+
+template<> struct compare_match_traits<1, channel_b, toggle_on_compare_match>
+{
+    static const uint8_t bits = _BV(COM1B0);
+};
+
+template<> struct compare_match_traits<1, channel_b, clear_on_compare_match>
+{
+    static const uint8_t bits = _BV(COM1B1);
+};
+
+template<> struct compare_match_traits<1, channel_b, set_on_compare_match>
+{
+    static const uint8_t bits = _BV(COM1B1) | _BV(COM1B0);
+};
+
 template<>
 struct timer_traits<2>
 {
@@ -207,6 +292,8 @@ struct timer_traits<2>
     static const uint8_t comb0 = COM2B0;
     static const uint8_t comb1 = COM2B1;
     static const uint8_t clock_source_mask = _BV(CS22) | _BV(CS21) | _BV(CS20);
+    static const uint8_t compare_match_a_mask = _BV(COM2A1) | _BV(COM2A0);
+    static const uint8_t compare_match_b_mask = _BV(COM2B1) | _BV(COM2B0);
 };
 
 template<> struct waveform_generator_traits<2, normal_mode, top_default>
@@ -253,6 +340,48 @@ template<> struct clock_source_traits<2, 128> { static const uint8_t bits = _BV(
 template<> struct clock_source_traits<2, 256> { static const uint8_t bits = _BV(CS22) | _BV(CS21); };
 template<> struct clock_source_traits<2, 1024> { static const uint8_t bits = _BV(CS22) | _BV(CS21) | _BV(CS20); };
 
+template<> struct compare_match_traits<2, channel_a, normal_port>
+{
+    static const uint8_t mask = _BV(COM2A1) | _BV(COM2A0);
+    static const uint8_t bits = 0;
+};
+
+template<> struct compare_match_traits<2, channel_a, toggle_on_compare_match>
+{
+    static const uint8_t bits = _BV(COM2A0);
+};
+
+template<> struct compare_match_traits<2, channel_a, clear_on_compare_match>
+{
+    static const uint8_t bits = _BV(COM2A1);
+};
+
+template<> struct compare_match_traits<2, channel_a, set_on_compare_match>
+{
+    static const uint8_t bits = _BV(COM2A1) | _BV(COM2A0);
+};
+
+template<> struct compare_match_traits<2, channel_b, normal_port>
+{
+    static const uint8_t mask = _BV(COM2B1) | _BV(COM2B0);
+    static const uint8_t bits = 0;
+};
+
+template<> struct compare_match_traits<2, channel_b, toggle_on_compare_match>
+{
+    static const uint8_t bits = _BV(COM2B0);
+};
+
+template<> struct compare_match_traits<2, channel_b, clear_on_compare_match>
+{
+    static const uint8_t bits = _BV(COM2B1);
+};
+
+template<> struct compare_match_traits<2, channel_b, set_on_compare_match>
+{
+    static const uint8_t bits = _BV(COM2B1) | _BV(COM2B0);
+};
+
 template<int TNO>
 struct timer_t
 {
@@ -278,6 +407,14 @@ struct timer_t
 		timer_traits<TNO>::tccrb() = timer_traits<TNO>::tccrb() & ~timer_traits<TNO>::clock_source_mask;
     }
 
+    template<tm_channel CH, cm_mode MODE>
+    static inline void output()
+    {
+		timer_traits<TNO>::tccra() = (timer_traits<TNO>::tccra() & ~compare_match_traits<TNO, CH>::mask)
+                                   | compare_match_traits<TNO, CH, MODE>::bits
+                                   ;
+    }
+
 	static inline volatile typename timer_traits<TNO>::count_t& ocra()
 	{
 		return timer_traits<TNO>::ocra();
@@ -292,11 +429,6 @@ struct timer_t
 	{
 		return timer_traits<TNO>::tcnt();
 	}
-
-    static void pwma()
-    {
-		timer_traits<TNO>::tccra() |= _BV(timer_traits<TNO>::coma1);    // clear on match, set at bottom
-    }
 
 	static void enable()
 	{
