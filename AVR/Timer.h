@@ -7,6 +7,11 @@ struct timer_traits
 {
 };
 
+enum wg_mode { normal_mode, ctc_mode, fast_pwm, pwm_phase_correct, pwm_phase_frequency_correct };
+enum wg_top { top_default, top_0xff, top_0x1ff, top_0x3ff, top_ocra, top_icr };
+
+template<int TNO, wg_mode MODE, wg_top TOP> struct waveform_generator_traits {};
+
 template<int TNO, int PRESCALE> struct clock_source_traits {};
 
 template<>
@@ -25,10 +30,43 @@ struct timer_traits<0>
     static const uint8_t coma1 = COM0A1;
     static const uint8_t comb0 = COM0B0;
     static const uint8_t comb1 = COM0B1;
-    static const uint8_t wgm0 = WGM00;
-    static const uint8_t wgm1 = WGM01;
-    static const uint8_t wgm2 = WGM02;
     static const uint8_t clock_source_mask = _BV(CS02) | _BV(CS01) | _BV(CS00);
+};
+
+template<> struct waveform_generator_traits<0, normal_mode, top_default>
+{ 
+    static const uint8_t bitsa = 0;
+    static const uint8_t bitsb = 0;
+};
+
+template<> struct waveform_generator_traits<0, pwm_phase_correct, top_0xff>
+{ 
+    static const uint8_t bitsa = _BV(WGM00);
+    static const uint8_t bitsb = 0;
+};
+
+template<> struct waveform_generator_traits<0, ctc_mode, top_ocra>
+{ 
+    static const uint8_t bitsa = _BV(WGM01);
+    static const uint8_t bitsb = 0;
+};
+
+template<> struct waveform_generator_traits<0, fast_pwm, top_0xff>
+{ 
+    static const uint8_t bitsa = _BV(WGM01) | _BV(WGM00);
+    static const uint8_t bitsb = 0;
+};
+
+template<> struct waveform_generator_traits<0, pwm_phase_correct, top_ocra>
+{ 
+    static const uint8_t bitsa = _BV(WGM00);
+    static const uint8_t bitsb = _BV(WGM02);
+};
+
+template<> struct waveform_generator_traits<0, fast_pwm, top_ocra>
+{ 
+    static const uint8_t bitsa = _BV(WGM01) | _BV(WGM00);
+    static const uint8_t bitsb = _BV(WGM02);
 };
 
 template<> struct clock_source_traits<0, 1> { static const uint8_t bits = _BV(CS00); };
@@ -53,10 +91,97 @@ struct timer_traits<1>
     static const uint8_t coma1 = COM1A1;
     static const uint8_t comb0 = COM1B0;
     static const uint8_t comb1 = COM1B1;
-    static const uint8_t wgm0 = WGM10;
-    static const uint8_t wgm1 = WGM11;
-    static const uint8_t wgm2 = WGM12;
     static const uint8_t clock_source_mask = _BV(CS12) | _BV(CS11) | _BV(CS10);
+};
+
+template<> struct waveform_generator_traits<1, normal_mode, top_default>
+{ 
+    static const uint8_t bitsa = 0;
+    static const uint8_t bitsb = 0;
+};
+
+template<> struct waveform_generator_traits<1, pwm_phase_correct, top_0xff>
+{ 
+    static const uint8_t bitsa = _BV(WGM10);
+    static const uint8_t bitsb = 0;
+};
+
+template<> struct waveform_generator_traits<1, pwm_phase_correct, top_0x1ff>
+{ 
+    static const uint8_t bitsa = _BV(WGM11);
+    static const uint8_t bitsb = 0;
+};
+
+template<> struct waveform_generator_traits<1, pwm_phase_correct, top_0x3ff>
+{ 
+    static const uint8_t bitsa = _BV(WGM11) | _BV(WGM10);
+    static const uint8_t bitsb = 0;
+};
+
+template<> struct waveform_generator_traits<1, ctc_mode, top_ocra>
+{ 
+    static const uint8_t bitsa = 0;
+    static const uint8_t bitsb = _BV(WGM12);
+};
+
+template<> struct waveform_generator_traits<1, fast_pwm, top_0xff>
+{ 
+    static const uint8_t bitsa = _BV(WGM10);
+    static const uint8_t bitsb = _BV(WGM12);
+};
+
+template<> struct waveform_generator_traits<1, fast_pwm, top_0x1ff>
+{ 
+    static const uint8_t bitsa = _BV(WGM11);
+    static const uint8_t bitsb = _BV(WGM12);
+};
+
+template<> struct waveform_generator_traits<1, fast_pwm, top_0x3ff>
+{ 
+    static const uint8_t bitsa = _BV(WGM11) | _BV(WGM10);
+    static const uint8_t bitsb = _BV(WGM12);
+};
+
+template<> struct waveform_generator_traits<1, pwm_phase_frequency_correct, top_icr>
+{ 
+    static const uint8_t bitsa = 0;
+    static const uint8_t bitsb = _BV(WGM13);
+};
+
+template<> struct waveform_generator_traits<1, pwm_phase_frequency_correct, top_ocra>
+{ 
+    static const uint8_t bitsa = _BV(WGM10);
+    static const uint8_t bitsb = _BV(WGM13);
+};
+
+template<> struct waveform_generator_traits<1, pwm_phase_correct, top_icr>
+{ 
+    static const uint8_t bitsa = _BV(WGM11);
+    static const uint8_t bitsb = _BV(WGM13);
+};
+
+template<> struct waveform_generator_traits<1, pwm_phase_correct, top_ocra>
+{ 
+    static const uint8_t bitsa = _BV(WGM11) | _BV(WGM10);
+    static const uint8_t bitsb = _BV(WGM13);
+};
+
+template<> struct waveform_generator_traits<1, ctc_mode, top_icr>
+{ 
+    static const uint8_t bitsa = 0;
+    static const uint8_t bitsb = _BV(WGM13) | _BV(WGM12);
+};
+
+template<> struct waveform_generator_traits<1, fast_pwm, top_icr>
+{ 
+    static const uint8_t bitsa = _BV(WGM11);
+    static const uint8_t bitsb = _BV(WGM13) | _BV(WGM12);
+};
+
+template<> struct waveform_generator_traits<1, fast_pwm, top_ocra>
+{ 
+    static const uint8_t bitsa = _BV(WGM11) | _BV(WGM10);
+    static const uint8_t bitsb = _BV(WGM13) | _BV(WGM12);
 };
 
 template<> struct clock_source_traits<1, 1> { static const uint8_t bits = _BV(CS10); };
@@ -81,10 +206,43 @@ struct timer_traits<2>
     static const uint8_t coma1 = COM2A1;
     static const uint8_t comb0 = COM2B0;
     static const uint8_t comb1 = COM2B1;
-    static const uint8_t wgm0 = WGM20;
-    static const uint8_t wgm1 = WGM21;
-    static const uint8_t wgm2 = WGM22;
     static const uint8_t clock_source_mask = _BV(CS22) | _BV(CS21) | _BV(CS20);
+};
+
+template<> struct waveform_generator_traits<2, normal_mode, top_default>
+{ 
+    static const uint8_t bitsa = 0;
+    static const uint8_t bitsb = 0;
+};
+
+template<> struct waveform_generator_traits<2, pwm_phase_correct, top_0xff>
+{ 
+    static const uint8_t bitsa = _BV(WGM20);
+    static const uint8_t bitsb = 0;
+};
+
+template<> struct waveform_generator_traits<2, ctc_mode, top_ocra>
+{ 
+    static const uint8_t bitsa = _BV(WGM21);
+    static const uint8_t bitsb = 0;
+};
+
+template<> struct waveform_generator_traits<2, fast_pwm, top_0xff>
+{ 
+    static const uint8_t bitsa = _BV(WGM21) | _BV(WGM20);
+    static const uint8_t bitsb = 0;
+};
+
+template<> struct waveform_generator_traits<2, pwm_phase_correct, top_ocra>
+{ 
+    static const uint8_t bitsa = _BV(WGM20);
+    static const uint8_t bitsb = _BV(WGM22);
+};
+
+template<> struct waveform_generator_traits<2, fast_pwm, top_ocra>
+{ 
+    static const uint8_t bitsa = _BV(WGM21) | _BV(WGM20);
+    static const uint8_t bitsb = _BV(WGM22);
 };
 
 template<> struct clock_source_traits<2, 1> { static const uint8_t bits = _BV(CS20); };
@@ -100,9 +258,11 @@ struct timer_t
 {
 	typedef void (*isr_t)();
 
+    template<wg_mode MODE, wg_top TOP>
     static inline void setup()
     {
-		timer_traits<TNO>::tccra() = timer_traits<TNO>::tccrb() = 0;
+		timer_traits<TNO>::tccra() = waveform_generator_traits<TNO, MODE, TOP>::bitsa;
+		timer_traits<TNO>::tccrb() = waveform_generator_traits<TNO, MODE, TOP>::bitsb;
     }
 
     template<int PRESCALE>
@@ -135,9 +295,7 @@ struct timer_t
 
     static void pwma()
     {
-		timer_traits<TNO>::tccra() |= _BV(timer_traits<TNO>::coma1)	    // clear on match, set at bottom
-		                            | _BV(timer_traits<TNO>::wgm1)	    // fast pwm mode
-		                            | _BV(timer_traits<TNO>::wgm0);	    // fast pwm mode
+		timer_traits<TNO>::tccra() |= _BV(timer_traits<TNO>::coma1);    // clear on match, set at bottom
     }
 
 	static void enable()
