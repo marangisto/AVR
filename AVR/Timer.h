@@ -25,13 +25,7 @@ struct timer_traits<0>
 	static inline volatile count_t& ocrb() { return OCR0B; }
 	static inline volatile count_t& tcnt() { return TCNT0; }
 	static const uint8_t toie = TOIE0;
-    static const uint8_t coma0 = COM0A0;
-    static const uint8_t coma1 = COM0A1;
-    static const uint8_t comb0 = COM0B0;
-    static const uint8_t comb1 = COM0B1;
     static const uint8_t clock_source_mask = _BV(CS02) | _BV(CS01) | _BV(CS00);
-    static const uint8_t compare_match_a_mask = _BV(COM0A1) | _BV(COM0A0);
-    static const uint8_t compare_match_b_mask = _BV(COM0B1) | _BV(COM0B0);
 };
 
 template<> struct waveform_generator_traits<0, normal_mode, top_default>
@@ -130,10 +124,6 @@ struct timer_traits<1>
 	static inline volatile count_t& ocrb() { return OCR1B; }
 	static inline volatile count_t& tcnt() { return TCNT1; }
 	static const uint8_t toie = TOIE1;
-    static const uint8_t coma0 = COM1A0;
-    static const uint8_t coma1 = COM1A1;
-    static const uint8_t comb0 = COM1B0;
-    static const uint8_t comb1 = COM1B1;
     static const uint8_t clock_source_mask = _BV(CS12) | _BV(CS11) | _BV(CS10);
 };
 
@@ -287,13 +277,7 @@ struct timer_traits<2>
 	static inline volatile count_t& ocrb() { return OCR2B; }
 	static inline volatile count_t& tcnt() { return TCNT2; }
 	static const uint8_t toie = TOIE2;
-    static const uint8_t coma0 = COM2A0;
-    static const uint8_t coma1 = COM2A1;
-    static const uint8_t comb0 = COM2B0;
-    static const uint8_t comb1 = COM2B1;
     static const uint8_t clock_source_mask = _BV(CS22) | _BV(CS21) | _BV(CS20);
-    static const uint8_t compare_match_a_mask = _BV(COM2A1) | _BV(COM2A0);
-    static const uint8_t compare_match_b_mask = _BV(COM2B1) | _BV(COM2B0);
 };
 
 template<> struct waveform_generator_traits<2, normal_mode, top_default>
