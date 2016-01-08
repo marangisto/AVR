@@ -1,4 +1,0 @@
-:
-# invoke shake on current directory project
-#runghc ../Tools/MakeAVR.hs $*
-../Tools/MakeAVR $*

@@ -1,6 +1,0 @@
-cd ~/Marangisto
-for i in `find . -name build.mk -print|sed 's/\/build.mk//g'`
-do
-	banner `echo $i|sed 's/\.\///g'`
-	(cd $i; ../Tools/MakeAVR $*)
-done
