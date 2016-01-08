@@ -7,6 +7,8 @@ struct timer_traits
 {
 };
 
+template<int TNO, int PRESCALE> struct clock_source_traits {};
+
 template<>
 struct timer_traits<0>
 {
@@ -29,7 +31,15 @@ struct timer_traits<0>
     static const uint8_t wgm0 = WGM00;
     static const uint8_t wgm1 = WGM01;
     static const uint8_t wgm2 = WGM02;
+    static const uint8_t clock_source_mask = _BV(CS02) | _BV(CS01) | _BV(CS00);
 };
+
+//template<> struct clock_source_traits<0, 1> { static const uint8_t bits = _BV(CS00); };
+template<> struct clock_source_traits<0, 1> { static inline uint8_t bits() { return _BV(CS00); } };
+template<> struct clock_source_traits<0, 8> { static inline uint8_t bits() { return _BV(CS01); } };
+template<> struct clock_source_traits<0, 64> { static inline uint8_t bits() { return _BV(CS01) | _BV(CS00); } };
+template<> struct clock_source_traits<0, 256> { static inline uint8_t bits() { return _BV(CS02); } };
+template<> struct clock_source_traits<0, 1024> { static inline uint8_t bits() { return _BV(CS02) | _BV(CS00); } };
 
 template<>
 struct timer_traits<1>
@@ -55,6 +65,12 @@ struct timer_traits<1>
     static const uint8_t wgm2 = WGM12;
 };
 
+template<> struct clock_source_traits<1, 1> { static inline uint8_t bits() { return _BV(CS10); } };
+template<> struct clock_source_traits<1, 8> { static inline uint8_t bits() { return _BV(CS11); } };
+template<> struct clock_source_traits<1, 64> { static inline uint8_t bits() { return _BV(CS11) | _BV(CS10); } };
+template<> struct clock_source_traits<1, 256> { static inline uint8_t bits() { return _BV(CS12); } };
+template<> struct clock_source_traits<1, 1024> { static inline uint8_t bits() { return _BV(CS12) | _BV(CS10); } };
+
 template<>
 struct timer_traits<2>
 {
@@ -78,6 +94,14 @@ struct timer_traits<2>
     static const uint8_t wgm1 = WGM21;
     static const uint8_t wgm2 = WGM22;
 };
+
+template<> struct clock_source_traits<2, 1> { static inline uint8_t bits() { return _BV(CS20); } };
+template<> struct clock_source_traits<2, 8> { static inline uint8_t bits() { return _BV(CS21); } };
+template<> struct clock_source_traits<2, 32> { static inline uint8_t bits() { return _BV(CS21) | _BV(CS20); } };
+template<> struct clock_source_traits<2, 64> { static inline uint8_t bits() { return _BV(CS22); } };
+template<> struct clock_source_traits<2, 128> { static inline uint8_t bits() { return _BV(CS22) | _BV(CS20); } };
+template<> struct clock_source_traits<2, 256> { static inline uint8_t bits() { return _BV(CS22) | _BV(CS21); } };
+template<> struct clock_source_traits<2, 1024> { static inline uint8_t bits() { return _BV(CS22) | _BV(CS21) | _BV(CS20); } };
 
 template<int TNO>
 struct timer_t
