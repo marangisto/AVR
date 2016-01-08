@@ -8,7 +8,8 @@ typedef timer_t<1> T;
 void setup()
 {
 	LED::setup();
-    T::prescale(T::prescale_1);
+    T::setup();
+    T::start<8>();
     T::pwma();
 }
 
@@ -27,7 +28,7 @@ void loop()
     
     i += dir ? 1 : -1;
 
-	delay_ms(25);
+	delay_ms(125);
 }
 
 int main()

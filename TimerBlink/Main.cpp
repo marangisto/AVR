@@ -19,7 +19,8 @@ void setup()
 {
 	LED::setup();
 
-	timer::prescale(timer::prescale_64);
+	timer::setup();
+	timer::start<64>();
 	timer::isr(isr);
 	timer::enable();
 	sei();
