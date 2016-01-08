@@ -21,8 +21,6 @@ struct timer_traits<0>
 	static inline volatile uint8_t& tccra() { return TCCR0A; }
 	static inline volatile uint8_t& tccrb() { return TCCR0B; }
 	static inline volatile uint8_t& timsk() { return TIMSK0; }
-	static inline volatile count_t& ocra() { return OCR0A; }
-	static inline volatile count_t& ocrb() { return OCR0B; }
 	static inline volatile count_t& tcnt() { return TCNT0; }
 	static const uint8_t toie = TOIE0;
 };
@@ -154,8 +152,6 @@ struct timer_traits<1>
 	static inline volatile uint8_t& tccra() { return TCCR1A; }
 	static inline volatile uint8_t& tccrb() { return TCCR1B; }
 	static inline volatile uint8_t& timsk() { return TIMSK1; }
-	static inline volatile count_t& ocra() { return OCR1A; }
-	static inline volatile count_t& ocrb() { return OCR1B; }
 	static inline volatile count_t& tcnt() { return TCNT1; }
 	static const uint8_t toie = TOIE1;
 };
@@ -341,8 +337,6 @@ struct timer_traits<2>
 	static inline volatile uint8_t& tccra() { return TCCR2A; }
 	static inline volatile uint8_t& tccrb() { return TCCR2B; }
 	static inline volatile uint8_t& timsk() { return TIMSK2; }
-	static inline volatile count_t& ocra() { return OCR2A; }
-	static inline volatile count_t& ocrb() { return OCR2B; }
 	static inline volatile count_t& tcnt() { return TCNT2; }
 	static const uint8_t toie = TOIE2;
 };
