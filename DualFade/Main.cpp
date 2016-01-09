@@ -1,6 +1,8 @@
 #include <AVR/Delay.h>
 #include <AVR/Timer.h>
 
+typedef output_t<PD, 0> Sa;
+typedef output_t<PD, 1> Sb;
 typedef timer_t<0> T;
 typedef timer_t<1> U;
 typedef timer_t<2> V;
@@ -9,6 +11,9 @@ void setup()
 {
     const wg_mode mode = pwm_phase_correct;
     const int prescale = 1;
+
+    Sa::setup();
+    Sb::setup();
 
     T::setup<mode, top_0xff>();
     T::clock_select<prescale>();
@@ -51,30 +56,38 @@ static unsigned duty_cycle(unsigned& i, bool& dir)
 
 void loop()
 {
+    static unsigned s_idx_a = 0, s_idx_b = 0;
     static unsigned t_idx_a = 0, t_idx_b = 0;
     static unsigned u_idx_a = 0, u_idx_b = 0;
     static unsigned v_idx_a = 0, v_idx_b = 0;
+    static bool s_dir_a = false, s_dir_b = false;
     static bool t_dir_a = false, t_dir_b = false;
     static bool u_dir_a = false, u_dir_b = false;
     static bool v_dir_a = false, v_dir_b = false;
     static unsigned i = 0;
 
+    if (i % 11 == 0)
+        Sa::write(duty_cycle(s_idx_a, s_dir_a) > 31);
+
     if (i % 13 == 0)
-        T::output_compare_register<channel_a>() = duty_cycle(t_idx_a, t_dir_a);
+        Sb::write(duty_cycle(s_idx_b, s_dir_b) > 31);
 
     if (i % 17 == 0)
-        T::output_compare_register<channel_b>() = duty_cycle(t_idx_b, t_dir_b);
+        T::output_compare_register<channel_a>() = duty_cycle(t_idx_a, t_dir_a);
 
     if (i % 23 == 0)
-        U::output_compare_register<channel_a>() = duty_cycle(u_idx_a, u_dir_a);
+        T::output_compare_register<channel_b>() = duty_cycle(t_idx_b, t_dir_b);
 
     if (i % 29 == 0)
-        U::output_compare_register<channel_b>() = duty_cycle(u_idx_b, u_dir_b);
+        U::output_compare_register<channel_a>() = duty_cycle(u_idx_a, u_dir_a);
 
     if (i % 31 == 0)
-        V::output_compare_register<channel_a>() = duty_cycle(v_idx_a, v_dir_a);
+        U::output_compare_register<channel_b>() = duty_cycle(u_idx_b, u_dir_b);
 
     if (i % 37 == 0)
+        V::output_compare_register<channel_a>() = duty_cycle(v_idx_a, v_dir_a);
+
+    if (i % 41 == 0)
         V::output_compare_register<channel_b>() = duty_cycle(v_idx_b, v_dir_b);
 
     ++i;
