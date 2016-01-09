@@ -1,2 +1,2 @@
 #BOARD=uno
-MCU=atmega328
+MCU=atmega328p
