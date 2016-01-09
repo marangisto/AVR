@@ -66,28 +66,28 @@ void loop()
     static bool v_dir_a = false, v_dir_b = false;
     static unsigned i = 0;
 
-    if (i % 11 == 0)
+    if (i % 2 == 0)
         Sa::write(duty_cycle(s_idx_a, s_dir_a) > 31);
 
-    if (i % 13 == 0)
+    if (i % 3 == 0)
         Sb::write(duty_cycle(s_idx_b, s_dir_b) > 31);
 
-    if (i % 17 == 0)
+    if (i % 5 == 0)
         T::output_compare_register<channel_a>() = duty_cycle(t_idx_a, t_dir_a);
 
-    if (i % 23 == 0)
+    if (i % 7 == 0)
         T::output_compare_register<channel_b>() = duty_cycle(t_idx_b, t_dir_b);
 
-    if (i % 29 == 0)
+    if (i % 11 == 0)
         U::output_compare_register<channel_a>() = duty_cycle(u_idx_a, u_dir_a);
 
-    if (i % 31 == 0)
+    if (i % 13 == 0)
         U::output_compare_register<channel_b>() = duty_cycle(u_idx_b, u_dir_b);
 
-    if (i % 37 == 0)
+    if (i % 17 == 0)
         V::output_compare_register<channel_a>() = duty_cycle(v_idx_a, v_dir_a);
 
-    if (i % 41 == 0)
+    if (i % 19 == 0)
         V::output_compare_register<channel_b>() = duty_cycle(v_idx_b, v_dir_b);
 
     ++i;
