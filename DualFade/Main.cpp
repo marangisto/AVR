@@ -7,24 +7,25 @@ typedef timer_t<2> V;
 
 void setup()
 {
-    const wg_mode mode = fast_pwm; // crashes non-deterinistically with pwm_phase_correct;
+    const wg_mode mode = pwm_phase_correct;
+    const int prescale = 1;
 
     T::setup<mode, top_0xff>();
-    T::clock_select<1>();
+    T::clock_select<prescale>();
     T::output_pin<channel_a>::setup();
     T::output_pin<channel_b>::setup();
     T::compare_output_mode<channel_a, clear_on_compare_match>();
     T::compare_output_mode<channel_b, clear_on_compare_match>();
 
     U::setup<mode, top_0xff>();
-    U::clock_select<1>();
+    U::clock_select<prescale>();
     U::output_pin<channel_a>::setup();
     U::output_pin<channel_b>::setup();
     U::compare_output_mode<channel_a, clear_on_compare_match>();
     U::compare_output_mode<channel_b, clear_on_compare_match>();
 
     V::setup<mode, top_0xff>();
-    V::clock_select<1>();
+    V::clock_select<prescale>();
     V::output_pin<channel_a>::setup();
     V::output_pin<channel_b>::setup();
     V::compare_output_mode<channel_a, clear_on_compare_match>();
