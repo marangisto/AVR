@@ -39,38 +39,51 @@ uint8_t buffer_t::m_widx = 0;
 uint8_t buffer_t::m_ridx = 0;
 
 
-static const uint8_t stable_count = 20;
-static bool stable_state = true;
-
-static void isr()
+template<int TNO>
+class debouncer_t
 {
-    static uint8_t count = 0;
-    static bool last_state = true;
+public:
+    typedef timer_t<TNO> timer;
 
-    bool this_state = BT0::read();
+    static void setup()
+    {
+        // set timer for ~1kHz isr
+        timer::template setup<normal_mode>();
+        timer::template clock_select<64>();
+	    timer::isr(isr);
+	    timer::enable();
+    }
+    
+private:
+    static void isr()
+    {
+        static uint8_t count = 0;
+        static bool last_state = true;
+        bool this_state = BT0::read();
 
-    count = this_state != stable_state && this_state == last_state ? count + 1 : 0;
+        count = this_state != stable_state && this_state == last_state ? count + 1 : 0;
+        if (count == stable_count)
+            buffer_t::put(stable_state = this_state);
+        last_state = this_state;
+    }
 
-    if (count == stable_count)
-        buffer_t::put(stable_state = this_state);
+    static const uint8_t stable_count;
+    static bool stable_state;
+};
 
-    last_state = this_state;
+template<int TNO> const uint8_t debouncer_t<TNO>::stable_count = 20;
+template<int TNO> bool debouncer_t<TNO>::stable_state = true;
 
-    //IC::write(stable_state);
-}
+
+typedef debouncer_t<2> debouncer;
 
 void setup()
 {
 	IC::setup();
 	CK::setup();
     BT0::setup();
-
-    // set timer for ~1kHz isr
-    T::setup<normal_mode>();
-    T::clock_select<64>();
-	T::isr(isr);
-	T::enable();
-	sei();
+    debouncer::setup();
+	sei();      // need explcit interrup-enable at end of setup
 }
 
 
