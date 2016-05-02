@@ -3,6 +3,12 @@
 #include <avr/interrupt.h>
 #include "Pins.h"
 
+struct critical_section_t
+{
+    critical_section_t() { cli(); }
+    ~critical_section_t() { sei(); }
+};
+
 enum wg_mode { normal_mode, ctc_mode, fast_pwm, pwm_phase_correct, pwm_phase_frequency_correct };
 enum wg_top { top_default, top_0xff, top_0x1ff, top_0x3ff, top_ocra, top_icr };
 enum cm_mode { normal_port, toggle_on_compare_match, clear_on_compare_match, set_on_compare_match };

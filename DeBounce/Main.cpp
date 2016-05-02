@@ -7,14 +7,6 @@ typedef input_t<PD, 0, enable_pullup> BT0;
 
 typedef timer_t<2> T;
 
-
-struct critical_section_t
-{
-    critical_section_t() { cli(); }
-    ~critical_section_t() { sei(); }
-};
-
-
 class buffer_t
 {
 public:
@@ -41,12 +33,13 @@ private:
     static uint8_t m_widx, m_ridx;
 };
 
+
 bool buffer_t::m_buf[8];
 uint8_t buffer_t::m_widx = 0;
 uint8_t buffer_t::m_ridx = 0;
 
 
-static const uint8_t stable_count = 10;
+static const uint8_t stable_count = 20;
 static bool stable_state = true;
 
 static void isr()
