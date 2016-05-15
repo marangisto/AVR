@@ -5,21 +5,21 @@ typedef output_t<PB, 0> IC;
 typedef output_t<PD, 7> CK;
 typedef input_t<PD, 0, enable_pullup> BT0;
 
-typedef timer_t<2> T;
-
-
-template<int N>
-class buffer_t
+template<int TIMER, int MILLISECS, int BUFSIZE>
+class debouncer_t
 {
 public:
-    static void put(bool x)
+    typedef timer_t<TIMER> timer;
+
+    static void setup()
     {
-        static_assert((N != 0) && !(N & (N - 1)), "buffer size must be a power of 2");
-
-        if (m_widx < m_ridx + N)        // avoid overflow
-            m_buf[m_widx++ & mask] = x;
+        // set timer for ~1kHz isr
+        timer::template setup<normal_mode>();
+        timer::template clock_select<64>();
+	    timer::isr(isr);
+	    timer::enable();
     }
-
+ 
     static bool get(bool& x)
     {
         critical_section_t cs;          // enter critical section
@@ -33,39 +33,6 @@ public:
     }
 
 private:
-    static const uint8_t mask = N - 1;
-
-    static bool m_buf[N];
-    static uint8_t m_widx, m_ridx;
-};
-
-
-template<int N> bool buffer_t<N>::m_buf[N];
-template<int N> uint8_t buffer_t<N>::m_widx = 0;
-template<int N> uint8_t buffer_t<N>::m_ridx = 0;
-
-
-template<int TNO, int N>
-class debouncer_t
-{
-public:
-    typedef timer_t<TNO> timer;
-
-    static void setup()
-    {
-        // set timer for ~1kHz isr
-        timer::template setup<normal_mode>();
-        timer::template clock_select<64>();
-	    timer::isr(isr);
-	    timer::enable();
-    }
- 
-    static bool get(bool& x)
-    {
-        return buffer_t<N>::get(x);
-    }
-
-private:
     static void isr()
     {
         static uint8_t count = 0;
@@ -74,19 +41,39 @@ private:
 
         count = this_state != stable_state && this_state == last_state ? count + 1 : 0;
         if (count == stable_count)
-            buffer_t<N>::put(stable_state = this_state);
+            put(stable_state = this_state);
         last_state = this_state;
     }
 
+    inline static void put(bool x)
+    {
+        static_assert((BUFSIZE != 0) && !(BUFSIZE & (BUFSIZE - 1)), "buffer size must be a power of 2");
+
+        if (m_widx < m_ridx + BUFSIZE)        // avoid overflow
+            m_buf[m_widx++ & mask] = x;
+    }
+ 
+    // debouncing state
+ 
     static const uint8_t stable_count;
     static bool stable_state;
+
+    // output buffer
+
+    static const uint8_t mask = BUFSIZE - 1;
+    static bool m_buf[BUFSIZE];
+    static uint8_t m_widx, m_ridx;
 };
 
-template<int TNO, int N> const uint8_t debouncer_t<TNO, N>::stable_count = 20;
-template<int TNO, int N> bool debouncer_t<TNO, N>::stable_state = true;
+template<int TIMER, int MILLISECS, int BUFSIZE> const uint8_t debouncer_t<TIMER, MILLISECS, BUFSIZE>::stable_count = MILLISECS;
+template<int TIMER, int MILLISECS, int BUFSIZE> bool debouncer_t<TIMER, MILLISECS, BUFSIZE>::stable_state = true;
+
+template<int TIMER, int MILLISECS, int BUFSIZE> bool debouncer_t<TIMER, MILLISECS, BUFSIZE>::m_buf[BUFSIZE];
+template<int TIMER, int MILLISECS, int BUFSIZE> uint8_t debouncer_t<TIMER, MILLISECS, BUFSIZE>::m_widx = 0;
+template<int TIMER, int MILLISECS, int BUFSIZE> uint8_t debouncer_t<TIMER, MILLISECS, BUFSIZE>::m_ridx = 0;
 
 
-typedef debouncer_t<2, 8> debouncer;
+typedef debouncer_t<2, 20, 8> debouncer;
 
 void setup()
 {
