@@ -7,13 +7,17 @@ typedef input_t<PD, 0, enable_pullup> BT0;
 
 typedef timer_t<2> T;
 
+
+template<int N>
 class buffer_t
 {
 public:
     static void put(bool x)
     {
-        if (m_widx < m_ridx + 8)        // avoid overflow
-            m_buf[m_widx++ & 0x7] = x;
+        static_assert((N != 0) && !(N & (N - 1)), "buffer size must be a power of 2");
+
+        if (m_widx < m_ridx + N)        // avoid overflow
+            m_buf[m_widx++ & mask] = x;
     }
 
     static bool get(bool& x)
@@ -22,24 +26,26 @@ public:
 
         if (m_ridx == m_widx)
             return false;
-        x = m_buf[m_ridx++ & 0x7];
+        x = m_buf[m_ridx++ & mask];
         if (m_ridx == m_widx)           // rebase indices
             m_ridx = m_widx = 0;
         return true;
     }
 
 private:
-    static bool m_buf[8];
+    static const uint8_t mask = N - 1;
+
+    static bool m_buf[N];
     static uint8_t m_widx, m_ridx;
 };
 
 
-bool buffer_t::m_buf[8];
-uint8_t buffer_t::m_widx = 0;
-uint8_t buffer_t::m_ridx = 0;
+template<int N> bool buffer_t<N>::m_buf[N];
+template<int N> uint8_t buffer_t<N>::m_widx = 0;
+template<int N> uint8_t buffer_t<N>::m_ridx = 0;
 
 
-template<int TNO>
+template<int TNO, int N>
 class debouncer_t
 {
 public:
@@ -53,7 +59,12 @@ public:
 	    timer::isr(isr);
 	    timer::enable();
     }
-    
+ 
+    static bool get(bool& x)
+    {
+        return buffer_t<N>::get(x);
+    }
+
 private:
     static void isr()
     {
@@ -63,7 +74,7 @@ private:
 
         count = this_state != stable_state && this_state == last_state ? count + 1 : 0;
         if (count == stable_count)
-            buffer_t::put(stable_state = this_state);
+            buffer_t<N>::put(stable_state = this_state);
         last_state = this_state;
     }
 
@@ -71,11 +82,11 @@ private:
     static bool stable_state;
 };
 
-template<int TNO> const uint8_t debouncer_t<TNO>::stable_count = 20;
-template<int TNO> bool debouncer_t<TNO>::stable_state = true;
+template<int TNO, int N> const uint8_t debouncer_t<TNO, N>::stable_count = 20;
+template<int TNO, int N> bool debouncer_t<TNO, N>::stable_state = true;
 
 
-typedef debouncer_t<2> debouncer;
+typedef debouncer_t<2, 8> debouncer;
 
 void setup()
 {
@@ -95,8 +106,9 @@ void loop()
 
     bool b2;
 
-    if (buffer_t::get(b2) && b2)
+    if (debouncer::get(b2) && b2)
         IC::toggle();
+    delay_ms(250);
 	//delay_ms(1);
 }
 
