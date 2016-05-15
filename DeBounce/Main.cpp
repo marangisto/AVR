@@ -5,7 +5,7 @@ typedef output_t<PB, 0> IC;
 typedef output_t<PD, 7> CK;
 typedef input_t<PD, 0, enable_pullup> BT0;
 
-template<int TIMER, int MILLISECS, int BUFSIZE>
+template<uint8_t TIMER, uint8_t MILLISECS, uint8_t BUFSIZE>
 class debouncer_t
 {
 public:
@@ -65,13 +65,11 @@ private:
     static uint8_t m_widx, m_ridx;
 };
 
-template<int TIMER, int MILLISECS, int BUFSIZE> const uint8_t debouncer_t<TIMER, MILLISECS, BUFSIZE>::stable_count = MILLISECS;
-template<int TIMER, int MILLISECS, int BUFSIZE> bool debouncer_t<TIMER, MILLISECS, BUFSIZE>::stable_state = true;
-
-template<int TIMER, int MILLISECS, int BUFSIZE> bool debouncer_t<TIMER, MILLISECS, BUFSIZE>::m_buf[BUFSIZE];
-template<int TIMER, int MILLISECS, int BUFSIZE> uint8_t debouncer_t<TIMER, MILLISECS, BUFSIZE>::m_widx = 0;
-template<int TIMER, int MILLISECS, int BUFSIZE> uint8_t debouncer_t<TIMER, MILLISECS, BUFSIZE>::m_ridx = 0;
-
+template<uint8_t TIMER, uint8_t MILLISECS, uint8_t BUFSIZE> const uint8_t debouncer_t<TIMER, MILLISECS, BUFSIZE>::stable_count = MILLISECS;
+template<uint8_t TIMER, uint8_t MILLISECS, uint8_t BUFSIZE> bool debouncer_t<TIMER, MILLISECS, BUFSIZE>::stable_state = true;
+template<uint8_t TIMER, uint8_t MILLISECS, uint8_t BUFSIZE> bool debouncer_t<TIMER, MILLISECS, BUFSIZE>::m_buf[BUFSIZE];
+template<uint8_t TIMER, uint8_t MILLISECS, uint8_t BUFSIZE> uint8_t debouncer_t<TIMER, MILLISECS, BUFSIZE>::m_widx = 0;
+template<uint8_t TIMER, uint8_t MILLISECS, uint8_t BUFSIZE> uint8_t debouncer_t<TIMER, MILLISECS, BUFSIZE>::m_ridx = 0;
 
 typedef debouncer_t<2, 20, 8> debouncer;
 
