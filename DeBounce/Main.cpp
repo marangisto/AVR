@@ -1,9 +1,10 @@
 #include <AVR/Delay.h>
 #include <AVR/Timer.h>
 
-typedef output_t<PB, 0> IC;
-typedef output_t<PD, 7> CK;
+typedef output_t<PB, 0> S0;
+typedef output_t<PD, 7> S1;
 typedef input_t<PD, 0, enable_pullup> BT0;
+typedef input_t<PD, 1, enable_pullup> BT1;
 
 template<uint8_t TIMER, uint8_t MILLISECS, uint8_t BUFSIZE>
 class debouncer_t
@@ -75,24 +76,24 @@ typedef debouncer_t<2, 20, 8> debouncer;
 
 void setup()
 {
-	IC::setup();
-	CK::setup();
+	S0::setup();
+	S1::setup();
     BT0::setup();
+    BT1::setup();
     debouncer::setup();
 	sei();      // need explcit interrup-enable at end of setup
 }
 
-
 void loop()
 {
-    bool b = BT0::read();
+    bool b1 = BT1::read();
     
-    CK::write(b);
+    S1::write(b1);
 
-    bool b2;
+    bool b0;
 
-    if (debouncer::get(b2) && b2)
-        IC::toggle();
+    if (debouncer::get(b0) && b0)
+        S0::toggle();
     delay_ms(250);
 	//delay_ms(1);
 }
