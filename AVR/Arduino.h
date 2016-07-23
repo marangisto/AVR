@@ -2,6 +2,12 @@
 
 #include <AVR/Pins.h>
 
+////
+//
+//      Pin mappings for Arduino UNO
+//
+////
+
 typedef output_t<PD, 0> D0;
 typedef output_t<PD, 1> D1;
 typedef output_t<PD, 2> D2;
