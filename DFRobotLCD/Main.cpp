@@ -4,7 +4,8 @@
 
 typedef D13 LED;
 
-class DFR0009
+template<class IFACE>
+class tc1602_t
 {
 public:
 	static void setup()
@@ -22,7 +23,7 @@ public:
 			, 0x0					// 0x4, right direction = 0x2, shift display = 0x1
 			};
 
-		tc1602::setup();
+		IFACE::setup();
 
 		const uint8_t *p = data;
 
@@ -40,22 +41,22 @@ public:
 
 	static void write(int x, int radix = 10)
 	{
-		write(itoa(x, buf, 10));
+		write(itoa(x, buf, radix));
 	}
 
 	static void write(unsigned x, int radix = 10)
 	{
-		write(utoa(x, buf, 10));
+		write(utoa(x, buf, radix));
 	}
 
 	static void write(long x, int radix = 10)
 	{
-		write(ltoa(x, buf, 10));
+		write(ltoa(x, buf, radix));
 	}
 
 	static void write(unsigned long x, int radix = 10)
 	{
-		write(ultoa(x, buf, 10));
+		write(ultoa(x, buf, radix));
 	}
 
 	static void write(double x, signed char w = 8, unsigned char p = 2)
@@ -103,6 +104,34 @@ public:
 	}
 
 private:
+	static const uint8_t rs = _BV(4);
+	static const uint8_t e  = _BV(5);
+	static const uint8_t l  = _BV(6);
+
+	static void send(uint8_t w)
+	{
+		IFACE::write(w | l | e);
+		nop<1>();					// minimum pulse width 140ns
+		IFACE::write((w | l) & ~e);
+		delay_us(40);				// min cycle time is min op time is 37us
+	}
+
+    static const int buf_size = 33;	// radix 2 on a 32-bit number plus terminator
+	static char buf[buf_size];
+};
+
+template<class IFACE>
+char tc1602_t<IFACE>::buf[tc1602_t<IFACE>::buf_size];
+
+// DFRobot LDC Shield DFR0009 interface for TC1602 LCD
+
+class dfr0009_t
+{
+public:
+    static inline void setup() { pins::setup(); }
+    static inline void write(uint8_t x) { pins::write(x); }
+
+private:
     typedef D10 BL;
     typedef D9 E;
     typedef D8 RS;
@@ -110,31 +139,15 @@ private:
     typedef D6 DB6;
     typedef D5 DB5;
     typedef D4 DB4;
-
-    typedef outputs_t<DB4, DB5, DB6, DB7, RS, E, BL> tc1602;
-
-	static const uint8_t rs = _BV(4);
-	static const uint8_t e  = _BV(5);
-	static const uint8_t l  = _BV(6);
-
-	static void send(uint8_t w)
-	{
-		tc1602::write(w | l | e);
-		nop<1>();					// minimum pulse width 140ns
-		tc1602::write((w | l) & ~e);
-		delay_us(40);				// min cycle time is min op time is 37us
-	}
-
-	static char buf[33];			// radix 2 on a 32-bit number plus terminator
+    typedef outputs_t<DB4, DB5, DB6, DB7, RS, E, BL> pins;
 };
 
-char DFR0009::buf[33];
-
+typedef tc1602_t<dfr0009_t> lcd;
 
 void setup()
 {
 	LED::setup();
-    DFR0009::setup();
+    lcd::setup();
 }
 
 void loop()
@@ -142,9 +155,9 @@ void loop()
     static uint16_t x = 0;
 
 	// LED::toggle();
-    DFR0009::set_pos(0, 0);
-    DFR0009::write(x++);
-    DFR0009::write("      ");
+    lcd::set_pos(0, 0);
+    lcd::write(x++, 16);
+    lcd::write("      ");
 	//delay_ms(50);
 }
 
