@@ -1,7 +1,7 @@
 #pragma once
 
 #include <AVR/LCD1602A.h>
-#include <AVR/Arduino.h>
+#include <Arduino/Pins.h>
 
 ////
 //
@@ -9,7 +9,7 @@
 //
 ////
 
-class dfr0009_t
+class dfr0009_tc1602_t
 {
 public:
     static inline void setup() { pins::setup(); }
@@ -27,5 +27,5 @@ private:
     typedef outputs_t<DB4, DB5, DB6, DB7, RS, E, BL> pins;
 };
 
-typedef tc1602_t<dfr0009_t> lcd;
+typedef tc1602_t<dfr0009_tc1602_t> dfr0009_t;
 

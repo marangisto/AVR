@@ -1,9 +1,9 @@
 #include <AVR/Delay.h>
-#include <AVR/LCD1602A/DFR0009.h>
+#include <Arduino//DFR0009.h>
 #include <stdlib.h>
 
 typedef D13 LED;
-typedef tc1602_t<dfr0009_t> lcd;
+typedef dfr0009_t lcd;
 
 void setup()
 {
