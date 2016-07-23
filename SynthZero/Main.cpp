@@ -4,6 +4,7 @@
 typedef timer_t<0> W;
 typedef timer_t<1> P;
 typedef output_t<PD, 7> CK;
+typedef input_t<PD, 0, enable_pullup> BT0;
 
 static const unsigned long wsteps = 32;
 typedef int wave_t[wsteps];
@@ -84,12 +85,28 @@ void setup()
 	sei();
 
 	CK::setup();
+    BT0::setup();
 }
 
 
 void loop()
 {
     static int i = 0;
+    static int w = 0;
+    static bool bt0 = true;
+ 
+    if (BT0::read())
+    {
+        switch (++w % 4)
+        {
+            case 0: wave = wsin; break;
+            case 1: wave = wsaw; break;
+            case 2: wave = wtri; break;
+            case 3: wave = wsqr; break;
+        }
+    }
+
+
     note_t n = A3;
 
     switch (i++ % 4)
