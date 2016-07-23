@@ -2,11 +2,10 @@
 
 #include "Pins.h"
 #include "Delay.h"
-#include "SN74HC595.h"
 #include <stdlib.h>
 
-template<class DT, class CK, class LT>
-class lcd1602a_t
+template<class IFACE>
+class tc1602_t
 {
 public:
 	static void setup()
@@ -24,7 +23,7 @@ public:
 			, 0x0					// 0x4, right direction = 0x2, shift display = 0x1
 			};
 
-		sr::setup();
+		IFACE::setup();
 
 		const uint8_t *p = data;
 
@@ -42,22 +41,22 @@ public:
 
 	static void write(int x, int radix = 10)
 	{
-		write(itoa(x, buf, 10));
+		write(itoa(x, buf, radix));
 	}
 
 	static void write(unsigned x, int radix = 10)
 	{
-		write(utoa(x, buf, 10));
+		write(utoa(x, buf, radix));
 	}
 
 	static void write(long x, int radix = 10)
 	{
-		write(ltoa(x, buf, 10));
+		write(ltoa(x, buf, radix));
 	}
 
 	static void write(unsigned long x, int radix = 10)
 	{
-		write(ultoa(x, buf, 10));
+		write(ultoa(x, buf, radix));
 	}
 
 	static void write(double x, signed char w = 8, unsigned char p = 2)
@@ -80,8 +79,8 @@ public:
 
 	static void write_char(char c)
 	{
-		send(RS | ((c >> 4) & 0xf));
-		send(RS | (c & 0xf));
+		send(rs | ((c >> 4) & 0xf));
+		send(rs | (c & 0xf));
 	}
 
 	static void set_pos(uint8_t r, uint8_t c)
@@ -105,23 +104,22 @@ public:
 	}
 
 private:
-	typedef sn74hc595_t<DT, CK, LT, LSB_FIRST> sr;
-
-	static const uint8_t RS = _BV(4);
-	static const uint8_t E  = _BV(5);
-	static const uint8_t L  = _BV(6);
+	static const uint8_t rs = _BV(4);
+	static const uint8_t e  = _BV(5);
+	static const uint8_t l  = _BV(6);
 
 	static void send(uint8_t w)
 	{
-		sr::write(w | L | E);
+		IFACE::write(w | l | e);
 		nop<1>();					// minimum pulse width 140ns
-		sr::write((w | L) & ~E);
+		IFACE::write((w | l) & ~e);
 		delay_us(40);				// min cycle time is min op time is 37us
 	}
 
-	static char buf[33];			// radix 2 on a 32-bit number plus terminator
+    static const int buf_size = 33;	// radix 2 on a 32-bit number plus terminator
+	static char buf[buf_size];
 };
 
-template<class DT, class CK, class LT>
-char lcd1602a_t<DT, CK, LT>::buf[33];
+template<class IFACE>
+char tc1602_t<IFACE>::buf[tc1602_t<IFACE>::buf_size];
 

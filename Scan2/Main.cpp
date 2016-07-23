@@ -1,6 +1,6 @@
 #include "../AVR/Pins.h"
 #include "../AVR/Delay.h"
-#include "../AVR/LCD1602A.h"
+#include "../AVR/LCD1602A/SN74HC595.h"
 #include "Buttons.h"
 #include "Editor.h"
 #include "Accel.h"
@@ -9,7 +9,7 @@ typedef output_t<PC, 3> CLOCK;
 typedef output_t<PC, 4> LATCH;
 typedef output_t<PC, 5> DATA;
 
-typedef lcd1602a_t<DATA, CLOCK, LATCH> lcd;
+typedef tc1602_t<sn74hc595_tc1602_t<DATA, CLOCK, LATCH> > lcd;
 
 typedef analog_input_t<2> A2;
 
