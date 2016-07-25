@@ -44,23 +44,25 @@ struct CTC1
         TCCR1A = 0;
         TCCR1B = _BV(WGM12); 
 
-        // toggle channel A on compare match on OCR1A
+        // toggle channel A on compare match
     
         TCCR1A = (TCCR1A & ~(_BV(COM1A1) | _BV(COM1A0))) | _BV(COM1A0);
   
-        // set OCR1A bound pin PB1 to output mode
+        // set channel A bound pin PB1 to output mode
 
         DDRB |= _BV(1);
     }
 
     static void set_freq(float f)
     {
+        static const float f1 = min_freq(1), f8 = min_freq(8), f64 = min_freq(64), f256 = min_freq(256);
+
         uint16_t n;
 
-        if (f >= 123)       n = 1;
-        else if (f >= 16)   n = 8;
-        else if (f >= 2)    n = 64;
-        else if (f >= 0.5)  n = 256;
+        if (f >= f1)        n = 1;
+        else if (f >= f8)   n = 8;
+        else if (f >= f64)  n = 64;
+        else if (f >= f256) n = 256;
         else                n = 1024;
 
         prescale(n);
@@ -83,6 +85,11 @@ struct CTC1
         }
 
         TCCR1B = (TCCR1B & ~(_BV(CS12) | _BV(CS11) | _BV(CS10))) | bits;
+    }
+
+    static inline float min_freq(uint16_t n)
+    {
+        return floor(F_CPU / (2 * n * 65536));
     }
 };
 
