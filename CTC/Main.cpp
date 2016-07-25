@@ -32,7 +32,7 @@ int main()
 
 #else
 
-#include <avr/interrupt.h>
+#include <avr/io.h>
 #include <util/delay.h>
 
 struct CTC1
