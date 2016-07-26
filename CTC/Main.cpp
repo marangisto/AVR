@@ -89,7 +89,7 @@ struct CTC1
 
     static inline float min_freq(uint16_t n)
     {
-        return floor(F_CPU / (2 * n * 65536));
+        return ceil(F_CPU / (2 * n * 65536));
     }
 };
 
