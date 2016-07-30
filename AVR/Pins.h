@@ -62,6 +62,10 @@ struct PC;
 struct PD;
 #endif
 
+#if defined(__AVR_ATmega32U4__)
+struct PE;
+#endif
+
 template<> struct port_t<PB>
 {
 	typedef PB port;
@@ -87,6 +91,16 @@ template<> struct port_t<PD>
 	static inline volatile uint8_t& ddr() { return DDRD; }
 	static inline volatile uint8_t& reg() { return PORTD; }
 	static inline volatile const uint8_t& pin() { return PIND; }
+};
+#endif
+
+#if defined(__AVR_ATmega32U4__)
+template<> struct port_t<PE>
+{
+	typedef PE port;
+	static inline volatile uint8_t& ddr() { return DDRE; }
+	static inline volatile uint8_t& reg() { return PORTE; }
+	static inline volatile const uint8_t& pin() { return PINE; }
 };
 #endif
 
@@ -165,15 +179,25 @@ struct outputs_t
 	static void setup()
 	{
 		write_bits_impl<PB, T0, T1, T2, T3, T4, T5, T6, T7, map_bits_impl<PB, T0, T1, T2, T3, T4, T5, T6, T7>::mask>::write_bits(DDRB, 0xff);
+#if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__) || defined(__AVR_ATmega32U4__)
 		write_bits_impl<PC, T0, T1, T2, T3, T4, T5, T6, T7, map_bits_impl<PC, T0, T1, T2, T3, T4, T5, T6, T7>::mask>::write_bits(DDRC, 0xff);
 		write_bits_impl<PD, T0, T1, T2, T3, T4, T5, T6, T7, map_bits_impl<PD, T0, T1, T2, T3, T4, T5, T6, T7>::mask>::write_bits(DDRD, 0xff);
+#endif
+#if defined(__AVR_ATmega32U4__)
+		write_bits_impl<PE, T0, T1, T2, T3, T4, T5, T6, T7, map_bits_impl<PE, T0, T1, T2, T3, T4, T5, T6, T7>::mask>::write_bits(DDRE, 0xff);
+#endif
 	}
 
 	static void write(uint8_t x)
 	{
 		write_bits_impl<PB, T0, T1, T2, T3, T4, T5, T6, T7, map_bits_impl<PB, T0, T1, T2, T3, T4, T5, T6, T7>::mask>::write_bits(PORTB, x);
+#if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__) || defined(__AVR_ATmega32U4__)
 		write_bits_impl<PC, T0, T1, T2, T3, T4, T5, T6, T7, map_bits_impl<PC, T0, T1, T2, T3, T4, T5, T6, T7>::mask>::write_bits(PORTC, x);
 		write_bits_impl<PD, T0, T1, T2, T3, T4, T5, T6, T7, map_bits_impl<PD, T0, T1, T2, T3, T4, T5, T6, T7>::mask>::write_bits(PORTD, x);
+#endif
+#if defined(__AVR_ATmega32U4__)
+		write_bits_impl<PE, T0, T1, T2, T3, T4, T5, T6, T7, map_bits_impl<PE, T0, T1, T2, T3, T4, T5, T6, T7>::mask>::write_bits(PORTE, x);
+#endif
 	}
 };
 

@@ -1,1 +1,2 @@
-BOARD=trinket-pro
+BOARD=leonardo
+MANUAL_BOOT=True
