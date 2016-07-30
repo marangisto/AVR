@@ -50,7 +50,11 @@ struct CTC1
   
         // set channel A bound pin PB1 to output mode
 
+#if defined(__AVR_ATmega32U4__)
+        DDRB |= _BV(5);
+#else
         DDRB |= _BV(1);
+#endif
     }
 
     static void set_freq(float f)
