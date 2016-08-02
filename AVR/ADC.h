@@ -83,7 +83,7 @@ struct adc
 	}
 
     template<uint8_t CH, adc_ref_t REF = adc_ref_vcc>
-    static uint16_t read_()
+    static uint16_t read()
     {
         static_assert((CH & ~(adc_mux_mux_mask | adc_mux_srb_mask)) == 0, "adc channel out of range");
         bool vref_changed = (ADMUX & adc_mux_ref_mask) != adc_mux_ref_t<REF>::bits;
@@ -101,7 +101,7 @@ struct adc
 
 	static int8_t temp()
 	{
-		return adc::read_<adc_temp_channel, adc_temp_ref>() - 273;
+		return adc::read<adc_temp_channel, adc_temp_ref>() - 273;
 	}
 };
 

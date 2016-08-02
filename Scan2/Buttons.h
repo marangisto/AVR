@@ -3,7 +3,7 @@
 
 #include "../AVR/ADC.h"
 
-template<class CH>
+template<int CH>
 class buttons_t
 {
 public:
@@ -12,7 +12,7 @@ public:
 
 	static void setup()
 	{
-		adc::setup();
+		adc::setup<128>();
 	}
 
 	static uint8_t read()

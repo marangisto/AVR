@@ -11,9 +11,7 @@ typedef output_t<PC, 5> DATA;
 
 typedef tc1602_t<sn74hc595_tc1602_t<DATA, CLOCK, LATCH> > lcd;
 
-typedef analog_input_t<2> A2;
-
-typedef buttons_t<A2> btns;
+typedef buttons_t<2> btns;
 
 typedef output_t<PB, 1> DIR;
 typedef output_t<PB, 2> STEP;
