@@ -16,21 +16,27 @@ public:
 		TWCR = _BV(TWEN); 						// enable TWI
 	}
 
-	static bool write(uint8_t addr, volatile const uint8_t *src, uint8_t nw)
+	static uint8_t write(uint8_t addr, volatile const uint8_t *src, uint8_t nw)
 	{
-		return write_read(addr, src, nw, 0, 0);
+		write_read(addr, src, nw, 0, 0);
+        return wait_idle();
 	}
 
-	static bool read(uint8_t addr, volatile uint8_t *dst, uint8_t nr)
+	static uint8_t read(uint8_t addr, volatile uint8_t *dst, uint8_t nr)
 	{
-		return write_read(addr, 0, 0, dst, nr);
+		write_read(addr, 0, 0, dst, nr);
+        return wait_idle();
 	}
 
-	static bool write_read(uint8_t addr, volatile const uint8_t *src, uint8_t nw, volatile uint8_t *dst, uint8_t nr)
+	static void write_read(uint8_t addr, volatile const uint8_t *src, uint8_t nw, volatile uint8_t *dst, uint8_t nr)
 	{
 		if (s_busy)
-			return false;
+        {
+            s_err = 255;                                            // busy
+            return;
+        }
 
+        s_err = 0;
 		s_busy = true;
 		s_addr = addr;
 		s_nw = nw;
@@ -41,10 +47,11 @@ public:
 		TWCR = TWINT_TWEN_TWIE | _BV(TWSTA); 						// start condition
 	}
 
-	static void wait_idle()
+	static inline uint8_t wait_idle()
 	{
 		while (s_busy)
 			delay_us(10);
+        return s_err;
 	}
 
 	static void isr()
@@ -53,7 +60,7 @@ public:
 		{
 		case TW_START: ;
 		case TW_REP_START:
-			TWDR = s_addr | (s_nw ? 0 : 1);							// SLA+R/W
+			TWDR = (s_addr << 1) | (s_nw ? 0 : 1);					// SLA+R/W
 			TWCR = TWINT_TWEN_TWIE;									// send
 			return;
 		case TW_MT_SLA_ACK:											// from SLA+W
@@ -79,7 +86,8 @@ public:
 		case TW_MR_DATA_NACK:
 			*s_dst++ = TWDR;
 			break;													// stop
-		default: ;													// stop
+		default:
+            s_err = TWSR & 0xf8;								    // stop + error
 		}
 
 		TWCR = _BV(TWINT) | _BV(TWSTO) | _BV(TWEN);					// stop condition
@@ -93,6 +101,7 @@ private:
 	static volatile uint8_t			s_addr;
 	static volatile uint8_t			s_nw;
 	static volatile uint8_t			s_nr;
+    static volatile uint8_t         s_err;
 	static volatile const uint8_t	*s_src;
 	static volatile uint8_t			*s_dst;
 };
@@ -101,6 +110,7 @@ volatile bool twi_t::s_busy = false;
 volatile uint8_t twi_t::s_addr;
 volatile uint8_t twi_t::s_nw;
 volatile uint8_t twi_t::s_nr;
+volatile uint8_t twi_t::s_err;
 volatile const uint8_t *twi_t::s_src;
 volatile uint8_t *twi_t::s_dst;
 
