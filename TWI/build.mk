@@ -1,1 +1,2 @@
-MCU=atmega328p
+BOARD=leonardo
+MANUAL_BOOT=True
