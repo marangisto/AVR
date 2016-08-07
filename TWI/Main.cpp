@@ -34,6 +34,26 @@ void setup()
     btns::setup();
     twi_t::setup();
     sei();
+
+    for (uint8_t a = 0; a < 128; ++a)
+    {
+        uint8_t buf[1];
+
+        if ((a & 0x78) == 0 || (a & 0x78) == 0x78)
+            continue;   // reserved address
+        if (twi_t::write(a, buf, 0) == 0)
+        {
+            lcd::clear();
+            lcd::write("TWI DEVICE: 0x");
+            lcd::write(a, 16);
+            delay_ms(1000);
+        }
+    }
+
+    lcd::clear();
+    lcd::write("READY");
+    delay_ms(1000);
+    lcd::clear();
 }
 
 void loop()
@@ -58,8 +78,9 @@ void loop()
         {
             uint8_t buf[256] = { 0x00, 0x0 };
 
-            //err = twi_t::write(0x60, buf, sizeof(buf));
-            TWI(err = twi_t::read(0x60, buf, x));
+            TWI(twi_t::write(0x60, buf, 2));
+            //TWI(err = twi_t::read(0x60, buf, x));
+            //TWI(err = twi_t::write(0x60, buf, 0));
         }
         update = true;
         break;
