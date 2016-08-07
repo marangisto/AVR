@@ -60,13 +60,18 @@ public:
 		{
 		case TW_START: ;
 		case TW_REP_START:
-			TWDR = (s_addr << 1) | (s_nw ? 0 : 1);					// SLA+R/W
+			TWDR = (s_addr << 1) | (s_src ? 0 : 1);					// SLA+R/W
 			TWCR = TWINT_TWEN_TWIE;									// send
 			return;
 		case TW_MT_SLA_ACK:											// from SLA+W
-			TWDR = *s_src++;										// data
-			TWCR = TWINT_TWEN_TWIE;									// send
-			return;
+            if (s_nw)
+            {
+			    TWDR = *s_src++;									// data
+			    TWCR = TWINT_TWEN_TWIE;								// send
+			    return;
+            }
+            else
+                break;                                              // stop
 		case TW_MT_DATA_ACK:										// from data write
 			if (--s_nw)
 			{
