@@ -21,12 +21,6 @@ static void twi_error(uint8_t err, const char *file, uint16_t line)
     while (true) ;  // stay here forever
 }
 
-#define TWI(expr) do { \
-    uint8_t _err = expr; \
-    if (_err) \
-        twi_error(_err, __FILE__, __LINE__); \
-} while (false)
-
 void setup()
 {
 	LED::setup();

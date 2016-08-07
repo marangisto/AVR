@@ -124,5 +124,13 @@ ISR(TWI_vect)
 	twi_t::isr();
 }
 
+// Error handling suppory. User must provide required twi_error handler
+// in scope before using this macro.
+#define TWI(expr) do { \
+    uint8_t _err = expr; \
+    if (_err) \
+        twi_error(_err, __FILE__, __LINE__); \
+} while (false)
+
 #endif TWI_H
 
