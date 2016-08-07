@@ -9,32 +9,27 @@
 class twi_t
 {
 public:
-	static void setup(uint32_t twi_freq = 100000)
+	static inline void setup(uint32_t twi_freq = 100000)
 	{
 		TWSR = 0;								// set prescaler to 1
 		TWBR = ((F_CPU / twi_freq) - 16) / 2;	// assuming prescaler 1
 		TWCR = _BV(TWEN); 						// enable TWI
 	}
 
-	static uint8_t write(uint8_t addr, volatile const uint8_t *src, uint8_t nw)
+	static inline uint8_t write(uint8_t addr, volatile const uint8_t *src, uint8_t nw)
 	{
-		write_read(addr, src, nw, 0, 0);
-        return wait_idle();
+		return write_read(addr, src, nw, 0, 0);
 	}
 
-	static uint8_t read(uint8_t addr, volatile uint8_t *dst, uint8_t nr)
+	static inline uint8_t read(uint8_t addr, volatile uint8_t *dst, uint8_t nr)
 	{
-		write_read(addr, 0, 0, dst, nr);
-        return wait_idle();
+		return write_read(addr, 0, 0, dst, nr);
 	}
 
-	static void write_read(uint8_t addr, volatile const uint8_t *src, uint8_t nw, volatile uint8_t *dst, uint8_t nr)
+	static uint8_t write_read(uint8_t addr, volatile const uint8_t *src, uint8_t nw, volatile uint8_t *dst, uint8_t nr)
 	{
 		if (s_busy)
-        {
-            s_err = 255;                                            // busy
-            return;
-        }
+            return s_err = 0xfe;                                    // busy
 
         s_err = 0;
 		s_busy = true;
@@ -45,13 +40,18 @@ public:
 		s_dst = dst;
 
 		TWCR = TWINT_TWEN_TWIE | _BV(TWSTA); 						// start condition
+        return wait_idle();
 	}
 
 	static inline uint8_t wait_idle()
 	{
-		while (s_busy)
+        for (uint16_t i = 0; i < 100000; ++i)                       // wait up to 1 second
+        {
+            if (!s_busy)
+                return s_err;
 			delay_us(10);
-        return s_err;
+        }
+        return 0xff;                                                // time-out
 	}
 
 	static void isr()
