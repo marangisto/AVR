@@ -7,6 +7,26 @@ typedef D13 LED;
 typedef dfr0009_t lcd;
 typedef buttons_t btns;
 
+static void twi_error(uint8_t err, const char *file, uint16_t line)
+{
+    lcd::clear();
+    lcd::set_pos(0, 0);
+    lcd::write("TWI ERROR: 0x");
+    lcd::write(err, 16);
+    lcd::set_pos(1, 0);
+    lcd::write(file);
+    lcd::write(", ");
+    lcd::write(line);
+
+    while (true) ;  // stay here forever
+}
+
+#define TWI(expr) do { \
+    uint8_t _err = expr; \
+    if (_err) \
+        twi_error(_err, __FILE__, __LINE__); \
+} while (false)
+
 void setup()
 {
 	LED::setup();
@@ -39,7 +59,7 @@ void loop()
             uint8_t buf[256] = { 0x00, 0x0 };
 
             //err = twi_t::write(0x60, buf, sizeof(buf));
-            err = twi_t::read(0x60, buf, x);
+            TWI(err = twi_t::read(0x60, buf, x));
         }
         update = true;
         break;
