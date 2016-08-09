@@ -6,7 +6,6 @@
 
 typedef D13 LED;
 typedef motor_shield_23_t<> ms23;
-static const int bridge = 0;
 
 void twi_error(uint8_t err, const char *file, uint16_t line)
 {
@@ -25,6 +24,9 @@ void setup()
 
 static void update_motor()
 {
+    static bridge_t bridges[] = { ms23::bridge<0>(), ms23::bridge<1>(), ms23::bridge<2>(), ms23::bridge<3>() };
+    static bridge_t bridge(bridges[0]);
+    static uint8_t bix = 0;
     static int state = 0;
     static int speed = 0;
     static int step = 64;
@@ -34,16 +36,15 @@ static void update_motor()
     {
     case 0:                 // initial state
         speed = 0;
-        ms23::duty_cycle<bridge>(speed);
-        ms23::command<bridge>(rev ? ms23::reverse : ms23::forward);
-        rev = !rev;
+        bridge.duty_cycle(speed);
+        bridge.command(rev ? ms_reverse : ms_forward);
         state = 1;
         break;
     case 1:                 // accelerating
         if (speed < 4096)
         {
             speed += step;
-            ms23::duty_cycle<bridge>(speed);
+            bridge.duty_cycle(speed);
         }
         else
             state = 2;
@@ -52,10 +53,16 @@ static void update_motor()
         if (speed > 0)
         {
             speed -= step;
-            ms23::duty_cycle<bridge>(speed);
+            bridge.duty_cycle(speed);
         }
         else
+        {
+            bridge.command(ms_stop);
+            if (rev)
+                bridge = bridges[++bix % (sizeof(bridges) / sizeof(*bridges))];
+            rev = !rev;
             state = 0;
+        }
         break;
     }
 }
