@@ -2,6 +2,8 @@
 
 #include <AVR/TWI.h>
 
+enum command_t { ms_stop, ms_brake, ms_forward, ms_reverse };
+
 template<int BRIDGE> struct bridge_traits {};
 
 template<> struct bridge_traits<0>
@@ -32,12 +34,26 @@ template<> struct bridge_traits<3>
     static const uint8_t in2 = 5;
 };
 
+class bridge_t
+{
+public:
+	typedef void (*duty_t)(uint16_t);
+	typedef void (*cmd_t)(command_t);
+
+    bridge_t(duty_t d, cmd_t c): m_duty(d), m_cmd(c) {}
+
+    inline void duty_cycle(uint16_t d) { m_duty(d); }
+    inline void command(command_t c) { m_cmd(c); }
+
+private:
+    duty_t m_duty;
+    cmd_t m_cmd;
+};
+
 template<uint8_t I2C = 0x60>
 class motor_shield_23_t
 {
 public:
-    enum command_t { stop, brake, forward, reverse };
- 
     template<uint8_t PS = 0x03>
     static void setup()
     {
@@ -71,11 +87,17 @@ public:
     {
         switch (m)
         {
-            case forward: set(bridge_traits<BRIDGE>::in1); clr(bridge_traits<BRIDGE>::in2); break;
-            case reverse: clr(bridge_traits<BRIDGE>::in1); set(bridge_traits<BRIDGE>::in2); break;
-            case brake:   set(bridge_traits<BRIDGE>::in1); set(bridge_traits<BRIDGE>::in2); break;
-            case stop:    clr(bridge_traits<BRIDGE>::in1); clr(bridge_traits<BRIDGE>::in2); break;
+            case ms_forward: set(bridge_traits<BRIDGE>::in1); clr(bridge_traits<BRIDGE>::in2); break;
+            case ms_reverse: clr(bridge_traits<BRIDGE>::in1); set(bridge_traits<BRIDGE>::in2); break;
+            case ms_brake:   set(bridge_traits<BRIDGE>::in1); set(bridge_traits<BRIDGE>::in2); break;
+            case ms_stop:    clr(bridge_traits<BRIDGE>::in1); clr(bridge_traits<BRIDGE>::in2); break;
         }
+    }
+
+    template<int BRIDGE>
+    static bridge_t bridge()
+    {
+        return bridge_t(duty_cycle<BRIDGE>, command<BRIDGE>);
     }
 
 private:
@@ -108,7 +130,7 @@ private:
         TWI(twi_t::write_read(I2C, &addr, 1, &x, 1));
         return x;
     }
- 
+
     static void write(uint8_t addr, uint8_t x)
     {
         uint8_t buf[] = { addr, x };
