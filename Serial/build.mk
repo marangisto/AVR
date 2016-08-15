@@ -1,0 +1,2 @@
+BOARD=uno
+MANUAL_BOOT=True
