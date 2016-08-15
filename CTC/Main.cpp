@@ -55,6 +55,7 @@ struct CTC1
 #else
         DDRB |= _BV(1);
 #endif
+        DDRB |= _BV(0);
     }
 
     static void set_freq(float f)
@@ -72,6 +73,13 @@ struct CTC1
         prescale(n);
   
         OCR1A = static_cast<uint16_t>(round(F_CPU / (2 * n * f) - 1));
+    }
+
+    static void set_ocr(uint16_t x)
+    {
+        while (TCNT1 > x)
+            ;
+        OCR1A = x;
     }
 
     static void prescale(uint16_t n)
@@ -100,18 +108,17 @@ struct CTC1
 void setup()
 {
     CTC1::setup();
+    CTC1::prescale(1);
 }
 
 void loop()
 {
-    for (uint8_t x = 0; x < 6; ++x)
-        for (uint8_t y = 0; y < 3; ++y)
-        {
-            float k = y > 0 ? (y > 1 ? 5 : 2) : 1;
+    static bool odd = false;
 
-            CTC1::set_freq(k * pow(10, x));
-            _delay_ms(2000);
-        }
+    PORTB ^= _BV(0);
+    CTC1::set_ocr(odd ? 1000 : 3000);
+    odd = !odd;
+    _delay_ms(1);
 }
 
 int main()
