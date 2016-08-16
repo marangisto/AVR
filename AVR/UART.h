@@ -23,13 +23,25 @@ struct UART
         UCSR0C = _BV(UCSZ01) | _BV(UCSZ00);     // 8-bit data
         UCSR0B = _BV(RXEN0) | _BV(TXEN0);       // enable rx & tx
 
+        stdin = &input;
         stdout = &output;
+    }
+
+    static int getChar()
+    {
+        loop_until_bit_is_set(UCSR0A, RXC0);
+        return static_cast<uint8_t>(UDR0);
     }
 
     static void putChar(char c)
     {
         loop_until_bit_is_set(UCSR0A, UDRE0);
         UDR0 = c;
+    }
+
+    static int getCharS(FILE *stream)
+    {
+        return getChar();
     }
 
     static int putCharS(char c, FILE *stream)
@@ -40,8 +52,10 @@ struct UART
         return 0;
     }
 
+    static FILE input;
     static FILE output;
 };
 
+FILE UART::input = FDEV_SETUP_STREAM(NULL, UART::getCharS, _FDEV_SETUP_READ);
 FILE UART::output = FDEV_SETUP_STREAM(UART::putCharS, NULL, _FDEV_SETUP_WRITE);
 
