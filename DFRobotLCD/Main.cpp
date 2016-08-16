@@ -1,3 +1,4 @@
+#include <AVR/Main.h>
 #include <AVR/Delay.h>
 #include <Arduino//DFR0009.h>
 #include <stdlib.h>
@@ -20,12 +21,5 @@ void loop()
     lcd::write(x++, 16);
     lcd::write("      ");
     //delay_ms(50);
-}
-
-int main()
-{
-    setup();
-    for (;;)
-        loop();
 }
 

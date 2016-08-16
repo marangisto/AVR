@@ -1,3 +1,4 @@
+#include <AVR/Main.h>
 #include <AVR/Delay.h>
 #include <AVR/Timer.h>
 
@@ -96,12 +97,5 @@ void loop()
         S0::toggle();
     delay_ms(250);
     //delay_ms(1);
-}
-
-int main()
-{
-    setup();
-    for (;;)
-        loop();
 }
 

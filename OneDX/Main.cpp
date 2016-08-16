@@ -1,5 +1,6 @@
-#include "../AVR/Pins.h"
-#include "../AVR/Delay.h"
+#include <AVR/Main.h>
+#include <AVR/Pins.h>
+#include <AVR/Delay.h>
 
 typedef pin_t<PB, 0> FOCUS;
 typedef pin_t<PB, 1> EXPOSE;
@@ -24,12 +25,5 @@ void loop()
 {
     shoot();
     delay_ms(30000);
-}
-
-int main()
-{
-    setup();
-    for (;;)
-        loop();
 }
 

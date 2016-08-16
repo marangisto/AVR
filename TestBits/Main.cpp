@@ -1,3 +1,4 @@
+#include <AVR/Main.h>
 #include <AVR/Pins.h>
 #include <AVR/Delay.h>
 
@@ -23,12 +24,5 @@ void loop()
 
     bits::write(i++);
     delay_ms(250);
-}
-
-int main()
-{
-    setup();
-    for (;;)
-        loop();
 }
 

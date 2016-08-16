@@ -1,3 +1,4 @@
+#include <AVR/Main.h>
 #include <AVR/Delay.h>
 #include <AVR/Timer.h>
 
@@ -29,12 +30,5 @@ void loop()
     i += dir ? 1 : -1;
 
     delay_ms(25);
-}
-
-int main()
-{
-    setup();
-    for (;;)
-        loop();
 }
 

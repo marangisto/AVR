@@ -1,3 +1,4 @@
+#include <AVR/Main.h>
 #include <AVR/Pins.h>
 #include <AVR/Delay.h>
 
@@ -122,12 +123,5 @@ void loop()
     LED::toggle();
     w::set(0xff);
     delay_ms(100);
-}
-
-int main()
-{
-    setup();
-    for (;;)
-        loop();
 }
 

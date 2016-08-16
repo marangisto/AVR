@@ -1,3 +1,4 @@
+#include <AVR/Main.h>
 #include <AVR/Delay.h>
 #include <AVR/Timer.h>
 
@@ -120,12 +121,5 @@ void loop()
     g_period = F_CPU / (wsteps * n);
 
     delay_ms(2000);
-}
-
-int main()
-{
-    setup();
-    for (;;)
-        loop();
 }
 

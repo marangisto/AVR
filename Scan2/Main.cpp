@@ -1,6 +1,7 @@
-#include "../AVR/Pins.h"
-#include "../AVR/Delay.h"
-#include "../AVR/LCD1602A/SN74HC595.h"
+#include <AVR/Main.h>
+#include <AVR/Pins.h>
+#include <AVR/Delay.h>
+#include <AVR/LCD1602A/SN74HC595.h>
 #include "Buttons.h"
 #include "Editor.h"
 #include "Accel.h"
@@ -106,13 +107,5 @@ void loop()
     }
 
     delay_ms(1);
-}
-
-
-int main()
-{
-    setup();
-    for (;;)
-        loop();
 }
 

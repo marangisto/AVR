@@ -1,6 +1,7 @@
-#include "../AVR/Pins.h"
-#include "../AVR/Delay.h"
-#include "../AVR/LCD1602A.h"
+#include <AVR/Main.h>
+#include <AVR/Pins.h>
+#include <AVR/Delay.h>
+#include <AVR/LCD1602A.h>
 
 typedef pin_t<PB, 3> LED;
 typedef pin_t<PB, 0> CLOCK;
@@ -41,12 +42,5 @@ void loop()
     if (++i >= n_fortunes)
         i = 0;
     delay_ms(1000);
-}
-
-int main()
-{
-    setup();
-    for (;;)
-        loop();
 }
 

@@ -1,3 +1,4 @@
+#include <AVR/Main.h>
 #include <AVR/Pins.h>
 #include <AVR/Delay.h>
 #include <AVR/Seg7.h>
@@ -37,12 +38,5 @@ void loop()
 	seg7::write(i++);
 
 	delay_ms(5);
-}
-
-int main()
-{
-	setup();
-	for (;;)
-		loop();
 }
 

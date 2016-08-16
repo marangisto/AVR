@@ -1,5 +1,6 @@
 #if 0
 
+#include <AVR/Main.h>
 #include <AVR/Delay.h>
 #include <AVR/Timer.h>
 #include <Arduino//DFR0009.h>
@@ -21,13 +22,6 @@ void loop()
     W::output_compare_register<channel_a>() = 77;
 
     delay_ms(2000);
-}
-
-int main()
-{
-    setup();
-    for (;;)
-        loop();
 }
 
 #else

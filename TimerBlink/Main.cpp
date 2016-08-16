@@ -1,3 +1,4 @@
+#include <AVR/Main.h>
 #include <AVR/Timer.h>
 #include <AVR/Delay.h>
 
@@ -29,12 +30,5 @@ void loop()
 {
     // do something else
     delay_ms(1000);
-}
-
-int main()
-{
-    setup();
-    for (;;)
-        loop();
 }
 

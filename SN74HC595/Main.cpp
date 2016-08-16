@@ -1,6 +1,7 @@
-#include "../AVR/Pins.h"
-#include "../AVR/Delay.h"
-#include "../AVR/SN74HC595.h"
+#include <AVR/Main.h>
+#include <AVR/Pins.h>
+#include <AVR/Delay.h>
+#include <AVR/SN74HC595.h>
 
 typedef pin_t<PB, 3> LED;
 typedef pin_t<PB, 0> CLOCK;
@@ -23,12 +24,5 @@ void loop()
         delay_ms(25);
         sn74hc595::write(i);
     }
-}
-
-int main()
-{
-    setup();
-    for (;;)
-        loop();
 }
 

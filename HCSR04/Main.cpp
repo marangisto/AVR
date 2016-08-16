@@ -1,5 +1,6 @@
-#include "../AVR/Pulse.h"
-#include "../AVR/SN74HC595.h"
+#include <AVR/Main.h>
+#include <AVR/Pulse.h>
+#include <AVR/SN74HC595.h>
 
 typedef pin_t<PB, 3> TRIG;
 typedef pin_t<PB, 4> ECHO;
@@ -27,12 +28,5 @@ void loop()
 
     sn74hc595::write(static_cast<uint8_t>(d));
     delay_ms(20);
-}
-
-int main()
-{
-    setup();
-    for (;;)
-        loop();
 }
 

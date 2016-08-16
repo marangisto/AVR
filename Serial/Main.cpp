@@ -1,3 +1,4 @@
+#include <AVR/Main.h>
 #include <AVR/UART.h>
 #include <AVR/Delay.h>
 #include <Arduino/Pins.h>
@@ -53,12 +54,5 @@ void loop()
             printf("%d%s", res[i], i + 1 < nres ? " " : "\n");
 
     delay_ms(10);
-}
-
-int main()
-{
-    setup();
-    for (;;)
-        loop();
 }
 

@@ -1,5 +1,6 @@
-#include "../AVR/Delay.h"
-#include "../AVR/Timer.h"
+#include <AVR/Main.h>
+#include <AVR/Delay.h>
+#include <AVR/Timer.h>
 
 enum note_t
     { C = 1911
@@ -121,12 +122,5 @@ void loop()
     if (++i >= sizeof(LTS) / sizeof(*LTS))
         i = 0;
 
-}
-
-int main()
-{
-    setup();
-    for (;;)
-        loop();
 }
 

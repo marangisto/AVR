@@ -1,4 +1,5 @@
-#include "../AVR/Pulse.h"
+#include <AVR/Main.h>
+#include <AVR/Pulse.h>
 
 typedef pin_t<PB, 0> FOCUS;
 typedef pin_t<PB, 1> EXPOSE;
@@ -73,12 +74,5 @@ void loop()
     }
 
     delay_ms(20);
-}
-
-int main()
-{
-    setup();
-    for (;;)
-        loop();
 }
 

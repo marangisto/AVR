@@ -1,16 +1,17 @@
-#include "../AVR/Pins.h"
-#include "../AVR/Delay.h"
+#include <AVR/Main.h>
+#include <AVR/Pins.h>
+#include <AVR/Delay.h>
 
 typedef pin_t<PC,7> LED;
 
-int main()
+void setup()
 {
     digital_out<LED>();
+}
 
-    for (;;)
-    {
-        toggle<LED>();
-        delay(250);
-    }
+void loop()
+{
+    toggle<LED>();
+    delay(250);
 }
 

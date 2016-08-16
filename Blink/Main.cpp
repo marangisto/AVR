@@ -1,5 +1,6 @@
-#include <Arduino/Pins.h>
+#include <AVR/Main.h>
 #include <AVR/Delay.h>
+#include <Arduino/Pins.h>
 
 typedef D13 LED;
 
@@ -12,12 +13,5 @@ void loop()
 {
     LED::toggle();
     delay_ms(1000);
-}
-
-int main()
-{
-    setup();
-    for (;;)
-        loop();
 }
 
