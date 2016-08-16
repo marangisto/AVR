@@ -28,13 +28,13 @@ void loop()
     
     i += dir ? 1 : -1;
 
-	delay_ms(25);
+    delay_ms(25);
 }
 
 int main()
 {
-	setup();
-	for (;;)
-		loop();
+    setup();
+    for (;;)
+        loop();
 }
 

@@ -11,24 +11,24 @@ typedef sn74hc595_t<DATA, CLOCK, LATCH, MSB_FIRST> sn74hc595;
 
 void setup()
 {
-	digital_out<LED>();
-	sn74hc595::setup();
+    digital_out<LED>();
+    sn74hc595::setup();
 }
 
 void loop()
 {
-	for (int i = 0; i < 255; ++i)
-	{
-		toggle<LED>();
-		delay_ms(25);
-		sn74hc595::write(i);
-	}
+    for (int i = 0; i < 255; ++i)
+    {
+        toggle<LED>();
+        delay_ms(25);
+        sn74hc595::write(i);
+    }
 }
 
 int main()
 {
-	setup();
-	for (;;)
-		loop();
+    setup();
+    for (;;)
+        loop();
 }
 

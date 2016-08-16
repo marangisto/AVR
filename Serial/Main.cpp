@@ -9,7 +9,7 @@ typedef D13 LED;
 
 void setup()
 {
-	LED::setup();
+    LED::setup();
     UART::setup<9600>();
 }
 
@@ -17,7 +17,7 @@ void loop()
 {
     static int i = 0;
 
-	LED::toggle();
+    LED::toggle();
 
     char buf[80] = "", *p;
 
@@ -52,13 +52,13 @@ void loop()
         for (size_t i = 0; i < nres; ++i)
             printf("%d%s", res[i], i + 1 < nres ? " " : "\n");
 
-	delay_ms(10);
+    delay_ms(10);
 }
 
 int main()
 {
-	setup();
-	for (;;)
-		loop();
+    setup();
+    for (;;)
+        loop();
 }
 

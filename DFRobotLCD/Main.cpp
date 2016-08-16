@@ -7,7 +7,7 @@ typedef dfr0009_t lcd;
 
 void setup()
 {
-	LED::setup();
+    LED::setup();
     lcd::setup();
 }
 
@@ -15,17 +15,17 @@ void loop()
 {
     static uint16_t x = 0;
 
-	// LED::toggle();
+    // LED::toggle();
     lcd::set_pos(0, 0);
     lcd::write(x++, 16);
     lcd::write("      ");
-	//delay_ms(50);
+    //delay_ms(50);
 }
 
 int main()
 {
-	setup();
-	for (;;)
-		loop();
+    setup();
+    for (;;)
+        loop();
 }
 

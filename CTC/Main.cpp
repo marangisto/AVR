@@ -25,9 +25,9 @@ void loop()
 
 int main()
 {
-	setup();
-	for (;;)
-		loop();
+    setup();
+    for (;;)
+        loop();
 }
 
 #else
@@ -123,9 +123,9 @@ void loop()
 
 int main()
 {
-	setup();
-	for (;;)
-		loop();
+    setup();
+    for (;;)
+        loop();
 }
 
 #endif

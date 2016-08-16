@@ -18,7 +18,7 @@ void twi_error(uint8_t err, const char *file, uint16_t line)
 
 void setup()
 {
-	LED::setup();
+    LED::setup();
     ms23::setup<0x1e>();  // keep last as it enables interrupts
 }
 
@@ -75,8 +75,8 @@ void loop()
         update_motor();
 
     if (++i == 0)
-	    LED::toggle();
+        LED::toggle();
 
-	delay_ms(1);
+    delay_ms(1);
 }
 

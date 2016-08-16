@@ -80,11 +80,11 @@ void setup()
 
     P::setup<normal_mode>();
     P::clock_select<1>();
-	P::isr(isr);
-	P::enable();
-	sei();
+    P::isr(isr);
+    P::enable();
+    sei();
 
-	CK::setup();
+    CK::setup();
     BT0::setup();
 }
 
@@ -119,13 +119,13 @@ void loop()
 
     g_period = F_CPU / (wsteps * n);
 
-	delay_ms(2000);
+    delay_ms(2000);
 }
 
 int main()
 {
-	setup();
-	for (;;)
-		loop();
+    setup();
+    for (;;)
+        loop();
 }
 

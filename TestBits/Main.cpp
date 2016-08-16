@@ -14,21 +14,21 @@ typedef outputs_t<H, G, F, E, D, C, B, A> bits;
 
 void setup()
 {
-	bits::setup();
+    bits::setup();
 }
 
 void loop()
 {
-	static uint8_t i = 0;
+    static uint8_t i = 0;
 
-	bits::write(i++);
-	delay_ms(250);
+    bits::write(i++);
+    delay_ms(250);
 }
 
 int main()
 {
-	setup();
-	for (;;)
-		loop();
+    setup();
+    for (;;)
+        loop();
 }
 

@@ -5,12 +5,12 @@ typedef pin_t<PC,7> LED;
 
 int main()
 {
-	digital_out<LED>();
+    digital_out<LED>();
 
-	for (;;)
-	{
+    for (;;)
+    {
         toggle<LED>();
-		delay(250);
-	}
+        delay(250);
+    }
 }
 

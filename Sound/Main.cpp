@@ -2,31 +2,31 @@
 #include "../AVR/Timer.h"
 
 enum note_t
-	{ C = 1911
-	, C1 = 1804
-	, D = 1703
-	, Eb = 1607
-	, E = 1517
-	, F = 1432
-	, F1 = 1352
-	, G = 1276
-	, Ab = 1204
-	, A = 1136
-	, Bb = 1073
-	, B = 1012
-	, c = 955
-	, c1 = 902
-	, d = 851
-	, eb = 803
-	, e = 758
-	, f = 716
-	, f1 = 676
-	, g = 638
-	, ab = 602
-	, a = 568
-	, bb = 536
-	, b = 506
-	};
+    { C = 1911
+    , C1 = 1804
+    , D = 1703
+    , Eb = 1607
+    , E = 1517
+    , F = 1432
+    , F1 = 1352
+    , G = 1276
+    , Ab = 1204
+    , A = 1136
+    , Bb = 1073
+    , B = 1012
+    , c = 955
+    , c1 = 902
+    , d = 851
+    , eb = 803
+    , e = 758
+    , f = 716
+    , f1 = 676
+    , g = 638
+    , ab = 602
+    , a = 568
+    , bb = 536
+    , b = 506
+    };
 
 // songs from https://therandombit.wordpress.com/2011/11/21/arduino-piezo-speaker-super-mario/
 
@@ -46,49 +46,49 @@ template<class AUDIO>
 class sound_t
 {
 public:
-	static void setup()
-	{
-		AUDIO::setup();
-		timer::setup<normal_mode>();
-		timer::clock_select<8>();
-		timer::isr(isr);
-		timer::enable();
-		period(2000);
-		sei();
-	}
+    static void setup()
+    {
+        AUDIO::setup();
+        timer::setup<normal_mode>();
+        timer::clock_select<8>();
+        timer::isr(isr);
+        timer::enable();
+        period(2000);
+        sei();
+    }
 
-	static void on(bool x) { s_on = x; }
+    static void on(bool x) { s_on = x; }
 
-	static void period(uint16_t us)
-	{
-		uint16_t n = (us * clocks_per_us) >> (1 + 3);	// half-period + prescaler
-		s_count = 65536 - n;
-	}
+    static void period(uint16_t us)
+    {
+        uint16_t n = (us * clocks_per_us) >> (1 + 3);    // half-period + prescaler
+        s_count = 65536 - n;
+    }
 
-	static void freq(uint16_t f)
-	{
-		uint16_t n = (1000000 * clocks_per_us / f) >> (1 + 3);	// half-period + prescaler
-		s_count = 65536 - n;
-	}
+    static void freq(uint16_t f)
+    {
+        uint16_t n = (1000000 * clocks_per_us / f) >> (1 + 3);    // half-period + prescaler
+        s_count = 65536 - n;
+    }
 
-	static void play(note_t x)
-	{
-		period(x);
-		s_on = true;
-	}
+    static void play(note_t x)
+    {
+        period(x);
+        s_on = true;
+    }
 
 private:
-	typedef timer_t<1> timer;
+    typedef timer_t<1> timer;
 
-	static void isr()
-	{
-		timer::counter() = s_count;
-		if (s_on)
-			AUDIO::toggle();
-	}
+    static void isr()
+    {
+        timer::counter() = s_count;
+        if (s_on)
+            AUDIO::toggle();
+    }
 
-	static volatile bool s_on;
-	static volatile uint16_t s_count;
+    static volatile bool s_on;
+    static volatile uint16_t s_count;
 };
 
 template<class AUDIO>
@@ -103,30 +103,30 @@ typedef sound_t<AUDIO> SOUND;
 
 void setup()
 {
-	LED::setup();
-	SOUND::setup();
+    LED::setup();
+    SOUND::setup();
 }
 
 void loop()
 {
-	static uint8_t i = 0;
+    static uint8_t i = 0;
 
-	LED::toggle();
-	
-	SOUND::play(LTS[i]);
+    LED::toggle();
+    
+    SOUND::play(LTS[i]);
 
-	for (uint8_t j = 0; j < _LTS[i]; ++j)
-		delay_ms(50);
+    for (uint8_t j = 0; j < _LTS[i]; ++j)
+        delay_ms(50);
 
-	if (++i >= sizeof(LTS) / sizeof(*LTS))
-		i = 0;
+    if (++i >= sizeof(LTS) / sizeof(*LTS))
+        i = 0;
 
 }
 
 int main()
 {
-	setup();
-	for (;;)
-		loop();
+    setup();
+    for (;;)
+        loop();
 }
 

@@ -29,8 +29,8 @@
     
     int main()
     {
-    	setup();
-    	for (;;)
-    		loop();
+        setup();
+        for (;;)
+            loop();
     }
     

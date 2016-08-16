@@ -17,8 +17,8 @@ public:
         // set timer for ~1kHz isr
         timer::template setup<normal_mode>();
         timer::template clock_select<64>();
-	    timer::isr(isr);
-	    timer::enable();
+        timer::isr(isr);
+        timer::enable();
     }
  
     static bool get(bool& x)
@@ -76,12 +76,12 @@ typedef debouncer_t<2, 20, 8> debouncer;
 
 void setup()
 {
-	S0::setup();
-	S1::setup();
+    S0::setup();
+    S1::setup();
     BT0::setup();
     BT1::setup();
     debouncer::setup();
-	sei();      // need explcit interrup-enable at end of setup
+    sei();      // need explcit interrup-enable at end of setup
 }
 
 void loop()
@@ -95,13 +95,13 @@ void loop()
     if (debouncer::get(b0) && b0)
         S0::toggle();
     delay_ms(250);
-	//delay_ms(1);
+    //delay_ms(1);
 }
 
 int main()
 {
-	setup();
-	for (;;)
-		loop();
+    setup();
+    for (;;)
+        loop();
 }
 

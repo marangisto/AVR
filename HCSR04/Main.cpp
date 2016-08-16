@@ -11,28 +11,28 @@ typedef sn74hc595_t<DATA, CLOCK, LATCH, MSB_FIRST> sn74hc595;
 
 void setup()
 {
-	digital_out<TRIG>();
-	digital_in<ECHO>();
-	sn74hc595::setup();
+    digital_out<TRIG>();
+    digital_in<ECHO>();
+    sn74hc595::setup();
 }
 
 void loop()
 {
-	set<TRIG>();
-	delay_us(10);
-	clear<TRIG>();
+    set<TRIG>();
+    delay_us(10);
+    clear<TRIG>();
 
-	uint32_t w = pulse_width<ECHO, true>(10000);
-	float d = w / (2 * 29.1);
+    uint32_t w = pulse_width<ECHO, true>(10000);
+    float d = w / (2 * 29.1);
 
-	sn74hc595::write(static_cast<uint8_t>(d));
-	delay_ms(20);
+    sn74hc595::write(static_cast<uint8_t>(d));
+    delay_ms(20);
 }
 
 int main()
 {
-	setup();
-	for (;;)
-		loop();
+    setup();
+    for (;;)
+        loop();
 }
 

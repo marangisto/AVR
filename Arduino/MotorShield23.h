@@ -37,8 +37,8 @@ template<> struct bridge_traits<3>
 class bridge_t
 {
 public:
-	typedef void (*duty_t)(uint16_t);
-	typedef void (*cmd_t)(command_t);
+    typedef void (*duty_t)(uint16_t);
+    typedef void (*cmd_t)(command_t);
 
     bridge_t(duty_t d, cmd_t c): m_duty(d), m_cmd(c) {}
 

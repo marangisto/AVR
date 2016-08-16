@@ -92,13 +92,13 @@ void loop()
 
     ++i;
 
-	delay_us(250);
+    delay_us(250);
 }
 
 int main()
 {
-	setup();
-	for (;;)
-		loop();
+    setup();
+    for (;;)
+        loop();
 }
 

@@ -30,89 +30,89 @@ typedef accel_t<a4988, LIML, LIMR> accel;
 
 void setup()
 {
-	lcd::setup();
-	btns::setup();
-	LIML::setup();
-	LIMR::setup();
-	accel::setup();
+    lcd::setup();
+    btns::setup();
+    LIML::setup();
+    LIMR::setup();
+    accel::setup();
 }
 
 void loop()
 {
-	static item_t<bool> d("dir", false);
-	static item_t<uint16_t> c("tmax", 10000);
-	static item_t<micro_step_t::e> ms("u-step", micro_step_t::quarter_step);
-	static item_i *items[] = { &d, &c, &ms };
-	static editor_t editor(items, sizeof(items) / sizeof(*items));
+    static item_t<bool> d("dir", false);
+    static item_t<uint16_t> c("tmax", 10000);
+    static item_t<micro_step_t::e> ms("u-step", micro_step_t::quarter_step);
+    static item_i *items[] = { &d, &c, &ms };
+    static editor_t editor(items, sizeof(items) / sizeof(*items));
 
-	static bool refresh = true;
-	static char buf[64];
+    static bool refresh = true;
+    static char buf[64];
 
-	uint8_t x = btns::read();
+    uint8_t x = btns::read();
 
-	switch (x & btns::mask)
-	{
-		case 1: 
-			editor.next();
-			refresh = true;
-			break;
-		case 2:
-			editor.decr((x & btns::fast) != 0);
-			refresh = true;
-			break;
-		case 3:
-			editor.incr((x & btns::fast) != 0);
-			refresh = true;
-			break;
-		case 4:
-		{
-			int16_t err = 0;
-			uint16_t c = 10000;
+    switch (x & btns::mask)
+    {
+        case 1: 
+            editor.next();
+            refresh = true;
+            break;
+        case 2:
+            editor.decr((x & btns::fast) != 0);
+            refresh = true;
+            break;
+        case 3:
+            editor.incr((x & btns::fast) != 0);
+            refresh = true;
+            break;
+        case 4:
+        {
+            int16_t err = 0;
+            uint16_t c = 10000;
 
-			do
-			{
-				lcd::clear();
-				lcd::set_pos(0, 0);
-				lcd::write(c);
-				accel::run(false, 1000, c, ms.value());
-				accel::run(true, 1000, c, ms.value());
-				err = accel::calibrate();
-				lcd::set_pos(0, 8);
-				lcd::write("adj = ");
-				lcd::write(err);
-				lcd::set_pos(1, 0);
-				lcd::write("min step = ");
-				lcd::write(accel::min_step());
-				c -= 250;
-			} while (abs(err) < 2);
-		} break;
-		case 5:
-			lcd::set_pos(1, 0);
-			lcd::write("adj = ");
-			lcd::write(accel::calibrate());
-			lcd::write("       ");
-			break;
-		default: ;
-	}
+            do
+            {
+                lcd::clear();
+                lcd::set_pos(0, 0);
+                lcd::write(c);
+                accel::run(false, 1000, c, ms.value());
+                accel::run(true, 1000, c, ms.value());
+                err = accel::calibrate();
+                lcd::set_pos(0, 8);
+                lcd::write("adj = ");
+                lcd::write(err);
+                lcd::set_pos(1, 0);
+                lcd::write("min step = ");
+                lcd::write(accel::min_step());
+                c -= 250;
+            } while (abs(err) < 2);
+        } break;
+        case 5:
+            lcd::set_pos(1, 0);
+            lcd::write("adj = ");
+            lcd::write(accel::calibrate());
+            lcd::write("       ");
+            break;
+        default: ;
+    }
 
-	if (refresh)
-	{
-		lcd::clear();
-		lcd::set_pos(0, 0);
-		lcd::write(editor.name());
-		lcd::set_pos(0, 8);
-		lcd::write(editor.show(buf));
-		refresh = false;
-	}
+    if (refresh)
+    {
+        lcd::clear();
+        lcd::set_pos(0, 0);
+        lcd::write(editor.name());
+        lcd::set_pos(0, 8);
+        lcd::write(editor.show(buf));
+        refresh = false;
+    }
 
-	delay_ms(1);
+    delay_ms(1);
 }
 
 
 int main()
 {
-	setup();
-	for (;;)
-		loop();
+    setup();
+    for (;;)
+        loop();
 }
 

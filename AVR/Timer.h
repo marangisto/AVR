@@ -23,27 +23,27 @@ template<int TNO, tm_channel CH, cm_mode MODE = normal_port> struct compare_matc
 template<>
 struct timer_traits<0>
 {
-	typedef uint8_t count_t;
+    typedef uint8_t count_t;
 
-	static inline volatile uint8_t& tccra() { return TCCR0A; }
-	static inline volatile uint8_t& tccrb() { return TCCR0B; }
-	static inline volatile uint8_t& timsk() { return TIMSK0; }
-	static inline volatile count_t& tcnt() { return TCNT0; }
-	static const uint8_t toie = TOIE0;
+    static inline volatile uint8_t& tccra() { return TCCR0A; }
+    static inline volatile uint8_t& tccrb() { return TCCR0B; }
+    static inline volatile uint8_t& timsk() { return TIMSK0; }
+    static inline volatile count_t& tcnt() { return TCNT0; }
+    static const uint8_t toie = TOIE0;
 };
 
 template<> struct channel_traits<0, channel_a>
 {
     typedef output_t<PD, 6> pin_t;
 
-	static inline volatile timer_traits<0>::count_t& ocr() { return OCR0A; }
+    static inline volatile timer_traits<0>::count_t& ocr() { return OCR0A; }
 };
 
 template<> struct channel_traits<0, channel_b>
 {
     typedef output_t<PD, 5> pin_t;
 
-	static inline volatile timer_traits<0>::count_t& ocr() { return OCR0B; }
+    static inline volatile timer_traits<0>::count_t& ocr() { return OCR0B; }
 };
 
 template<> struct waveform_generator_traits<0, normal_mode, top_default>
@@ -158,27 +158,27 @@ template<> struct compare_match_traits<0, channel_b, set_on_compare_match>
 template<>
 struct timer_traits<1>
 {
-	typedef uint16_t count_t;
+    typedef uint16_t count_t;
 
-	static inline volatile uint8_t& tccra() { return TCCR1A; }
-	static inline volatile uint8_t& tccrb() { return TCCR1B; }
-	static inline volatile uint8_t& timsk() { return TIMSK1; }
-	static inline volatile count_t& tcnt() { return TCNT1; }
-	static const uint8_t toie = TOIE1;
+    static inline volatile uint8_t& tccra() { return TCCR1A; }
+    static inline volatile uint8_t& tccrb() { return TCCR1B; }
+    static inline volatile uint8_t& timsk() { return TIMSK1; }
+    static inline volatile count_t& tcnt() { return TCNT1; }
+    static const uint8_t toie = TOIE1;
 };
 
 template<> struct channel_traits<1, channel_a>
 {
     typedef output_t<PB, 1> pin_t;
 
-	static inline volatile timer_traits<1>::count_t& ocr() { return OCR1A; }
+    static inline volatile timer_traits<1>::count_t& ocr() { return OCR1A; }
 };
 
 template<> struct channel_traits<1, channel_b>
 {
     typedef output_t<PB, 2> pin_t;
 
-	static inline volatile timer_traits<1>::count_t& ocr() { return OCR1B; }
+    static inline volatile timer_traits<1>::count_t& ocr() { return OCR1B; }
 };
 
 template<> struct waveform_generator_traits<1, normal_mode, top_default>
@@ -347,27 +347,27 @@ template<> struct compare_match_traits<1, channel_b, set_on_compare_match>
 template<>
 struct timer_traits<2>
 {
-	typedef uint8_t count_t;
+    typedef uint8_t count_t;
 
-	static inline volatile uint8_t& tccra() { return TCCR2A; }
-	static inline volatile uint8_t& tccrb() { return TCCR2B; }
-	static inline volatile uint8_t& timsk() { return TIMSK2; }
-	static inline volatile count_t& tcnt() { return TCNT2; }
-	static const uint8_t toie = TOIE2;
+    static inline volatile uint8_t& tccra() { return TCCR2A; }
+    static inline volatile uint8_t& tccrb() { return TCCR2B; }
+    static inline volatile uint8_t& timsk() { return TIMSK2; }
+    static inline volatile count_t& tcnt() { return TCNT2; }
+    static const uint8_t toie = TOIE2;
 };
 
 template<> struct channel_traits<2, channel_a>
 {
     typedef output_t<PB, 3> pin_t;
 
-	static inline volatile timer_traits<2>::count_t& ocr() { return OCR2A; }
+    static inline volatile timer_traits<2>::count_t& ocr() { return OCR2A; }
 };
 
 template<> struct channel_traits<2, channel_b>
 {
     typedef output_t<PD, 3> pin_t;
 
-	static inline volatile timer_traits<2>::count_t& ocr() { return OCR2B; }
+    static inline volatile timer_traits<2>::count_t& ocr() { return OCR2B; }
 };
 
 template<> struct waveform_generator_traits<2, normal_mode, top_default>
@@ -492,7 +492,7 @@ template<> struct compare_match_traits<2, channel_b, set_on_compare_match>
 template<int TNO>
 struct timer_t
 {
-	typedef void (*isr_t)();
+    typedef void (*isr_t)();
 
     template<tm_channel CH>
     using output_pin = typename channel_traits<TNO, CH>::pin_t;
@@ -500,14 +500,14 @@ struct timer_t
     template<wg_mode MODE, wg_top TOP = top_default>
     static inline void setup()
     {
-		timer_traits<TNO>::tccra() = waveform_generator_traits<TNO, MODE, TOP>::bitsa;
-		timer_traits<TNO>::tccrb() = waveform_generator_traits<TNO, MODE, TOP>::bitsb;
+        timer_traits<TNO>::tccra() = waveform_generator_traits<TNO, MODE, TOP>::bitsa;
+        timer_traits<TNO>::tccrb() = waveform_generator_traits<TNO, MODE, TOP>::bitsb;
     }
 
     template<int PRESCALE>
     static inline void clock_select()
     {
-		timer_traits<TNO>::tccrb() = (timer_traits<TNO>::tccrb() & ~clock_select_traits<TNO>::mask)
+        timer_traits<TNO>::tccrb() = (timer_traits<TNO>::tccrb() & ~clock_select_traits<TNO>::mask)
                                    | clock_select_traits<TNO, PRESCALE>::bits
                                    ;
     }
@@ -515,42 +515,42 @@ struct timer_t
     template<tm_channel CH, cm_mode MODE>
     static inline void compare_output_mode()
     {
-		timer_traits<TNO>::tccra() = (timer_traits<TNO>::tccra() & ~compare_match_traits<TNO, CH>::mask)
+        timer_traits<TNO>::tccra() = (timer_traits<TNO>::tccra() & ~compare_match_traits<TNO, CH>::mask)
                                    | compare_match_traits<TNO, CH, MODE>::bits
                                    ;
     }
 
     template<tm_channel CH>
-	static inline volatile typename timer_traits<TNO>::count_t& output_compare_register()
+    static inline volatile typename timer_traits<TNO>::count_t& output_compare_register()
     {
-		return channel_traits<TNO, CH>::ocr();
+        return channel_traits<TNO, CH>::ocr();
     }
 
-	static inline volatile typename timer_traits<TNO>::count_t& counter()
-	{
-		return timer_traits<TNO>::tcnt();
-	}
+    static inline volatile typename timer_traits<TNO>::count_t& counter()
+    {
+        return timer_traits<TNO>::tcnt();
+    }
 
-	static void enable()
-	{
-		timer_traits<TNO>::timsk() |= _BV(timer_traits<TNO>::toie);		// enable timer overflow interrupt
-	}
+    static void enable()
+    {
+        timer_traits<TNO>::timsk() |= _BV(timer_traits<TNO>::toie);     // enable timer overflow interrupt
+    }
 
-	static void disable()
-	{
-		timer_traits<TNO>::timsk() &= ~_BV(timer_traits<TNO>::toie);	// disable timer overflow interrupt
-	}
+    static void disable()
+    {
+        timer_traits<TNO>::timsk() &= ~_BV(timer_traits<TNO>::toie);    // disable timer overflow interrupt
+    }
 
-	static void isr(isr_t f)
-	{
-		g_isr = f;
-	}
+    static void isr(isr_t f)
+    {
+        g_isr = f;
+    }
 
-	static void dummy_isr()
-	{
-	}
+    static void dummy_isr()
+    {
+    }
 
-	static isr_t g_isr;
+    static isr_t g_isr;
 };
 
 template<int TNO>
@@ -558,16 +558,16 @@ typename timer_t<TNO>::isr_t timer_t<TNO>::g_isr = timer_t<TNO>::dummy_isr;
 
 ISR(TIMER0_OVF_vect)
 {
-	timer_t<0>::g_isr();
+    timer_t<0>::g_isr();
 }
 
 ISR(TIMER1_OVF_vect)
 {
-	timer_t<1>::g_isr();
+    timer_t<1>::g_isr();
 }
 
 ISR(TIMER2_OVF_vect)
 {
-	timer_t<2>::g_isr();
+    timer_t<2>::g_isr();
 }
 

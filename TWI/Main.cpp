@@ -23,7 +23,7 @@ static void twi_error(uint8_t err, const char *file, uint16_t line)
 
 void setup()
 {
-	LED::setup();
+    LED::setup();
     lcd::setup();
     btns::setup();
     twi_t::setup();
@@ -92,9 +92,9 @@ void loop()
     }
 
     if (++i == 0)
-	    LED::toggle();
+        LED::toggle();
 
-	delay_ms(1);
+    delay_ms(1);
 }
 
 
@@ -102,32 +102,32 @@ void loop()
 
 void loop()
 {
-//	static const uint8_t sla = 0x68;		// DS1307 address (shifted?)
-	static const uint8_t sla = 0xA0;		// 24C32 address (shifted?)
-	static uint8_t i = 0, j = 0;
+//    static const uint8_t sla = 0x68;        // DS1307 address (shifted?)
+    static const uint8_t sla = 0xA0;        // 24C32 address (shifted?)
+    static uint8_t i = 0, j = 0;
 
-	if (i < 250)
-	{
-		uint8_t buf[] = { 0, i,  i, i + 1, i + 2, i + 3 };
+    if (i < 250)
+    {
+        uint8_t buf[] = { 0, i,  i, i + 1, i + 2, i + 3 };
 
-		twi_t::write(0xA0, buf, sizeof(buf));
-		delay_ms(10);
-		twi_t::wait_idle();
-		i += 4;
-	}
-	else
-	{
-		uint8_t adr[2] = { 0, j++ }, xs[8];
+        twi_t::write(0xA0, buf, sizeof(buf));
+        delay_ms(10);
+        twi_t::wait_idle();
+        i += 4;
+    }
+    else
+    {
+        uint8_t adr[2] = { 0, j++ }, xs[8];
 
-		twi_t::write_read(sla, adr, sizeof(adr), xs, sizeof(xs));
-		twi_t::wait_idle();
-		for (uint8_t k = 0; k < sizeof(xs); ++k)
-		{
-			seg7::write(xs[k]);
-			delay_ms(100);
-		}
-		delay_ms(250);
-	}
+        twi_t::write_read(sla, adr, sizeof(adr), xs, sizeof(xs));
+        twi_t::wait_idle();
+        for (uint8_t k = 0; k < sizeof(xs); ++k)
+        {
+            seg7::write(xs[k]);
+            delay_ms(100);
+        }
+        delay_ms(250);
+    }
 }
 
 */

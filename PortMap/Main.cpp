@@ -1,21 +1,21 @@
 #include <AVR/Pins.h>
 #include <AVR/Delay.h>
 
-typedef output_t<PD, 7> LED;			// uno
+typedef output_t<PD, 7> LED;            // uno
 
 
 template<class PORT, unsigned BIT> struct pint_t : port_t<PORT>
 {
-	static_assert(BIT < 8, "bit out of range");
+    static_assert(BIT < 8, "bit out of range");
 
-	static const int bit = BIT;
-	static const uint8_t mask = _BV(BIT);
+    static const int bit = BIT;
+    static const uint8_t mask = _BV(BIT);
 
 /*
-	static inline void set() { port_t<PORT>::reg() |= mask; }
-	static inline void clear() { port_t<PORT>::reg() &= ~mask; }
-	static inline void write(bool x) { x ? set() : clear(); }
-	static inline void toggle() { port_t<PORT>::reg() ^= mask; }
+    static inline void set() { port_t<PORT>::reg() |= mask; }
+    static inline void clear() { port_t<PORT>::reg() &= ~mask; }
+    static inline void write(bool x) { x ? set() : clear(); }
+    static inline void toggle() { port_t<PORT>::reg() ^= mask; }
 */
 };
 
@@ -98,7 +98,7 @@ struct portmap_t<PIN, TAIL...>
 {
     static const uint8_t mask = 0;
 
-	static inline void setup()
+    static inline void setup()
     {
     }
 
@@ -114,20 +114,20 @@ typedef portmap_t<PD7> w;
 
 void setup()
 {
-	LED::setup();
+    LED::setup();
 }
 
 void loop()
 {
-	LED::toggle();
+    LED::toggle();
     w::set(0xff);
-	delay_ms(100);
+    delay_ms(100);
 }
 
 int main()
 {
-	setup();
-	for (;;)
-		loop();
+    setup();
+    for (;;)
+        loop();
 }
 

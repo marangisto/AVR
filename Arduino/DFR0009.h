@@ -35,10 +35,10 @@ enum button_t { btn_none, btn_release, btn_select, btn_left, btn_down, btn_up, b
 class buttons_t
 {
 public:
-	static void setup()
-	{
-		adc::setup<128>();
-	}
+    static void setup()
+    {
+        adc::setup<128>();
+    }
 
     static button_t read()  // call every 1ms
     {
@@ -62,18 +62,18 @@ private:
     static const uint8_t stable_count;
     static uint8_t stable_state;
 
-	static uint8_t raw_read()
-	{
-		static uint16_t limits[] = { 820, 475, 340, 175, 50 };
-		static uint8_t n_limits = sizeof(limits) / sizeof(*limits);
-		uint16_t x = adc::read<CHANNEL>();
+    static uint8_t raw_read()
+    {
+        static uint16_t limits[] = { 820, 475, 340, 175, 50 };
+        static uint8_t n_limits = sizeof(limits) / sizeof(*limits);
+        uint16_t x = adc::read<CHANNEL>();
 
-		for (uint8_t i = 0; i < n_limits; ++i)
-			if (x > limits[i])
-				return i;
+        for (uint8_t i = 0; i < n_limits; ++i)
+            if (x > limits[i])
+                return i;
 
-		return n_limits;
-	}
+        return n_limits;
+    }
 };
 
 const uint8_t buttons_t::stable_count = 10;

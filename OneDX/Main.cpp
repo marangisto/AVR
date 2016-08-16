@@ -6,30 +6,30 @@ typedef pin_t<PB, 1> EXPOSE;
 
 void shoot()
 {
-	set<FOCUS>();
-	delay_ms(100);
-	set<EXPOSE>();
-	delay_ms(100);
-	clear<EXPOSE>();
-	clear<FOCUS>();
+    set<FOCUS>();
+    delay_ms(100);
+    set<EXPOSE>();
+    delay_ms(100);
+    clear<EXPOSE>();
+    clear<FOCUS>();
 }
 
 void setup()
 {
-	digital_out<FOCUS>();
-	digital_out<EXPOSE>();
+    digital_out<FOCUS>();
+    digital_out<EXPOSE>();
 }
 
 void loop()
 {
-	shoot();
-	delay_ms(30000);
+    shoot();
+    delay_ms(30000);
 }
 
 int main()
 {
-	setup();
-	for (;;)
-		loop();
+    setup();
+    for (;;)
+        loop();
 }
 

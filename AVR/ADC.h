@@ -67,20 +67,20 @@ static const adc_ref_t adc_temp_ref = adc_ref_2_56_cap;
 template<uint8_t CH, uint8_t RS = adc_ref_vcc>
 struct analog_input_t
 {
-	static_assert(CH < 64, "adc channel out of range");
+    static_assert(CH < 64, "adc channel out of range");
 
-	static const uint8_t channel = CH;
-	static const uint8_t ref_source = RS;
+    static const uint8_t channel = CH;
+    static const uint8_t ref_source = RS;
 };
 
 struct adc
 {
     template<int PRESCALE>
-	static void setup()
-	{
+    static void setup()
+    {
         ADCSRA = adc_prescale_traits<PRESCALE>::bits;
-		ADCSRA |= _BV(ADEN) | _BV(ADSC);		        // start ADC and make initial conversion
-	}
+        ADCSRA |= _BV(ADEN) | _BV(ADSC);                // start ADC and make initial conversion
+    }
 
     template<uint8_t CH, adc_ref_t REF = adc_ref_vcc>
     static uint16_t read()
@@ -93,15 +93,15 @@ struct adc
             ADCSRB = (ADCSRB & ~adc_mux_srb_mask) | (CH & adc_mux_srb_mask);
         if (vref_changed)                               // stabilize after voltage reference change
             delay_ms(2);
-		ADCSRA |= _BV(ADSC);	                        // start conversion
-		while (ADCSRA & _BV(ADSC))
-			;                                           // wait for completion
-		return ADCW;
+        ADCSRA |= _BV(ADSC);                            // start conversion
+        while (ADCSRA & _BV(ADSC))
+            ;                                           // wait for completion
+        return ADCW;
     }
 
-	static int8_t temp()
-	{
-		return adc::read<adc_temp_channel, adc_temp_ref>() - 273;
-	}
+    static int8_t temp()
+    {
+        return adc::read<adc_temp_channel, adc_temp_ref>() - 273;
+    }
 };
 

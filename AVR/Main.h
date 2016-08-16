@@ -13,8 +13,8 @@ int main()
     // and we'd crash on sei! So we turn off USB here...
     USBCON &= ~_BV(USBE);
 #endif
-	setup();
-	for (;;)
-		loop();
+    setup();
+    for (;;)
+        loop();
 }
 
