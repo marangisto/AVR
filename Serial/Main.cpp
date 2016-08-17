@@ -22,10 +22,13 @@ void loop()
 
     char buf[80] = "", *p;
 
-    printf("> ");
+    printf("%04d> ", i++);
 
     if (!fgets(buf, sizeof(buf), stdin))
+    {
+        printf("reset\n");
         return;
+    }
 
     if (p = strpbrk(buf, "\r\n"))
         *p = 0;
