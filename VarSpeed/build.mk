@@ -1,0 +1,3 @@
+MCU=atmega328
+#BOARD=uno
+#MANUAL_BOOT=True
