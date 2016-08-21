@@ -8,37 +8,29 @@
 #include <string.h>
 #include <stdlib.h>
 
-template <class T> const T& max(const T& a, const T& b)
-{
-    return (a<b) ? b : a;
-}
+template <class T> const T& max(const T& a, const T& b) { return (a<b) ? b : a; }
+template <class T> const T& min(const T& a, const T& b) { return (a<b) ? a : b; }
+template <class T> const T sqr(T a) { return a * a; }
 
 typedef output_t<PB, 0> STEP;
 typedef output_t<PD, 7> DIR;
 typedef output_t<PD, 6> ENABLE;
 
+template<uint16_t STEPS_PER_REVOLUTION, uint16_t MAX_RPM>
+struct stepper_traits_t
+{
+    static const uint16_t timer_prescale = 64;
+    static uint16_t time_count(float t) { return static_cast<uint16_t>(t * F_CPU / timer_prescale); }
+    static float min_step_time() { return 1. / (STEPS_PER_REVOLUTION * MAX_RPM / 60.); }
+    static uint16_t min_step_count() { return time_count(min_step_time()); }
+    static float accel_to_max_speed_in_steps(uint16_t n) { return 2. / sqr(min_step_time() / (sqrt(n + 1) - sqrt(n))); }
+    static inline float constant_acceleration_time(float accel, uint16_t l) { return sqrt(2. * l / accel); }
+};
+
+typedef stepper_traits_t<200, 162> stepper_traits; // 17HS1003
 typedef timer_t<1> timer;
 
-static const uint16_t timer_prescale = 64;
-
-static inline uint16_t time_count(float t) { return static_cast<uint16_t>(t * F_CPU / timer_prescale); }
-
-static const uint16_t steps_per_revolution = 200;
-static const float max_revolutions_per_second = 2.7;
-static const float min_step_time = 1. / (max_revolutions_per_second * steps_per_revolution);
-static const uint16_t min_step_count = time_count(min_step_time);
-
-static float accel_to_max_speed_in_steps(uint16_t n)
-{
-    float z = min_step_time / (sqrt(n + 1) - sqrt(n));
-
-    return 2. / (z * z);
-}
-
-static volatile float s_accel = accel_to_max_speed_in_steps(steps_per_revolution * 10);
-
-static inline float constant_acceleration_time(uint16_t l) { return sqrt(2. * l / s_accel); }
-
+static volatile float s_accel = stepper_traits::accel_to_max_speed_in_steps(200);
 static volatile uint16_t s_nsteps = 5000;
 static volatile uint16_t s_step = 0;
 static volatile bool s_run = false;
@@ -46,15 +38,16 @@ static volatile float s_time = .0;
 
 void isr()
 {
+    static const uint16_t min_step_count = stepper_traits::min_step_count();
     if (!s_run)
         return;
 
     STEP::set();
     //delay_us(1);    // minumum 1us
 
-    float next_time = constant_acceleration_time(s_step + 1);
+    float next_time = stepper_traits::constant_acceleration_time(s_accel, s_step + 1);
 
-    timer::counter() = 65535 - max(min_step_count, time_count(next_time - s_time));
+    timer::counter() = 65535 - max(min_step_count, stepper_traits::time_count(next_time - s_time));
 
     s_run = ++s_step < s_nsteps;
     s_time = next_time;
@@ -71,7 +64,7 @@ void run(uint16_t n, bool dir, float accel)
 
     s_accel = accel;
     s_nsteps = n;
-    s_step = 0; 
+    s_step = 0;
     s_time = .0;
     s_run = true;
 
@@ -79,7 +72,7 @@ void run(uint16_t n, bool dir, float accel)
         ;
 
     ENABLE::set();
- 
+
     printf("...done\n");
 }
 
@@ -88,7 +81,7 @@ void setup()
     adc::setup<128>();
 
     timer::setup<normal_mode>();
-    timer::clock_select<timer_prescale>();
+    timer::clock_select<stepper_traits::timer_prescale>();
     timer::isr(isr);
     timer::enable();
 
@@ -107,13 +100,17 @@ void loop()
     static uint16_t last_x = -1;
     uint16_t x = adc::read<5>();
 
+    printf("min_step_count = %d\n", stepper_traits::min_step_count());
+    printf("accel = %g\n", s_accel);
+    printf("accel to 200 = %g\n", stepper_traits::accel_to_max_speed_in_steps(200));
+
     if (x != last_x)
     {
         printf("%d\n", x);
         last_x = x;
     }
 
-    run(x + 200, dir = !dir, accel_to_max_speed_in_steps(x));
+    run(x + 200, dir = !dir, stepper_traits::accel_to_max_speed_in_steps(x));
     delay_ms(10);
 }
 
@@ -159,5 +156,5 @@ void loop()
     }
 }
 
- 
+
  */
