@@ -91,7 +91,6 @@ void run(uint16_t n, bool dir, float accel)
     printf("running %d steps %s...", n, dir ? "forward" : "reverse");
 
     DIR::write(dir);
-    ENABLE::clear();
 
     s_accel = accel;
     s_nsteps = n;
@@ -101,8 +100,6 @@ void run(uint16_t n, bool dir, float accel)
 
     while (s_state != ss_stop)
         ;
-
-    ENABLE::set();
 
     printf("...done\n");
 }
@@ -127,37 +124,8 @@ void setup()
 
 void loop()
 {
-    static bool dir = false;
-    static uint16_t last_x = -1;
-    uint16_t x = adc::read<5>();
-
-    printf("min_step_count = %d\n", stepper_traits::min_step_count());
-    printf("accel = %g\n", s_accel);
-    printf("accel to 200 = %g\n", stepper_traits::accel_to_max_speed_in_steps(200));
-
-    if (x != last_x)
-    {
-        printf("%d\n", x);
-        last_x = x;
-    }
-
-    //run(x + 200, dir = !dir, stepper_traits::accel_to_max_speed_in_steps(x));
-    run(1000, dir = !dir, stepper_traits::accel_to_max_speed_in_steps(x));
-    delay_ms(10);
-}
-
-/*
-
-void loop()
-{
-    static int i = 0;
     char buf[80] = "", *p;
-    static uint16_t dt = 10;
-    static int n = 0;
-
-    printf("adc<5> = %d\n", adc::read<5>());
-    printf("%04d> ", i++);
-
+    
     if (!fgets(buf, sizeof(buf), stdin))
     {
         printf("reset\n");
@@ -169,24 +137,45 @@ void loop()
 
     printf("got '%s'\n", buf);
 
+    static int16_t res[16];
+    static uint8_t nres = 0;
+
     switch (buf[0])
     {
-    case 'T':
-        dt = atoi(buf + 1);
-        printf("dt = %d\n", dt);
-        break;
-    case 'R':
-        if (buf[1])
-            n = atoi(buf + 1);
-        printf("running %d\n", n);
-        run(abs(n), n > 0, dt);
+    case 'E':
+        ENABLE::clear();
+        return;
+    case 'D':
+        ENABLE::set();
+        return;
+    case 'G':
+        nres = 0;
+        for (char *p = strtok(buf + 1, " "); p; p = strtok(0, " "))
+            if (nres < sizeof(res) / sizeof(*res))
+                res[nres++] = atoi(p);
         break;
     case '\0':
-        printf("repeat %d\n", n);
-        run(abs(n), n > 0, dt);
+        // repeat run
         break;
+    default:
+        printf("unrecognized command: '%s'\n", buf);
+        return;
     }
+
+    printf("%d\n", nres);
+
+    static bool dir = false;
+    static uint16_t last_x = -1;
+    uint16_t x = adc::read<5>();
+
+    if (x != last_x)
+    {
+        printf("%d\n", x);
+        last_x = x;
+    }
+
+    for (uint8_t i = 0; i < nres; ++i)
+        run(abs(res[i]), res[i] > 0, stepper_traits::accel_to_max_speed_in_steps(x));
+    delay_ms(10);
 }
 
-
- */
