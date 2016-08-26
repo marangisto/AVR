@@ -16,6 +16,12 @@ typedef output_t<PB, 0> STEP;
 typedef output_t<PD, 7> DIR;
 typedef output_t<PD, 6> ENABLE;
 
+typedef output_t<PB, 1> MS1;
+typedef output_t<PB, 2> MS2;
+typedef output_t<PB, 3> MS3;
+
+typedef outputs_t<MS1, MS2, MS3> MS;
+
 template<uint16_t STEPS_PER_REVOLUTION, uint16_t MAX_RPM>
 struct stepper_traits_t
 {
@@ -38,6 +44,19 @@ static volatile float s_accel = stepper_traits::accel_to_max_speed_in_steps(200)
 static volatile uint16_t s_nsteps = 0;
 static volatile uint16_t s_nramp = 0;
 static volatile uint16_t s_step = 0;
+
+static uint8_t ms_bits(uint8_t ms)
+{
+    switch (ms)
+    {
+        case 1: return 0x0;
+        case 2: return 0x1;
+        case 4: return 0x2;
+        case 8: return 0x3;
+        case 16: return 0x7;
+        default: return 0x0;
+    }
+}
 
 void isr()
 {
@@ -113,6 +132,7 @@ void setup()
     timer::isr(isr);
     timer::enable();
 
+    MS::setup();
     STEP::setup();
     DIR::setup();
     ENABLE::setup();
@@ -147,6 +167,9 @@ void loop()
         return;
     case 'D':
         ENABLE::set();
+        return;
+    case 'M':
+        MS::write(ms_bits(atoi(buf + 1)));
         return;
     case 'G':
         nres = 0;
