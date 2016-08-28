@@ -81,8 +81,8 @@ void isr()
         break;
     case ss_decel:
         if (s_step + s_nramp <= s_nsteps) // only true once
-            l_t = stepper_traits::constant_acceleration_time(s_accel, s_nsteps - s_step);
-        step_time = l_t - stepper_traits::constant_acceleration_time(s_accel, s_nsteps - s_step - 1);
+            l_t = stepper_traits::constant_acceleration_time(s_accel, s_nsteps - s_step - 1);
+        step_time = l_t - stepper_traits::constant_acceleration_time(s_accel, s_nsteps - s_step - 2);
         step_count = stepper_traits::time_count(step_time);
         l_t -= step_time;
         break;
