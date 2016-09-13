@@ -44,6 +44,7 @@ static volatile float s_accel = stepper_traits::accel_to_max_speed_in_steps(200)
 static volatile uint16_t s_nsteps = 0;
 static volatile uint16_t s_nramp = 0;
 static volatile uint16_t s_step = 0;
+static volatile uint8_t s_microsteps = 1;
 
 static uint8_t ms_bits(uint8_t ms)
 {
@@ -110,6 +111,7 @@ void run(uint16_t n, bool dir, float accel)
     printf("running %d steps %s...", n, dir ? "forward" : "reverse");
 
     DIR::write(dir);
+    MS::write(ms_bits(s_microsteps));
 
     s_accel = accel;
     s_nsteps = n;
@@ -169,7 +171,8 @@ void loop()
         ENABLE::set();
         return;
     case 'M':
-        MS::write(ms_bits(atoi(buf + 1)));
+        s_microsteps = atoi(buf + 1);
+        printf("microsteps = %d\n", s_microsteps);
         return;
     case 'G':
         nres = 0;
@@ -198,7 +201,7 @@ void loop()
     }
 
     for (uint8_t i = 0; i < nres; ++i)
-        run(abs(res[i]), res[i] > 0, stepper_traits::accel_to_max_speed_in_steps(x));
+        run(abs(res[i]) * s_microsteps, res[i] > 0, stepper_traits::accel_to_max_speed_in_steps(x));
     delay_ms(10);
 }
 
