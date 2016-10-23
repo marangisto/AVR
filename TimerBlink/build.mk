@@ -1,1 +1,1 @@
-BOARD=trinket-pro
+BOARD=TrinketPro

@@ -1,2 +1,2 @@
-BOARD=leonardo
+BOARD=Uno
 MANUAL_BOOT=True

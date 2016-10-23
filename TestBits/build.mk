@@ -1,1 +1,1 @@
-MCU=atmega328
+MCU=ATMEGA328

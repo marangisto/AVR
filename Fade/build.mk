@@ -1,1 +1,1 @@
-BOARD=uno
+BOARD=Uno
