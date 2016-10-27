@@ -1,5 +1,4 @@
-#ifndef TWI_H
-#define TWI_H
+#pragma once
 
 #include <AVR/Pins.h>
 #include <AVR/Delay.h>
@@ -132,6 +131,4 @@ ISR(TWI_vect)
     if (_err) \
         twi_error(_err, __FILE__, __LINE__); \
 } while (false)
-
-#endif TWI_H
 

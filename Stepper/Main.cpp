@@ -87,6 +87,8 @@ void isr()
         step_count = stepper_traits::time_count(step_time);
         l_t -= step_time;
         break;
+    case ss_stop:
+        return;     // never reached
     }
 
     delay_us(1);    // minumum 1us
@@ -154,7 +156,7 @@ void loop()
         return;
     }
 
-    if (p = strpbrk(buf, "\r\n"))
+    if ((p = strpbrk(buf, "\r\n")))
         *p = 0;
 
     printf("got '%s'\n", buf);
@@ -190,7 +192,6 @@ void loop()
 
     printf("%d\n", nres);
 
-    static bool dir = false;
     static uint16_t last_x = -1;
     uint16_t x = adc::read<5>();
 

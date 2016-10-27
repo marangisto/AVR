@@ -1,5 +1,6 @@
 #pragma once
 
+#define __DELAY_BACKWARD_COMPATIBLE__
 #include <util/delay.h>
 
 template<int N>

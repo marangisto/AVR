@@ -113,7 +113,13 @@ private:
 
     static void set_pwm(uint8_t ch, uint16_t on, uint16_t off)
     {
-        uint8_t buf[] = { 0x6 + (ch << 2), on, on >> 8, off, off >> 8 };
+        uint8_t buf[] =
+            { static_cast<uint8_t>(0x6 + (ch << 2))
+            , static_cast<uint8_t>(on)
+            , static_cast<uint8_t>(on >> 8)
+            , static_cast<uint8_t>(off)
+            , static_cast<uint8_t>(off >> 8)
+            };
 
         TWI(twi_t::write(I2C, buf, sizeof(buf)));
     }

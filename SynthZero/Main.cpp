@@ -94,7 +94,6 @@ void loop()
 {
     static int i = 0;
     static int w = 0;
-    static bool bt0 = true;
  
     if (BT0::read())
     {

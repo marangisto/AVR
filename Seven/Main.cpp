@@ -30,13 +30,8 @@ void setup()
 void loop()
 {
 	static uint16_t i = 0;
-	static uint8_t j = 0, k = 0;
-	static char chars[4] = { '4', '5', '6', '7' };
-	static const uint8_t nchar = sizeof(chars) / sizeof(*chars);
-	static char *s = " 0123456789ABCDEFGHIJKLMNOPQRSTUVXYZ    ";
 
 	seg7::write(i++);
-
 	delay_ms(5);
 }
 

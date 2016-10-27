@@ -30,12 +30,13 @@ void loop()
         return;
     }
 
-    if (p = strpbrk(buf, "\r\n"))
+    if ((p = strpbrk(buf, "\r\n")))
         *p = 0;
 
     printf("got '%s'\n", buf);
 
-    int res[8], nres = 0;
+    int res[8];
+    unsigned nres = 0;
     bool inlist = false;
 
     for (char *p = strtok(buf, " "); p; p = strtok(0, " "))

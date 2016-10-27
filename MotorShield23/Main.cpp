@@ -1,6 +1,5 @@
 #include <AVR/Main.h>
 #include <AVR/Delay.h>
-#include <AVR/TWI.h>
 #include <Arduino/Pins.h>
 #include <Arduino/MotorShield23.h>
 
