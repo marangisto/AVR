@@ -1,5 +1,5 @@
 #include <AVR/Main.h>
-#include <AVR/ADC.h>
+//#include <AVR/ADC.h>
 #include <AVR/UART.h>
 #include <AVR/Timer.h>
 #include <AVR/Delay.h>
@@ -12,15 +12,15 @@ template <class T> const T& max(const T& a, const T& b) { return (a<b) ? b : a; 
 template <class T> const T& min(const T& a, const T& b) { return (a<b) ? a : b; }
 template <class T> const T sqr(T a) { return a * a; }
 
-typedef output_t<PB, 0> STEP;
-typedef output_t<PD, 7> DIR;
-typedef output_t<PD, 6> ENABLE;
+typedef output_t<PD, 2> STEP;
+typedef output_t<PD, 5> DIR;
+typedef output_t<PB, 0> ENABLE;
 
-typedef output_t<PB, 1> MS1;
-typedef output_t<PB, 2> MS2;
-typedef output_t<PB, 3> MS3;
+//typedef output_t<PB, 1> MS1;
+//typedef output_t<PB, 2> MS2;
+//typedef output_t<PB, 3> MS3;
 
-typedef outputs_t<MS1, MS2, MS3> MS;
+//typedef outputs_t<MS1, MS2, MS3> MS;
 
 template<uint16_t STEPS_PER_REVOLUTION, uint16_t MAX_RPM>
 struct stepper_traits_t
@@ -113,7 +113,7 @@ void run(uint16_t n, bool dir, float accel)
     printf("running %d steps %s...", n, dir ? "forward" : "reverse");
 
     DIR::write(dir);
-    MS::write(ms_bits(s_microsteps));
+    //MS::write(ms_bits(s_microsteps)); // HARDWARE SET
 
     s_accel = accel;
     s_nsteps = n;
@@ -129,14 +129,14 @@ void run(uint16_t n, bool dir, float accel)
 
 void setup()
 {
-    adc::setup<128>();
+    //adc::setup<128>();
 
     timer::setup<normal_mode>();
     timer::clock_select<stepper_traits::timer_prescale>();
     timer::isr(isr);
     timer::enable();
 
-    MS::setup();
+    //MS::setup();
     STEP::setup();
     DIR::setup();
     ENABLE::setup();
@@ -163,6 +163,7 @@ void loop()
 
     static int16_t res[16];
     static uint8_t nres = 0;
+    static uint16_t acc_steps = 50;    // acceleration steps to max speed
 
     switch (buf[0])
     {
@@ -171,6 +172,10 @@ void loop()
         return;
     case 'D':
         ENABLE::set();
+        return;
+    case 'S':
+        acc_steps = atoi(buf + 1);
+        printf("acceleration steps to max speed = %d\n", acc_steps);
         return;
     case 'M':
         s_microsteps = atoi(buf + 1);
@@ -192,6 +197,7 @@ void loop()
 
     printf("%d\n", nres);
 
+    /*
     static uint16_t last_x = -1;
     uint16_t x = adc::read<5>();
 
@@ -200,9 +206,10 @@ void loop()
         printf("%d\n", x);
         last_x = x;
     }
+    */
 
     for (uint8_t i = 0; i < nres; ++i)
-        run(abs(res[i]) * s_microsteps, res[i] > 0, stepper_traits::accel_to_max_speed_in_steps(x));
+        run(abs(res[i]) * s_microsteps, res[i] > 0, stepper_traits::accel_to_max_speed_in_steps(acc_steps));
     delay_ms(10);
 }
 
