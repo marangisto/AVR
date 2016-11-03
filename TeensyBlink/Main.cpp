@@ -87,6 +87,25 @@ template<port_enum_t PORT, uint8_t BIT> struct pin_t
     static inline volatile word_t& pcr() { return *(&port::pcr0() + BIT); }
 };
 
+enum pullup_t { nopull, pullup, pulldown };
+
+template<pullup_t> struct pullup_traits;
+template<> struct pullup_traits<nopull> { static const word_t flags = 0; };
+template<> struct pullup_traits<pullup> { static const word_t flags = PORT_PCR_PE | PORT_PCR_PS; };
+template<> struct pullup_traits<pulldown> { static const word_t flags = PORT_PCR_PE; };
+
+template<class PIN> struct input_t
+{
+    template<pullup_t PULLUP = nopull>
+    static inline void setup()
+    {
+        PIN::port::pddr() &= ~PIN::bitmask;
+        PIN::pcr() = PORT_PCR_MUX(1) | pullup_traits<PULLUP>::flags;
+    }
+
+    static inline bool get() { return (PIN::port::pdir() & PIN::bitmask) != 0; }
+};
+
 template<class PIN> struct output_t
 {
     static inline void setup()
@@ -170,6 +189,7 @@ typedef pin_t<PE,  5> P63;
 typedef output_t<P13> LED;
 typedef output_t<P14> LED2;
 typedef output_t<P15> LED3;
+typedef input_t<P16> BTN;
 
 extern "C"
 void setup()
@@ -177,12 +197,14 @@ void setup()
     LED::setup();
     LED2::setup();
     LED3::setup();
+    BTN::setup<pullup>();
 }
 
 extern "C"
 void loop()
 {
-    LED::toggle();
+    if (BTN::get())
+        LED::toggle();
     if (!LED::get())
     {
         LED2::toggle();
