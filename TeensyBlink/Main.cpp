@@ -9,7 +9,7 @@ enum port_enum_t { P_, PA, PB, PC, PD, PE };
 template<port_enum_t PORT> struct port_t
 {
     template<uint8_t BIT>
-    static inline volatile word_t& pcr();           // pin control register
+    static inline volatile word_t& pcr0();          // pin control register base
     static inline volatile word_t& pddr();          // data direction register
     static inline volatile word_t& pdor();          // data output register
     static inline volatile word_t& psor();          // set output register
@@ -21,8 +21,7 @@ template<port_enum_t PORT> struct port_t
 template<> struct port_t<PA>
 {
     static const port_enum_t port = PA;
-    template<uint8_t BIT>
-    static inline volatile word_t& pcr() { return *(&PORTA_PCR0 + BIT); }
+    static inline volatile word_t& pcr0() { return PORTA_PCR0; }
     static inline volatile word_t& pddr() { return GPIOA_PDDR; }
     static inline volatile word_t& pdor() { return GPIOA_PDOR; }
     static inline volatile word_t& psor() { return GPIOA_PSOR; }
@@ -34,8 +33,7 @@ template<> struct port_t<PA>
 template<> struct port_t<PB>
 {
     static const port_enum_t port = PB;
-    template<uint8_t BIT>
-    static inline volatile word_t& pcr() { return *(&PORTB_PCR0 + BIT); }
+    static inline volatile word_t& pcr0() { return PORTB_PCR0; }
     static inline volatile word_t& pddr() { return GPIOB_PDDR; }
     static inline volatile word_t& pdor() { return GPIOB_PDOR; }
     static inline volatile word_t& psor() { return GPIOB_PSOR; }
@@ -47,8 +45,7 @@ template<> struct port_t<PB>
 template<> struct port_t<PC>
 {
     static const port_enum_t port = PC;
-    template<uint8_t BIT>
-    static inline volatile word_t& pcr() { return *(&PORTC_PCR0 + BIT); }
+    static inline volatile word_t& pcr0() { return PORTC_PCR0; }
     static inline volatile word_t& pddr() { return GPIOC_PDDR; }
     static inline volatile word_t& pdor() { return GPIOC_PDOR; }
     static inline volatile word_t& psor() { return GPIOC_PSOR; }
@@ -60,8 +57,7 @@ template<> struct port_t<PC>
 template<> struct port_t<PD>
 {
     static const port_enum_t port = PD;
-    template<uint8_t BIT>
-    static inline volatile word_t& pcr() { return *(&PORTD_PCR0 + BIT); }
+    static inline volatile word_t& pcr0() { return PORTD_PCR0; }
     static inline volatile word_t& pddr() { return GPIOD_PDDR; }
     static inline volatile word_t& pdor() { return GPIOD_PDOR; }
     static inline volatile word_t& psor() { return GPIOD_PSOR; }
@@ -73,8 +69,7 @@ template<> struct port_t<PD>
 template<> struct port_t<PE>
 {
     static const port_enum_t port = PE;
-    template<uint8_t BIT>
-    static inline volatile word_t& pcr() { return *(&PORTE_PCR0 + BIT); }
+    static inline volatile word_t& pcr0() { return PORTE_PCR0; }
     static inline volatile word_t& pddr() { return GPIOE_PDDR; }
     static inline volatile word_t& pdor() { return GPIOE_PDOR; }
     static inline volatile word_t& psor() { return GPIOE_PSOR; }
@@ -89,7 +84,7 @@ template<port_enum_t PORT, uint8_t BIT> struct pin_t
     static_assert(BIT < 8 * sizeof(word_t), "bit out of range");
     static const uint8_t bitpos = BIT;
     static const word_t bitmask = 1<<BIT;
-    static inline volatile word_t& pcr() { return port::template pcr<BIT>(); }
+    static inline volatile word_t& pcr() { return *(&port::pcr0() + BIT); }
 };
 
 template<class PIN> struct output_t
