@@ -106,12 +106,19 @@ template<class PIN> struct input_t
     static inline bool get() { return (PIN::port::pdir() & PIN::bitmask) != 0; }
 };
 
+enum drain_t { common_drain, open_drain };
+
+template<drain_t> struct drain_traits;
+template<> struct drain_traits<common_drain> { static const word_t flags = 0; };
+template<> struct drain_traits<open_drain> { static const word_t flags = PORT_PCR_ODE; };
+
 template<class PIN> struct output_t
 {
+    template<drain_t DRAIN = common_drain>
     static inline void setup()
     {
         PIN::port::pddr() |= PIN::bitmask;
-        PIN::pcr() = PORT_PCR_SRE | PORT_PCR_DSE | PORT_PCR_MUX(1);
+        PIN::pcr() = PORT_PCR_MUX(1) | PORT_PCR_SRE | PORT_PCR_DSE | drain_traits<DRAIN>::flags;
     }
 
     static inline bool get() { return (PIN::port::pdor() & PIN::bitmask) != 0; }
@@ -195,7 +202,7 @@ extern "C"
 void setup()
 {
     LED::setup();
-    LED2::setup();
+    LED2::setup<common_drain>();
     LED3::setup();
     BTN::setup<pullup>();
 }
