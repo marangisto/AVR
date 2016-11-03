@@ -100,7 +100,7 @@ template<class PIN> struct input_t
     static inline void setup()
     {
         PIN::port::pddr() &= ~PIN::bitmask;
-        PIN::pcr() = PORT_PCR_MUX(1) | pullup_traits<PULLUP>::flags;
+        PIN::pcr() = PORT_PCR_LK | PORT_PCR_MUX(1) | pullup_traits<PULLUP>::flags;
     }
 
     static inline bool get() { return (PIN::port::pdir() & PIN::bitmask) != 0; }
@@ -118,7 +118,7 @@ template<class PIN> struct output_t
     static inline void setup()
     {
         PIN::port::pddr() |= PIN::bitmask;
-        PIN::pcr() = PORT_PCR_MUX(1) | PORT_PCR_SRE | PORT_PCR_DSE | drain_traits<DRAIN>::flags;
+        PIN::pcr() = PORT_PCR_LK | PORT_PCR_MUX(1) | PORT_PCR_SRE | PORT_PCR_DSE | drain_traits<DRAIN>::flags;
     }
 
     static inline bool get() { return (PIN::port::pdor() & PIN::bitmask) != 0; }
