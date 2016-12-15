@@ -196,28 +196,28 @@ typedef pin_t<PE,  5> P63;
 // multi-pin stuff
 
 template<int N, bool IS_NEGATIVE>
-struct shift_impl { static uint8_t shift(uint8_t x) { return x << N; } };
+struct shift_impl { static word_t shift(word_t x) { return x << N; } };
 
 template<int N>
-struct shift_impl<N, true> { static uint8_t shift(uint8_t x) { return x >> -N; } };
+struct shift_impl<N, true> { static word_t shift(word_t x) { return x >> -N; } };
 
 template<int N>
-uint8_t shift(uint8_t x) { return shift_impl<N, N < 0>::shift(x); }
+word_t shift(word_t x) { return shift_impl<N, N < 0>::shift(x); }
 
 template<port_enum_t PORT, port_enum_t PINPORT, int POS, typename PIN>
 struct mask_impl
 {
-    static const uint8_t mask = 0;
+    static const word_t mask = 0;
     static const int dist = 0;
-    static uint8_t shift(uint8_t x) { return 0; }
+    static word_t shift(word_t x) { return 0; }
 };
 
 template<port_enum_t PORT, int POS, typename PIN>
 struct mask_impl<PORT, PORT, POS, PIN>
 {
-    static const uint8_t mask = PIN::bitmask;
+    static const word_t mask = PIN::bitmask;
     static const int dist = PIN::bitpos - POS;
-    static uint8_t shift(uint8_t x) { return ::shift<dist>(static_cast<uint8_t>(x & (1<<POS))); }
+    static word_t shift(word_t x) { return ::shift<dist>(static_cast<word_t>(x & (1<<POS))); }
 };
 
 static_assert(mask_impl<PD, PD, 2, P51>::dist == 12, "");
@@ -231,15 +231,15 @@ struct mask_t;
 template<port_enum_t PORT, int POS, typename PIN>
 struct mask_t<PORT, POS, PIN>
 {
-    static const uint8_t mask = mask_impl<PORT, PIN::port::port, POS, PIN>::mask;
-    static uint8_t shift(uint8_t x) { return mask_impl<PORT, PIN::port::port, POS, PIN>::shift(x); }
+    static const word_t mask = mask_impl<PORT, PIN::port::port, POS, PIN>::mask;
+    static word_t shift(word_t x) { return mask_impl<PORT, PIN::port::port, POS, PIN>::shift(x); }
 };
 
 template<port_enum_t PORT, int POS, typename PIN, typename...TAIL>
 struct mask_t<PORT, POS, PIN, TAIL...>
 {
-    static const uint8_t mask = mask_t<PORT, POS, PIN>::mask | mask_t<PORT, POS + 1, TAIL...>::mask;
-    static uint8_t shift(uint8_t x) { return mask_t<PORT, POS, PIN>::shift(x) | mask_t<PORT, POS + 1, TAIL...>::shift(x); }
+    static const word_t mask = mask_t<PORT, POS, PIN>::mask | mask_t<PORT, POS + 1, TAIL...>::mask;
+    static word_t shift(word_t x) { return mask_t<PORT, POS, PIN>::shift(x) | mask_t<PORT, POS + 1, TAIL...>::shift(x); }
 };
 
 static_assert(mask_t<PB, 0, P16>::mask == 0x01, "");
@@ -257,8 +257,8 @@ struct outputs_t
 	// FIXME: initialize pin settings here
     }
 
-    static inline uint8_t get() { return 0; }
-    static inline void set(uint8_t x) {}
+    static inline word_t get() { return 0; }
+    static inline void set(word_t x) {}
 };
 
 // demo program
@@ -284,7 +284,7 @@ void setup()
 extern "C"
 void loop()
 {
-    static uint8_t i = 0;
+    static word_t i = 0;
     if (BTN::get())
         LED::toggle();
     if (!LED::get())
