@@ -193,10 +193,83 @@ typedef pin_t<PE,  3> P61;
 typedef pin_t<PE,  4> P62;
 typedef pin_t<PE,  5> P63;
 
+// multi-pin stuff
+
+template<int N, bool IS_NEGATIVE>
+struct shift_impl { static uint8_t shift(uint8_t x) { return x << N; } };
+
+template<int N>
+struct shift_impl<N, true> { static uint8_t shift(uint8_t x) { return x >> -N; } };
+
+template<int N>
+uint8_t shift(uint8_t x) { return shift_impl<N, N < 0>::shift(x); }
+
+template<port_enum_t PORT, port_enum_t PINPORT, int POS, typename PIN>
+struct mask_impl
+{
+    static const uint8_t mask = 0;
+    static const int dist = 0;
+    static uint8_t shift(uint8_t x) { return 0; }
+};
+
+template<port_enum_t PORT, int POS, typename PIN>
+struct mask_impl<PORT, PORT, POS, PIN>
+{
+    static const uint8_t mask = PIN::bitmask;
+    static const int dist = PIN::bitpos - POS;
+    static uint8_t shift(uint8_t x) { return ::shift<dist>(static_cast<uint8_t>(x & (1<<POS))); }
+};
+
+static_assert(mask_impl<PD, PD, 2, P51>::dist == 12, "");
+static_assert(mask_impl<PB, PB, 7, P19>::dist == -5, "");
+static_assert(mask_impl<PC, PC, 7, P12>::dist == 0, "");
+static_assert(mask_impl<PA, PD, 2, P51>::dist == 0, "");    // wrong port
+
+template<port_enum_t PORT, int POS, typename...PINS>
+struct mask_t;
+
+template<port_enum_t PORT, int POS, typename PIN>
+struct mask_t<PORT, POS, PIN>
+{
+    static const uint8_t mask = mask_impl<PORT, PIN::port::port, POS, PIN>::mask;
+    static uint8_t shift(uint8_t x) { return mask_impl<PORT, PIN::port::port, POS, PIN>::shift(x); }
+};
+
+template<port_enum_t PORT, int POS, typename PIN, typename...TAIL>
+struct mask_t<PORT, POS, PIN, TAIL...>
+{
+    static const uint8_t mask = mask_t<PORT, POS, PIN>::mask | mask_t<PORT, POS + 1, TAIL...>::mask;
+    static uint8_t shift(uint8_t x) { return mask_t<PORT, POS, PIN>::shift(x) | mask_t<PORT, POS + 1, TAIL...>::shift(x); }
+};
+
+static_assert(mask_t<PB, 0, P16>::mask == 0x01, "");
+static_assert(mask_t<PB, 0, P16, P17>::mask == 0x03, "");
+static_assert(mask_t<PB, 0, P17, P16>::mask == 0x03, "");
+static_assert(mask_t<PB, 0, P16, P17, P19>::mask == 0x07, "");
+static_assert(mask_t<PC, 0, P16, P17, P19>::mask == 0x00, "");
+
+template<typename...PINS>
+struct outputs_t
+{
+    template<drain_t DRAIN = common_drain>
+    static inline void setup()
+    {
+	// FIXME: initialize pin settings here
+    }
+
+    static inline uint8_t get() { return 0; }
+    static inline void set(uint8_t x) {}
+};
+
+// demo program
+
 typedef output_t<P13> LED;
 typedef output_t<P14> LED2;
 typedef output_t<P15> LED3;
 typedef input_t<P16> BTN;
+
+
+typedef outputs_t<P17, P18, P19> W3;
 
 extern "C"
 void setup()
@@ -205,11 +278,13 @@ void setup()
     LED2::setup<common_drain>();
     LED3::setup();
     BTN::setup<pullup>();
+    W3::setup();
 }
 
 extern "C"
 void loop()
 {
+    static uint8_t i = 0;
     if (BTN::get())
         LED::toggle();
     if (!LED::get())
@@ -218,6 +293,7 @@ void loop()
         if (!LED2::get())
             LED3::toggle();
     }
+    W3::set(i++);
     delay(100);
 }
 
