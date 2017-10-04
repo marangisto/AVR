@@ -218,6 +218,6 @@ void loop()
         if (!LED2::get())
             LED3::toggle();
     }
-    delay(100);
+    delay(50);
 }
 
