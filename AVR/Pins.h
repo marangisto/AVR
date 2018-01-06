@@ -66,6 +66,10 @@ struct PD;
 struct PE;
 #endif
 
+#if defined(__AVR_ATmega32U4__)
+struct PF;
+#endif
+
 template<> struct port_t<PB>
 {
     typedef PB port;
@@ -101,6 +105,16 @@ template<> struct port_t<PE>
     static inline volatile uint8_t& ddr() { return DDRE; }
     static inline volatile uint8_t& reg() { return PORTE; }
     static inline volatile const uint8_t& pin() { return PINE; }
+};
+#endif
+
+#if defined(__AVR_ATmega32U4__)
+template<> struct port_t<PF>
+{
+	typedef PF port;
+	static inline volatile uint8_t& ddr() { return DDRF; }
+	static inline volatile uint8_t& reg() { return PORTF; }
+	static inline volatile const uint8_t& pin() { return PINF; }
 };
 #endif
 
