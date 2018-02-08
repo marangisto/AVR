@@ -83,5 +83,15 @@ struct spi_t
         loop_until_bit_is_set(SPSR, SPIF);
         SS::set();
     }
+
+    static void write(uint16_t x)
+    {
+        SS::clear();
+        SPDR = SHIFT_ORD ? (x & 0xff) : (x >> 8);
+        loop_until_bit_is_set(SPSR, SPIF);
+        SPDR = SHIFT_ORD ? (x >> 8) : (x & 0xff);
+        loop_until_bit_is_set(SPSR, SPIF);
+        SS::set();
+    }
 };
 
