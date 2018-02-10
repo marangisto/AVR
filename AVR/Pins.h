@@ -52,7 +52,7 @@ template<> struct port_t<NO_PORT>
 
 typedef output_t<NO_PORT, 0> no_output_t;
 
-#if defined(__AVR_ATtimy84__)
+#if defined(__AVR_ATtiny84__)
 struct PA;
 #endif
 
@@ -74,7 +74,7 @@ struct PE;
 struct PF;
 #endif
 
-#if defined(__AVR_ATtimy84__)
+#if defined(__AVR_ATtiny84__)
 template<> struct port_t<PA>
 {
     typedef PA port;
