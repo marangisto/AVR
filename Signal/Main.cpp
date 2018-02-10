@@ -1,5 +1,4 @@
 #include <AVR/Main.h>
-#include <AVR/UART.h>
 #include <AVR/ADC.h>
 #include <AVR/SPI.h>
 #include <AVR/MCP48x2.h>
@@ -11,12 +10,12 @@
 
 template<class T> T max(const T& x, const T& y) { return x > y ? x : y; }
 
-typedef output_t<PC, 4> led;
+typedef output_t<PB, 2> led;
+//typedef output_t<PC, 4> led;
 typedef timer_t<0> blink;
 typedef timer_t<1> wave;
-typedef timer_t<2> pwm;
-typedef spi_t<1, msb_first> spi;
-typedef output_t<PB, 1> dac;
+typedef spi_t<1, msb_first, PA, 6> spi;
+typedef output_t<PA, 7> dac;
 
 static void blink_isr()
 {
@@ -53,7 +52,6 @@ static void wave_isr()
     static uint8_t i = 0;
 
     wave::counter() = 65536 - period;
-    pwm::output_compare_register<channel_b>() = i;
     i += 8;
     spi::write(mcp48x2_t::encode<chan_a>(i));
     spi::write(mcp48x2_t::encode<chan_b>(sine[i]));
@@ -64,7 +62,6 @@ static void wave_isr()
 void setup()
 {
     led::setup();
-    UART::setup<9600>();
     adc::setup<128>();
     spi::setup();
     dac::setup();
@@ -80,12 +77,6 @@ void setup()
     wave::isr(wave_isr);
     wave::enable();
 
-    pwm::setup<fast_pwm, top_0xff>();
-    pwm::clock_select<1>();
-    pwm::output_pin<channel_b>::setup();
-    pwm::compare_output_mode<channel_b, clear_on_compare_match>();
-    pwm::output_compare_register<channel_b>() = 127;
-
     sei();
 }
 
@@ -94,7 +85,6 @@ void loop()
     static uint16_t i = 0;
 
     period = 2 * max<uint16_t>(adc::read<0>(), 1);
-    //pwm::output_compare_register<channel_b>() = adc::read<0>() >> 2;
     printf("%d\n", period);
 
     ++i;
