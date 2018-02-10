@@ -52,7 +52,9 @@ template<> struct port_t<NO_PORT>
 
 typedef output_t<NO_PORT, 0> no_output_t;
 
+#if defined(__AVR_ATtimy84__)
 struct PA;
+#endif
 
 struct PB;
 
@@ -72,6 +74,7 @@ struct PE;
 struct PF;
 #endif
 
+#if defined(__AVR_ATtimy84__)
 template<> struct port_t<PA>
 {
     typedef PA port;
@@ -79,6 +82,7 @@ template<> struct port_t<PA>
     static inline volatile uint8_t& reg() { return PORTA; }
     static inline volatile const uint8_t& pin() { return PINA; }
 };
+#endif
 
 template<> struct port_t<PB>
 {
