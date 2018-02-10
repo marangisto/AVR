@@ -44,6 +44,15 @@ template<> struct adc_mux_ref_t<adc_ref_2_56>     { static const uint8_t bits = 
 template<> struct adc_mux_ref_t<adc_ref_2_56_cap> { static const uint8_t bits = _BV(REFS2) | _BV(REFS1) | _BV(REFS0); };
 static const uint8_t adc_temp_channel = 15;
 static const adc_ref_t adc_temp_ref = adc_ref_1_1;
+#elif defined(__AVR_ATtiny84__)
+static const uint8_t adc_mux_mux_mask = _BV(MUX5) | _BV(MUX4) | _BV(MUX3) | _BV(MUX2) | _BV(MUX1) | _BV(MUX0);
+static const uint8_t adc_mux_srb_mask = 0;
+static const uint8_t adc_mux_ref_mask = _BV(REFS1) | _BV(REFS0);
+template<> struct adc_mux_ref_t<adc_ref_vcc>      { static const uint8_t bits =                                    0; };
+template<> struct adc_mux_ref_t<adc_ref_aref>     { static const uint8_t bits =                           _BV(REFS0); };
+template<> struct adc_mux_ref_t<adc_ref_1_1>      { static const uint8_t bits =              _BV(REFS1)             ; };
+static const uint8_t adc_temp_channel = _BV(MUX5) | _BV(MUX1);
+static const adc_ref_t adc_temp_ref = adc_ref_1_1;
 #elif defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__)
 static const uint8_t adc_mux_mux_mask = _BV(MUX3) | _BV(MUX2) | _BV(MUX1) | _BV(MUX0);
 static const uint8_t adc_mux_srb_mask = 0;
