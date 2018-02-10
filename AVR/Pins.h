@@ -52,6 +52,8 @@ template<> struct port_t<NO_PORT>
 
 typedef output_t<NO_PORT, 0> no_output_t;
 
+struct PA;
+
 struct PB;
 
 #if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__) || defined(__AVR_ATmega32U4__)
@@ -69,6 +71,14 @@ struct PE;
 #if defined(__AVR_ATmega32U4__)
 struct PF;
 #endif
+
+template<> struct port_t<PA>
+{
+    typedef PA port;
+    static inline volatile uint8_t& ddr() { return DDRA; }
+    static inline volatile uint8_t& reg() { return PORTA; }
+    static inline volatile const uint8_t& pin() { return PINA; }
+};
 
 template<> struct port_t<PB>
 {
