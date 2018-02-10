@@ -34,14 +34,20 @@ struct timer_traits<0>
 
 template<> struct channel_traits<0, channel_a>
 {
+#if defined(__AVR_ATtiny84__)
+#else
     typedef output_t<PD, 6> pin_t;
+#endif
 
     static inline volatile timer_traits<0>::count_t& ocr() { return OCR0A; }
 };
 
 template<> struct channel_traits<0, channel_b>
 {
+#if defined(__AVR_ATtiny84__)
+#else
     typedef output_t<PD, 5> pin_t;
+#endif
 
     static inline volatile timer_traits<0>::count_t& ocr() { return OCR0B; }
 };
@@ -344,6 +350,8 @@ template<> struct compare_match_traits<1, channel_b, set_on_compare_match>
     static const uint8_t bits = _BV(COM1B1) | _BV(COM1B0);
 };
 
+#if defined(__AVR_ATtiny84__)
+#else
 template<>
 struct timer_traits<2>
 {
@@ -488,6 +496,7 @@ template<> struct compare_match_traits<2, channel_b, set_on_compare_match>
 {
     static const uint8_t bits = _BV(COM2B1) | _BV(COM2B0);
 };
+#endif
 
 template<int TNO>
 struct timer_t
@@ -556,6 +565,17 @@ struct timer_t
 template<int TNO>
 typename timer_t<TNO>::isr_t timer_t<TNO>::g_isr = timer_t<TNO>::dummy_isr;
 
+#if defined(__AVR_ATtiny84__)
+ISR(TIM0_OVF_vect)
+{
+    timer_t<0>::g_isr();
+}
+
+ISR(TIM1_OVF_vect)
+{
+    timer_t<1>::g_isr();
+}
+#else
 ISR(TIMER0_OVF_vect)
 {
     timer_t<0>::g_isr();
@@ -570,4 +590,5 @@ ISR(TIMER2_OVF_vect)
 {
     timer_t<2>::g_isr();
 }
+#endif
 
