@@ -9,16 +9,20 @@
 
 typedef timer_t<1> timer;
 typedef output_t<PC, 5> trig;
-typedef spi_t<2, msb_first> spi;
+typedef spi_t<2, msb_first, PB, 2> spi;
 
-static volatile uint16_t period = 305;   // this gives us a sample rate of 44.1kHz
+static volatile uint16_t period = 30000;   // 1.4Hz waveform
 
 static void timer_isr()
 {
     static uint8_t i = 0;
+    static uint8_t dir = 1;
 
     timer::counter() = 65536 - period;
-    spi::write(i++);
+    spi::write(i);
+    i += dir;
+    if (i == 0)
+        dir = -dir;
 }
 
 void setup()

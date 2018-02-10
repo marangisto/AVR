@@ -61,16 +61,17 @@ struct spi_clock_traits<32>
 
 typedef output_t<PB, 3> MOSI;
 typedef output_t<PB, 5> SCK;
-typedef output_t<PB, 2> SS;
 
-template<int CLOCK_DIV, spi_shift_order_t SHIFT_ORD>
+template<int CLOCK_DIV, spi_shift_order_t SHIFT_ORD, class PORT, unsigned BIT>
 struct spi_t
 {
+    typedef output_t<PORT, BIT> CS;
+ 
     static void setup()
     {
         MOSI::setup();
         SCK::setup();
-        SS::setup();
+        CS::setup();
 
         SPCR = _BV(SPE) | _BV(MSTR) | (SHIFT_ORD<<DORD) | spi_clock_traits<CLOCK_DIV>::spr10();
         SPSR = spi_clock_traits<CLOCK_DIV>::spi2x();
@@ -78,20 +79,20 @@ struct spi_t
 
     static void write(uint8_t x)
     {
-        SS::clear();
+        CS::clear();
         SPDR = x;
         loop_until_bit_is_set(SPSR, SPIF);
-        SS::set();
+        CS::set();
     }
 
     static void write(uint16_t x)
     {
-        SS::clear();
+        CS::clear();
         SPDR = SHIFT_ORD ? (x & 0xff) : (x >> 8);
         loop_until_bit_is_set(SPSR, SPIF);
         SPDR = SHIFT_ORD ? (x >> 8) : (x & 0xff);
         loop_until_bit_is_set(SPSR, SPIF);
-        SS::set();
+        CS::set();
     }
 };
 
