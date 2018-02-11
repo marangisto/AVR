@@ -11,7 +11,7 @@
 template<class T> T max(const T& x, const T& y) { return x > y ? x : y; }
 
 typedef output_t<PB, 2> led;
-//typedef output_t<PC, 4> led;
+typedef output_t<PA, 3> trig;
 typedef timer_t<0> blink;
 typedef timer_t<1> wave;
 typedef spi_t<1, msb_first, PA, 6> spi;
@@ -24,6 +24,8 @@ static void blink_isr()
     if (++i == 0)
         led::toggle();
 }
+
+static uint16_t counts[] = { 1374, 1294, 1218, 1147, 1079, 1015, 955, 898, 845, 794, 746, 701 };
 
 static uint8_t sine[] =
     {128,131,134,137,140,143,146,149,152,156,159,162,165,168,171,174
@@ -45,28 +47,45 @@ static uint8_t sine[] =
     ,96,99,103,106,109,112,115,118,121,124
     };
 
-static volatile uint16_t period = 500;
+static volatile uint16_t g_count = 1079;
+static volatile uint8_t g_stride = 8;
 
 static void wave_isr()
 {
+    static uint16_t count = 1079;
+    static uint8_t stride = 8;
     static uint8_t i = 0;
 
-    wave::counter() = 65536 - period;
-    i += 8;
+    if (i == 0) // only update on new cycle
+    {
+        count = g_count;
+        stride = g_stride;
+    }
+
+    wave::counter() = 65536 - count;
+
+    if (i == 0)
+    {
+        trig::clear();
+        trig::set();
+    }
+
     spi::write(mcp48x2_t::encode<chan_a>(i));
     spi::write(mcp48x2_t::encode<chan_b>(sine[i]));
     dac::clear();
     dac::set();
+    i += stride;
 }
 
 void setup()
 {
     led::setup();
+    trig::setup();
     adc::setup<128>();
     spi::setup();
     dac::setup();
     dac::set();
- 
+
     blink::setup<normal_mode>();
     blink::clock_select<256>();
     blink::isr(blink_isr);
@@ -82,12 +101,13 @@ void setup()
 
 void loop()
 {
-    static uint16_t i = 0;
+    uint16_t analog = adc::read<0>();
+    uint8_t major_index = (analog + 47) / 141;
+    uint8_t minor_index = (analog + 47 - major_index * 141) / 12;
 
-    period = 2 * max<uint16_t>(adc::read<0>(), 1);
-    printf("%d\n", period);
+    g_stride = 1 << (major_index - 1);
+    g_count = counts[minor_index];
 
-    ++i;
     delay_ms(1);
 }
 
