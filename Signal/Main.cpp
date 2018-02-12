@@ -25,7 +25,17 @@ static void blink_isr()
         led::toggle();
 }
 
-static uint16_t counts[] = { 1374, 1294, 1218, 1147, 1079, 1015, 955, 898, 845, 794, 746, 701 };
+static const uint16_t steps_per_octave = 12 * 8;
+
+static uint16_t counts[] =
+    {1432,1422,1412,1402,1391,1381,1372,1362,1352,1342,1332,1323,1313,1304
+    ,1295,1285,1276,1267,1258,1249,1240,1231,1222,1213,1204,1196,1187,1179
+    ,1170,1162,1153,1145,1137,1129,1121,1113,1105,1097,1089,1081,1073,1065
+    ,1058,1050,1043,1035,1028,1020,1013,1006,998,991,984,977,970,963,956
+    ,949,942,936,929,922,916,909,902,896,890,883,877,870,864,858,852,846
+    ,840,834,828,822,816,810,804,798,793,787,781,776,770,764,759,753,748
+    ,743,737,732,727,722
+    };
 
 static uint8_t sine[] =
     {128,131,134,137,140,143,146,149,152,156,159,162,165,168,171,174
@@ -52,13 +62,14 @@ static volatile uint8_t g_stride = 8;
 
 static void wave_isr()
 {
+    static const uint16_t call_overhead = 58;       // tune this to isr call overhead
     static uint16_t count = 1079;
     static uint8_t stride = 8;
     static uint8_t i = 0;
 
-    if (i == 0) // only update on new cycle
+    if (i == 0)                                     // we only update on new cycle
     {
-        count = g_count;
+        count = g_count - call_overhead;
         stride = g_stride;
     }
 
@@ -101,12 +112,11 @@ void setup()
 
 void loop()
 {
-    uint16_t analog = adc::read<0>();
-    uint8_t major_index = (analog + 47) / 141;
-    uint8_t minor_index = (analog + 47 - major_index * 141) / 12;
-
-    g_stride = 1 << (major_index - 1);
-    g_count = counts[minor_index];
+    uint16_t i = adc::read<0>();
+ 
+    // FIXME: do we need to assign these atomically?
+    g_stride = 1 << (i / steps_per_octave);
+    g_count = counts[i % steps_per_octave];
 
     delay_ms(1);
 }
