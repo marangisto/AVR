@@ -2,7 +2,6 @@ module Main where
 
 import Data.Word
 
---stepsPerOctave = 12 * 8
 stepsPerOctave = 12 * 8
 maxSamples = 256
 minFreq = 27.5 * 2 ** (8/12)
@@ -18,9 +17,14 @@ computeStep i = (i, freq, stride, samples, count, index)
           count = floor $ (cpuFreq - 1) / (freq * fromIntegral samples) + 1
           index = i `mod` stepsPerOctave
 
+count :: Int -> Int
+count i = floor $ (cpuFreq - 1) / (freq * fromIntegral maxSamples) + 1
+    where freq = minFreq * 2 ** (fromIntegral i / fromIntegral stepsPerOctave)
+
 main :: IO ()
 main = do
     let xs = map computeStep [0..(octaves * stepsPerOctave)]
         ys = [ c | (_, _, _, _, c, _) <- xs ]
     mapM_ print xs
-    print $ take stepsPerOctave ys
+    mapM_ print $ take stepsPerOctave ys
+    print $ count 0
