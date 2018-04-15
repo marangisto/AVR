@@ -13,7 +13,7 @@ rebase top xs = map (round . f) xs
 
 main :: IO ()
 main = do
-    print $ rebase 255 $ gen sin 0 (2*pi) 255
+    print $ rebase 255 $ gen sin 0 (2*pi) 256
     print $ rebase 255 $ gen id 0 1 32
     print $ rebase 255 $ gen (\x -> if x > 1 then 2 - x else x) 0 2 32
     print $ rebase 255 $ gen (\x -> if x > 1 then 1 else 0) 0 2 32
