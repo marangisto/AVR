@@ -20,7 +20,7 @@ typedef output_t<PA, 7> dac;
 typedef output_t<PD, 5> led;
 typedef output_t<PD, 6> trig;
 typedef spi_t<1, msb_first, PB, 2> spi;
-typedef output_t<PD, 7> dac;
+typedef output_t<PB, 1> dac;
 #endif
 typedef timer_t<0> blink;
 typedef timer_t<1> wave;
@@ -108,12 +108,12 @@ void setup()
 
     blink::setup<normal_mode>();
     blink::clock_select<256>();
-    blink::isr(blink_isr);
+    //blink::isr(blink_isr);
     blink::enable();
 
     wave::setup<normal_mode>();
     wave::clock_select<1>();
-//    wave::isr(wave_isr);
+    //wave::isr(wave_isr);
     wave::enable();
 
     sei();
@@ -123,7 +123,7 @@ void loop()
 {
     uint16_t i = adc::read<0>();
  
-#if 0
+#if 1
     // FIXME: do we need to assign these atomically?
     g_stride = 1 << (i / steps_per_octave);
     g_count = counts[i % steps_per_octave];
