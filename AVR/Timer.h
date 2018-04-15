@@ -565,6 +565,8 @@ struct timer_t
 template<int TNO>
 typename timer_t<TNO>::isr_t timer_t<TNO>::g_isr = timer_t<TNO>::dummy_isr;
 
+#if defined(NO_TIMER_VECTORS)
+#else
 #if defined(__AVR_ATtiny84__)
 ISR(TIM0_OVF_vect)
 {
@@ -590,5 +592,6 @@ ISR(TIMER2_OVF_vect)
 {
     timer_t<2>::g_isr();
 }
+#endif
 #endif
 

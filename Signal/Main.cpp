@@ -1,3 +1,4 @@
+#define NO_TIMER_VECTORS 1
 #include <AVR/Main.h>
 #include <AVR/ADC.h>
 #include <AVR/SPI.h>
@@ -24,7 +25,8 @@ typedef output_t<PD, 7> dac;
 typedef timer_t<0> blink;
 typedef timer_t<1> wave;
 
-static void blink_isr()
+ISR(TIMER0_OVF_vect)
+//static void blink_isr()
 {
     static uint8_t i = 0;
 
@@ -66,7 +68,8 @@ static const uint8_t sine[] =
 static volatile uint16_t g_count = 1079;
 static volatile uint8_t g_stride = 8;
 
-static void wave_isr()
+ISR(TIMER1_OVF_vect)
+//static void wave_isr()
 {
     static const uint16_t call_overhead = 58;       // tune this to isr call overhead
     static uint16_t count = 1079;
@@ -110,7 +113,7 @@ void setup()
 
     wave::setup<normal_mode>();
     wave::clock_select<1>();
-    wave::isr(wave_isr);
+//    wave::isr(wave_isr);
     wave::enable();
 
     sei();
