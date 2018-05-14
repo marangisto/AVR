@@ -3,16 +3,16 @@
 #include <AVR/Delay.h>
 #include <AVR/SN74HC595.h>
 
-typedef pin_t<PB, 3> LED;
-typedef pin_t<PB, 0> CLOCK;
-typedef pin_t<PB, 1> LATCH;
-typedef pin_t<PB, 2> DATA;
+typedef output_t<PD, 5> LED;
+typedef output_t<PD, 4> CLOCK;
+typedef output_t<PB, 0> LATCH;
+typedef output_t<PD, 3> DATA;
 
 typedef sn74hc595_t<DATA, CLOCK, LATCH, MSB_FIRST> sn74hc595;
 
 void setup()
 {
-    digital_out<LED>();
+    LED::setup();
     sn74hc595::setup();
 }
 
@@ -20,9 +20,10 @@ void loop()
 {
     for (int i = 0; i < 255; ++i)
     {
-        toggle<LED>();
+        uint16_t j = (i << 8) | (255-i);
+        LED::toggle();
         delay_ms(25);
-        sn74hc595::write(i);
+        sn74hc595::write(j);
     }
 }
 
