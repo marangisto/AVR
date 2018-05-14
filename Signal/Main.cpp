@@ -11,17 +11,10 @@
 
 template<class T> T max(const T& x, const T& y) { return x > y ? x : y; }
 
-#if defined(__AVR_ATtiny84__)
-typedef output_t<PB, 2> led;
-typedef output_t<PA, 3> trig;
-typedef spi_t<1, msb_first, PA, 6> spi;
-typedef output_t<PA, 7> dac;
-#else
 typedef output_t<PD, 5> led;
 typedef output_t<PD, 6> trig;
 typedef spi_t<1, msb_first, PB, 2> spi;
 typedef output_t<PB, 1> dac;
-#endif
 typedef timer_t<0> blink;
 typedef timer_t<1> wave;
 
@@ -122,6 +115,7 @@ void setup()
 void loop()
 {
     uint16_t i = adc::read<0>();
+    //uint16_t i = adc::read<5>();
  
 #if 1
     // FIXME: do we need to assign these atomically?
