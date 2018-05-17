@@ -3,8 +3,10 @@
 #include <AVR/ADC.h>
 #include <AVR/SPI.h>
 #include <AVR/MCP48x2.h>
+#include <AVR/SN74HC595.h>
 #include <AVR/Delay.h>
 #include <AVR/Timer.h>
+#include <AVR/Buttons.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -18,8 +20,45 @@ typedef output_t<PB, 1> dac;
 typedef timer_t<0> blink;
 typedef timer_t<1> wave;
 
+typedef output_t<PD, 3> DATA;
+typedef output_t<PD, 4> CLOCK;
+typedef output_t<PB, 0> LATCH;
+
+typedef sn74hc595_t<DATA, CLOCK, LATCH, MSB_FIRST> display; // 16 leds
+
+static const int pot_tune = 0;
+static const int pot_phase = 1;
+static const int pot_pwm = 2;
+static const int pot_auxa = 3;
+static const int pot_auxb = 4;
+static const int adc_btns = 5;
+
+typedef buttons_t<adc_btns> buttons;
+
+static const uint8_t btn_shape_a = 5;
+static const uint8_t btn_shape_b = 4;
+static const uint8_t btn_octave_a = 3;
+static const uint8_t btn_octave_b = 2;
+
+enum shape_t { shape_sin, shape_tri, shape_saw, shape_sqr };
+
+static inline void increment_shape(volatile shape_t& x)
+{
+    if (x < shape_sqr)
+        x = static_cast<shape_t>(static_cast<int>(x) + 1);
+    else
+        x = shape_sin;
+}
+
+struct display_t
+{
+    unsigned int shape_a : 4;
+    unsigned int shape_b : 4;
+    unsigned int octave_a : 5;
+    unsigned int octave_b : 3;
+};
+
 ISR(TIMER0_OVF_vect)
-//static void blink_isr()
 {
     static uint8_t i = 0;
 
@@ -61,8 +100,12 @@ static const uint8_t sine[] =
 static volatile uint16_t g_count = 1079;
 static volatile uint8_t g_stride = 8;
 
+static volatile shape_t g_shape_a = shape_sin;
+static volatile shape_t g_shape_b = shape_sin;
+static volatile uint8_t g_octave_a = 2; // ranges 0..4 octave shift with 2 = centre
+static volatile uint8_t g_octave_b = 2; // ranges 0..2 octave shift down from octave a with 2 == no shift
+
 ISR(TIMER1_OVF_vect)
-//static void wave_isr()
 {
     static const uint16_t call_overhead = 58;       // tune this to isr call overhead
     static uint16_t count = 1079;
@@ -93,6 +136,8 @@ ISR(TIMER1_OVF_vect)
 void setup()
 {
     led::setup();
+    display::setup();
+    buttons::setup();
     trig::setup();
     adc::setup<128>();
     spi::setup();
@@ -114,9 +159,33 @@ void setup()
 
 void loop()
 {
-    uint16_t i = adc::read<0>();
-    //uint16_t i = adc::read<5>();
+    static bool init = true;
+    static union { display_t d; uint16_t i; } display_data, last_display;
+
+    uint16_t i = adc::read<adc_btns>();
+    uint8_t x = buttons::read();
  
+    switch (x & buttons::mask)
+    {
+        case btn_shape_a: increment_shape(g_shape_a); break;
+        case btn_shape_b: increment_shape(g_shape_b); break;
+        case btn_octave_a: g_octave_a = g_octave_a < 4 ? g_octave_a + 1 : 0; break;
+        case btn_octave_b: g_octave_b = g_octave_b > 0 ? g_octave_b - 1 : 2; break;
+        default: ;
+    }
+
+    if (x & buttons::mask || init)
+    {
+        display_data.d.shape_a = 1 << g_shape_a;
+        display_data.d.shape_b = 1 << g_shape_b;
+        display_data.d.octave_a = 1 << g_octave_a;
+        display_data.d.octave_b = 1 << g_octave_b;
+        if (display_data.i != last_display.i)
+            display::write(display_data.i);
+        last_display = display_data;
+        init = false;
+    }
+
 #if 1
     // FIXME: do we need to assign these atomically?
     g_stride = 1 << (i / steps_per_octave);
@@ -125,6 +194,7 @@ void loop()
     g_stride = 1;
     g_count = i;
 #endif
+
 
     delay_ms(1);
 }
