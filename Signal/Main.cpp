@@ -143,6 +143,7 @@ static volatile uint8_t g_octave_b = 2; // ranges 0..2 octave shift down from oc
 
 static volatile const uint8_t *g_wave_a = wave_sin;
 static volatile const uint8_t *g_wave_b = wave_sin;
+static volatile uint8_t g_phase_b = 0;
 
 ISR(TIMER1_OVF_vect)
 {
@@ -166,7 +167,8 @@ ISR(TIMER1_OVF_vect)
     }
 
     spi::write(mcp48x2_t::encode<chan_a>(g_wave_a[i]));
-    spi::write(mcp48x2_t::encode<chan_b>(g_wave_b[i]));
+    spi::write(mcp48x2_t::encode<chan_b>(g_wave_b[(i + g_phase_b) & 0xff]));
+
     dac::clear();
     dac::set();
     i += stride;
@@ -185,12 +187,10 @@ void setup()
 
     blink::setup<normal_mode>();
     blink::clock_select<256>();
-    //blink::isr(blink_isr);
     blink::enable();
 
     wave::setup<normal_mode>();
     wave::clock_select<1>();
-    //wave::isr(wave_isr);
     wave::enable();
 
     sei();
@@ -201,7 +201,6 @@ void loop()
     static bool init = true;
     static union { display_t d; uint16_t i; } display_data, last_display;
 
-    uint16_t i = adc::read<adc_cv>();
     uint8_t x = buttons::read();
  
     switch (x & buttons::mask)
@@ -225,11 +224,14 @@ void loop()
         init = false;
     }
 
+    uint16_t cv = adc::read<adc_cv>();
+    g_phase_b = adc::read<adc_phase>() >> 2;
+ 
 #if 1
     // FIXME: do we need to assign these atomically?
-    i += steps_per_octave * (g_octave_a - 2);
-    g_stride = 1 << (i / steps_per_octave);
-    g_count = counts[i % steps_per_octave];
+    cv += steps_per_octave * (g_octave_a - 2);
+    g_stride = 1 << (cv / steps_per_octave);
+    g_count = counts[cv % steps_per_octave];
 #else
     g_stride = 1;
     g_count = i;
