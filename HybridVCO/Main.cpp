@@ -7,6 +7,7 @@
 #include <AVR/Delay.h>
 #include <AVR/Timer.h>
 #include <AVR/Buttons.h>
+#include <AVR/UART.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -69,13 +70,9 @@ ISR(TIMER0_OVF_vect)
 static const uint16_t steps_per_octave = 12 * 8;
 
 static const uint16_t counts[] =
-    {1432,1422,1412,1402,1391,1381,1372,1362,1352,1342,1332,1323,1313,1304
-    ,1295,1285,1276,1267,1258,1249,1240,1231,1222,1213,1204,1196,1187,1179
-    ,1170,1162,1153,1145,1137,1129,1121,1113,1105,1097,1089,1081,1073,1065
-    ,1058,1050,1043,1035,1028,1020,1013,1006,998,991,984,977,970,963,956
-    ,949,942,936,929,922,916,909,902,896,890,883,877,870,864,858,852,846
-    ,840,834,828,822,816,810,804,798,793,787,781,776,770,764,759,753,748
-    ,743,737,732,727,722
+    { 1374,1364,1354,1344,1333,1323,1314,1304,1294,1284,1274,1265,1255,1246,1237,1227,1218,1209,1200,1191,1182,1173,1164,1155,1146,1138,1129,1121,1112,1104,1095,1087
+    , 1079,1071,1063,1055,1047,1039,1031,1023,1015,1007,1000,992,985,977,970,962,955,948,940,933,926,919,912,905,898,891,884,878,871,864,858,851
+    , 844,838,832,825,819,812,806,800,794,788,782,776,770,764,758,752,746,740,735,729,723,718,712,706,701,695,690,685,679,674,669,664
     };
 
 static const uint8_t wave_sin[] =
@@ -147,14 +144,13 @@ static volatile uint8_t g_phase_b = 0;
 
 ISR(TIMER1_OVF_vect)
 {
-    static const uint16_t call_overhead = 58;       // tune this to isr call overhead
     static uint16_t count = 1079;
     static uint8_t stride = 8;
     static uint8_t i = 0;
 
     if (i == 0)                                     // we only update on new cycle
     {
-        count = g_count - call_overhead;
+        count = g_count;
         stride = g_stride;
     }
 
@@ -193,12 +189,15 @@ void setup()
     wave::clock_select<1>();
     wave::enable();
 
+    UART::setup<115200>();
+
     sei();
 }
 
 void loop()
 {
     static bool init = true;
+    static uint16_t i = 0;
     static union { display_t d; uint16_t i; } display_data, last_display;
 
     uint8_t x = buttons::read();
@@ -224,19 +223,27 @@ void loop()
         init = false;
     }
 
-    uint16_t cv = adc::read<adc_cv>();
+    uint16_t cv = 1023 - adc::read<adc_cv>(); // input is inverted
+
     g_phase_b = adc::read<adc_phase>() >> 2;
+
+    static uint16_t cv_octaves[] = { /*204,*/ 306, 409, 511, 613, 716, 818 };
+    static uint8_t o = 0;
+
+    if (++i % 2048 == 0)
+        o = (o + 1) % (sizeof(cv_octaves) / sizeof(*cv_octaves));
+
+    cv = cv_octaves[o];
  
 #if 1
-    // FIXME: do we need to assign these atomically?
-    cv += steps_per_octave * (g_octave_a - 2);
+    cv += steps_per_octave * (g_octave_a - 2) - 232;    // this is the offset to center CV = 0 on key 44 = 329.6Hz
     g_stride = 1 << (cv / steps_per_octave);
     g_count = counts[cv % steps_per_octave];
+    printf("cv = %d, stride = %d\n", cv, g_stride);
 #else
     g_stride = 1;
-    g_count = i;
+    g_count = 664;
 #endif
-
 
     delay_ms(1);
 }
