@@ -26,11 +26,11 @@ typedef output_t<PB, 0> LATCH;
 
 typedef sn74hc595_t<DATA, CLOCK, LATCH, MSB_FIRST> display; // 16 leds
 
-static const int pot_tune = 0;
-static const int pot_phase = 1;
-static const int pot_pwm = 2;
-static const int pot_auxa = 3;
-static const int pot_auxb = 4;
+static const int adc_cv = 0;
+static const int adc_phase = 1;
+static const int adc_pwm = 2;
+static const int adc_auxa = 3;
+static const int adc_auxb = 4;
 static const int adc_btns = 5;
 
 typedef buttons_t<adc_btns> buttons;
@@ -162,7 +162,7 @@ void loop()
     static bool init = true;
     static union { display_t d; uint16_t i; } display_data, last_display;
 
-    uint16_t i = adc::read<adc_btns>();
+    uint16_t i = adc::read<adc_cv>();
     uint8_t x = buttons::read();
  
     switch (x & buttons::mask)
