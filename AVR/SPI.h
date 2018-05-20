@@ -10,7 +10,7 @@ template<int CLOCK_DIV>
 struct spi_clock_traits
 {
     static_assert((CLOCK_DIV != 0) && !(CLOCK_DIV & (CLOCK_DIV - 1)), "clock divider must be a power of 2");
-    static_assert(CLOCK_DIV > 0 && CLOCK_DIV < 255, "clock divider out of range [1..128]");
+    static_assert(CLOCK_DIV > 1 && CLOCK_DIV < 255, "clock divider out of range [2..128]");
 
     static inline uint8_t spi2x() { return 0; }
     static inline uint8_t spr10() { return 0; }
