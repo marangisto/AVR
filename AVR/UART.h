@@ -27,6 +27,11 @@ struct UART
         stdout = &output;
     }
 
+    static bool hasChar()
+    {
+        return (UCSR0A & _BV(RXC0)) != 0;
+    }
+
     static int getChar()
     {
         loop_until_bit_is_set(UCSR0A, RXC0);
