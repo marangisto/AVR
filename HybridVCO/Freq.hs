@@ -5,7 +5,7 @@ import Data.List (intercalate)
 import Data.Word
 
 stepsPerOctave = 12 * 8
-maxSamples = 256
+maxSamples = 512
 minFreq = 27.5 * 2 ** (8/12)
 octaves = 7
 cpuFreq = 16e6
@@ -24,7 +24,7 @@ count i = (floor $ (cpuFreq - 1) / (freq * fromIntegral maxSamples) + 1) - fudge
     where freq = minFreq * 2 ** (fromIntegral i / fromIntegral stepsPerOctave)
 
 output :: [Int] -> [String]
-output xs = decl : (map ("    "++) $ (zipWith g [0..] $ map f $ chunksOf 32 xs) ++ [ "};", "" ])
+output xs = decl : (map ("    "++) $ (zipWith g [0..] $ map f $ chunksOf 16 xs) ++ [ "};", "" ])
     where f = intercalate "," . map show
           g 0 s = "{ " ++ s
           g _ s = ", " ++ s
@@ -35,6 +35,5 @@ main = do
     let xs = map computeStep [0..(octaves * stepsPerOctave)]
         ys = [ c | (_, _, _, _, c, _) <- xs ]
     mapM_ print xs
-    -- mapM_ putStrLn $ output $ count 0
     mapM_ putStrLn $ output $ take stepsPerOctave ys
     print $ count 0
