@@ -16,7 +16,7 @@ template<class T> T max(const T& x, const T& y) { return x > y ? x : y; }
 
 typedef output_t<PD, 5> led;
 typedef output_t<PD, 6> trig;
-typedef spi_t<1, msb_first, PB, 2> spi;
+typedef spi_t<2, msb_first, PB, 2> spi;
 typedef output_t<PB, 1> dac;
 typedef timer_t<0> blink;
 typedef timer_t<1> wave;
@@ -207,7 +207,6 @@ void setup()
     wave::clock_select<1>();
     wave::enable();
 
-    //UART::setup<115200>();
     UART::setup<9600>();
 
     sei();
@@ -282,9 +281,20 @@ void loop()
         printf("cv> ");
     }
 #else
-    g_stride = 1;
-    g_count = 664;
+    g_stride_a = g_stride_b = 1;
+    g_mask_a = g_mask_b = 0;
+    g_count = cv;
+
+    if (got_input || init)
+    {
+        printf("cv = %d, ", cv);
+        printf("count = %d, ", g_count);
+        printf("a = (%d, %d), ", g_stride_a, g_mask_a);
+        printf("b = (%d, %d)\n", g_stride_b, g_mask_b);
+        printf("cv> ");
+    }
 #endif
+
     init = false;
     delay_ms(1);
 }
