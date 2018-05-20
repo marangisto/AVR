@@ -68,6 +68,13 @@ ISR(TIMER0_OVF_vect)
 }
 
 static const uint16_t steps_per_octave = 12 * 8;
+static const uint8_t max_octave_downshifts = 4;
+
+// we have max(cv) = 1024 / steps_per_octave < 12 possible octaves so we allocate this many
+// strides and masks even though some of these won't produce sound
+
+static const uint8_t strides[] = {    1,    1,    1,    1,    1,    1,    1,   1,   2,   4,   8,   16,   32,   64,   0,   0,   0,   0,   0 };
+static const uint8_t masks[] =   { 0x7f, 0x3f, 0x1f, 0x0f, 0x07, 0x03, 0x01, 0x0, 0x0, 0x0, 0x0,  0x0,  0x0,  0x0, 0x0, 0x0, 0x0, 0x0, 0x0 };
 
 static const uint16_t counts[] =
     { 1374,1364,1354,1344,1333,1323,1314,1304,1294,1284,1274,1265,1255,1246,1237,1227,1218,1209,1200,1191,1182,1173,1164,1155,1146,1138,1129,1121,1112,1104,1095,1087
@@ -131,7 +138,10 @@ static inline void assign_wave(volatile const uint8_t*& wave, shape_t shape)
 }
 
 static volatile uint16_t g_count = 1079;
-static volatile uint8_t g_stride = 8;
+static volatile uint8_t g_stride_a = 1;
+static volatile uint8_t g_stride_b = 1;
+static volatile uint8_t g_mask_a = 0;
+static volatile uint8_t g_mask_b = 0;
 
 static volatile shape_t g_shape_a = shape_sin;
 static volatile shape_t g_shape_b = shape_sin;
@@ -145,29 +155,37 @@ static volatile uint8_t g_phase_b = 0;
 ISR(TIMER1_OVF_vect)
 {
     static uint16_t count = 1079;
-    static uint8_t stride = 8;
-    static uint8_t i = 0;
+    static uint8_t stride_a = 0;
+    static uint8_t stride_b = 0;
+    static uint8_t mask_a = 0;
+    static uint8_t mask_b = 0;
+    static uint8_t i = 0, j = 0, k = 0;
 
-    if (i == 0)                                     // we only update on new cycle
+    wave::counter() = 65536 - count;                // timing correct on next cycle
+
+    if (j == 0)                                     // we only update on new cycle
     {
         count = g_count;
-        stride = g_stride;
-    }
-
-    wave::counter() = 65536 - count;
-
-    if (i == 0)
-    {
-        trig::clear();
+        stride_a = g_stride_a;
+        stride_b = g_stride_b;
+        mask_a = g_mask_a;
+        mask_b = g_mask_b;
         trig::set();
     }
+    else if (j == 128)
+        trig::clear();
 
     spi::write(mcp48x2_t::encode<chan_a>(g_wave_a[i]));
-    spi::write(mcp48x2_t::encode<chan_b>(g_wave_b[(i + g_phase_b) & 0xff]));
+    spi::write(mcp48x2_t::encode<chan_b>(g_wave_b[(j + g_phase_b) & 0xff]));
 
     dac::clear();
     dac::set();
-    i += stride;
+
+    if ((k & mask_a) == 0)
+        i += stride_a;
+    if ((k & mask_b) == 0)
+        j += stride_b;
+    ++k;
 }
 
 void setup()
@@ -189,19 +207,22 @@ void setup()
     wave::clock_select<1>();
     wave::enable();
 
-    UART::setup<115200>();
+    //UART::setup<115200>();
+    UART::setup<9600>();
 
     sei();
+
+    printf("Hybrid VCO 1.0\n");
 }
 
 void loop()
 {
     static bool init = true;
-    static uint16_t i = 0;
+    static bool use_adc_cv = true;
     static union { display_t d; uint16_t i; } display_data, last_display;
-
+    bool got_input = false;
     uint8_t x = buttons::read();
- 
+
     switch (x & buttons::mask)
     {
         case btn_shape_a: increment_shape(g_shape_a); assign_wave(g_wave_a, g_shape_a); break;
@@ -218,33 +239,53 @@ void loop()
         display_data.d.octave_a = 1 << g_octave_a;
         display_data.d.octave_b = 1 << g_octave_b;
         if (display_data.i != last_display.i)
+        {
             display::write(display_data.i);
+            got_input = true;
+        }
         last_display = display_data;
-        init = false;
     }
 
-    uint16_t cv = 1023 - adc::read<adc_cv>(); // input is inverted
+    static uint16_t cv = 512;
 
-    g_phase_b = adc::read<adc_phase>() >> 2;
+    if (use_adc_cv)
+        cv = 1023 - adc::read<adc_cv>();        // input is inverted
 
-    static uint16_t cv_octaves[] = { /*204,*/ 306, 409, 511, 613, 716, 818 };
-    static uint8_t o = 0;
+    g_phase_b = adc::read<adc_phase>() >> 2;    // [0..1023] -> [0..255]
 
-    if (++i % 2048 == 0)
-        o = (o + 1) % (sizeof(cv_octaves) / sizeof(*cv_octaves));
+    static char buf[80] = "";
 
-    cv = cv_octaves[o];
- 
+    if (!init && UART::hasChar() && fgets(buf, sizeof(buf), stdin))
+    {
+        cv = atoi(buf);
+        printf("%d\n", cv);
+        got_input = true;
+        use_adc_cv = false;                     // manual mode from now on
+    }
+
 #if 1
-    cv += steps_per_octave * (g_octave_a - 2) - 232;    // this is the offset to center CV = 0 on key 44 = 329.6Hz
-    g_stride = 1 << (cv / steps_per_octave);
+    uint8_t index = cv / steps_per_octave + max_octave_downshifts;
+    uint8_t index_a = index + g_octave_a - 2;
+    uint8_t index_b = index_a - 2 + g_octave_b;
+    g_stride_a = strides[index_a];
+    g_mask_a = masks[index_a];
+    g_stride_b = strides[index_b];
+    g_mask_b = masks[index_b];
     g_count = counts[cv % steps_per_octave];
-    printf("cv = %d, stride = %d\n", cv, g_stride);
+
+    if (got_input || init)
+    {
+        printf("cv = %d, index = (%d, %d, %d), ", cv, index, index_a, index_b);
+        printf("count = %d, ", g_count);
+        printf("a = (%d, %d), ", g_stride_a, g_mask_a);
+        printf("b = (%d, %d)\n", g_stride_b, g_mask_b);
+        printf("cv> ");
+    }
 #else
     g_stride = 1;
     g_count = 664;
 #endif
-
+    init = false;
     delay_ms(1);
 }
 
