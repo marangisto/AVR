@@ -30,8 +30,8 @@ typedef sn74hc595_t<DATA, CLOCK, LATCH, MSB_FIRST> display; // 16 leds
 static const int adc_cv = 0;
 static const int adc_phase = 1;
 static const int adc_pwm = 2;
-static const int adc_auxa = 3;
-static const int adc_auxb = 4;
+static const int adc_auxa = 4;
+static const int adc_auxb = 3;
 static const int adc_btns = 5;
 
 typedef buttons_t<adc_btns> buttons;
