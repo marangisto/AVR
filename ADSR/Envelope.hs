@@ -30,9 +30,8 @@ main = do
               | otherwise = 0;
         dec x = 1 - (exp $ -5.0 * x)
     mapM_ putStrLn $ output "exp" $ rebase range $ gen dec 0 1 256
-    mapM_ putStrLn $ output "tri" $ rebase 255 $ gen tri 0 1 256
-    mapM_ putStrLn $ output "saw" $ rebase 255 $ gen id 0 1 256
-    mapM_ putStrLn $ output "sqr" $ rebase 255 $ gen sqr 0 1 256
     mapM_ putStrLn $ output "lin" $ rebase 255 $ gen id 0 1 256
+    mapM_ putStrLn $ output "sqr" $ rebase 255 $ gen sqr 0 1 256
+    mapM_ putStrLn $ output "sin" $ rebase 255 $ gen (\x -> sin $ x - 0.5 * pi) 0 pi 256
 
 
