@@ -54,7 +54,10 @@ static const uint8_t env_sqr[] =
     , 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
     };
 
-static volatile uint16_t g_count = 1079;
+enum state_t { s_start, s_attack, s_hold, s_decay, s_sustain, s_release, s_stop };
+
+static volatile state_t g_state = s_start;
+static volatile uint16_t g_counts[7] = { 0, 0, 0, 0, 0, 0, 0 };
 static volatile uint8_t g_stride = 1;
 static volatile uint8_t g_mask = 0;
 static volatile shape_t g_shape = shape_sin;
@@ -62,6 +65,8 @@ static volatile const uint8_t *g_env = env_sin;
 
 ISR(TIMER1_OVF_vect)
 {
+    static bool invert = false;
+    static bool update = false;
     static uint16_t count = 1079;
     static uint8_t stride = 0;
     static uint8_t mask = 0;
@@ -69,17 +74,42 @@ ISR(TIMER1_OVF_vect)
 
     time::counter() = 65536 - count;                // timing correct on next cycle
 
-    if (i == 0)                                     // we only update on new cycle
+    if (g_state == s_start)
     {
-        count = g_count;
+        i = 0;
+    }
+
+    if (i == 0)
+    {
+        switch (g_state)
+        {
+        case s_start:
+            g_state = s_attack;
+            invert = false;
+            update = true;
+            break;
+        case s_attack:
+            g_state = s_hold;
+            update = false;
+            break;
+        case s_hold:
+            g_state = s_decay;
+            invert = true;
+            update = true;
+            break;
+        case s_decay:
+            g_state = s_stop;
+            return;
+        default:
+            return; // ignore all unhandled states
+        }
+        count = g_counts[g_state];
         stride = g_stride;
         mask = g_mask;
-        //trig::set();
     }
-    //else if (i == 128)
-        //trig::clear();
 
-    pwm::output_compare_register<channel_a>() = g_env[i];
+    if (update)
+        pwm::output_compare_register<channel_a>() = invert ? 255 - g_env[i] : g_env[i];
 
     if ((k & mask) == 0)
         i += stride;
@@ -112,7 +142,15 @@ void loop()
 
     g_stride = 1;
     g_mask = 0;
-    g_count = 20000;  // 200-500 is lowest practically reliable count for exponential envelope, for square we can go to 50 for really fast edge
+ 
+    // 200-500 is lowest practically reliable count for exponential envelope, for square we can go to 50 for really fast edge
+
+    g_counts[s_attack] = 500;
+    g_counts[s_hold] = 200;
+    g_counts[s_decay] = 1000;
+
+    if (g_state == s_stop)
+        g_state = s_start;
 
     delay_ms(100);
 }
