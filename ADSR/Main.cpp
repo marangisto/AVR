@@ -2,11 +2,18 @@
 #include <AVR/Main.h>
 #include <AVR/Delay.h>
 #include <AVR/Timer.h>
+#include <AVR/ADC.h>
 #include <Arduino/Pins.h>
 
 typedef D13 led;
 typedef timer_t<0> pwm;
 typedef timer_t<1> time;
+
+static const int adc_a = 0;
+static const int adc_h = 1;
+static const int adc_d = 2;
+static const int adc_s = 3;
+static const int adc_r = 4;
 
 enum shape_t { shape_lin, shape_exp, shape_sin, shape_sqr };
 
@@ -148,6 +155,8 @@ ISR(TIMER1_OVF_vect)
 void setup()
 {
     led::setup();
+    adc::setup<128>();
+
     const wg_mode mode = pwm_phase_correct;
     //const wg_mode mode = fast_pwm;
     const int prescale = 1;
@@ -167,30 +176,40 @@ void setup()
 
 void loop()
 {
-    led::toggle();
+    static uint16_t i = 0;
 
     g_stride = 1;
     g_mask = 0;
- 
+
     // 200-500 is lowest practically reliable count for exponential envelope, for square we can go to 50 for really fast edge
 
-    uint16_t t = 100;
-
-    g_counts[s_attack] = t;
-    g_counts[s_hold] = t;
-    g_counts[s_decay] = t;
     g_counts[s_sustain] = 100;  // not really used
-    g_counts[s_release] = t;
-    g_sustain = 100;            //  0..255!
 
-    if (g_state == s_stop)
+    g_counts[s_attack] = 100 + (adc::read<adc_a>() << 4);
+    g_counts[s_hold] = 100 + (adc::read<adc_h>() << 4);
+    g_counts[s_decay] = 100 + (adc::read<adc_d>() << 4);
+    g_sustain = adc::read<adc_s>() >> 2;
+    g_counts[s_release] = 100 + (adc::read<adc_r>() << 4);
+
+    switch (i)
     {
+    case 0:
+        led::set();
         g_state = s_start;
         g_gate = true;
-        delay_ms(50);
+        break;
+    case 100:
+        led::clear();
         g_gate = false;
+        break;
+    case 1000:
+        i = 65535;
+        break;
+    default:
+        ; // do nothing
     }
 
-    delay_ms(100);
+    ++i;
+    delay_ms(1);
 }
 
