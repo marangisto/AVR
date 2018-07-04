@@ -155,6 +155,23 @@ ISR(TIMER1_OVF_vect)
     ++k;
 }
 
+
+ISR(PCINT2_vect)
+{
+    static bool last_gate = false;
+
+    g_gate = gate::read();
+
+    if (g_gate != last_gate)
+    {
+        if (g_gate)
+            g_state = s_start;
+        last_gate = g_gate;
+        led::write(g_gate);
+    }
+}
+
+
 void setup()
 {
     led::setup();
@@ -178,13 +195,13 @@ void setup()
 
     led::clear();
 
+    PCMSK2 |= _BV(PCINT18);
+    PCICR |= _BV(PCIE2);
     sei();
 }
 
 void loop()
 {
-    static bool last_gate = false;
-
     g_stride = 1;
     g_mask = 0;
 
@@ -197,17 +214,6 @@ void loop()
     g_counts[s_decay] = 100 + (adc::read<adc_d>() << 4);
     g_sustain = adc::read<adc_s>() >> 2;
     g_counts[s_release] = 100 + (adc::read<adc_r>() << 4);
-
-
-    g_gate = gate::read();
-
-    if (g_gate != last_gate)
-    {
-        if (g_gate)
-            g_state = s_start;
-        last_gate = g_gate;
-        led::write(g_gate);
-    }
 
     delay_ms(1);
 }
