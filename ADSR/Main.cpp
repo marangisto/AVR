@@ -144,7 +144,7 @@ ISR(TIMER1_OVF_vect)
     case s_sustain:
         if (i == 0)
             pwm::output_compare_register<channel_a>() = g_sustain;
-        i = g_gate ? 1 : 255;   // gate down -> force overflow
+        i = g_gate ? 1 : 255 - (stride - 1);   // gate down -> force overflow
         break;
     default:
             ; // nothing to do
