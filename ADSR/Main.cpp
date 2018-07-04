@@ -61,16 +61,18 @@ static volatile uint16_t g_counts[7] = { 0, 0, 0, 0, 0, 0, 0 };
 static volatile uint8_t g_stride = 1;
 static volatile uint8_t g_mask = 0;
 static volatile shape_t g_shape = shape_sin;
-static volatile const uint8_t *g_env = env_sin;
+static volatile const uint8_t *g_env = env_lin;
+static volatile bool g_gate = false;
+static volatile bool g_trig = false;
+static volatile uint8_t g_sustain = 0;
 
 ISR(TIMER1_OVF_vect)
 {
-    static bool invert = false;
-    static bool update = false;
     static uint16_t count = 1079;
     static uint8_t stride = 0;
     static uint8_t mask = 0;
     static uint8_t i = 0, k = 0;
+    static uint8_t decay_floor = 0;
 
     time::counter() = 65536 - count;                // timing correct on next cycle
 
@@ -85,21 +87,31 @@ ISR(TIMER1_OVF_vect)
         {
         case s_start:
             g_state = s_attack;
-            invert = false;
-            update = true;
             break;
         case s_attack:
             g_state = s_hold;
-            update = false;
             break;
         case s_hold:
             g_state = s_decay;
-            invert = true;
-            update = true;
             break;
         case s_decay:
+            if (g_gate)
+            {
+                g_state = s_sustain;
+                decay_floor = g_sustain;
+            }
+            else
+            {
+                g_state = s_stop;
+                decay_floor = 0;
+            }
+            break;
+        case s_sustain:
+            g_state = s_release;
+            break;
+        case s_release:
             g_state = s_stop;
-            return;
+            break;
         default:
             return; // ignore all unhandled states
         }
@@ -108,8 +120,25 @@ ISR(TIMER1_OVF_vect)
         mask = g_mask;
     }
 
-    if (update)
-        pwm::output_compare_register<channel_a>() = invert ? 255 - g_env[i] : g_env[i];
+    switch (g_state)
+    {
+    case s_attack:
+        pwm::output_compare_register<channel_a>() = g_env[i];
+        break;
+    case s_decay: ;
+        pwm::output_compare_register<channel_a>() = decay_floor + (((255 - decay_floor) * (255 - g_env[i])) >> 8);
+        break;
+    case s_release:
+        pwm::output_compare_register<channel_a>() = ((g_sustain * (255 - g_env[i])) >> 8);
+        break;
+    case s_sustain:
+        if (i == 0)
+            pwm::output_compare_register<channel_a>() = g_sustain;
+        i = g_gate ? 1 : 255;   // gate down -> force overflow
+        break;
+    default:
+            ; // nothing to do
+    }
 
     if ((k & mask) == 0)
         i += stride;
@@ -145,12 +174,22 @@ void loop()
  
     // 200-500 is lowest practically reliable count for exponential envelope, for square we can go to 50 for really fast edge
 
-    g_counts[s_attack] = 500;
-    g_counts[s_hold] = 200;
-    g_counts[s_decay] = 1000;
+    uint16_t t = 100;
+
+    g_counts[s_attack] = t;
+    g_counts[s_hold] = t;
+    g_counts[s_decay] = t;
+    g_counts[s_sustain] = 100;  // not really used
+    g_counts[s_release] = t;
+    g_sustain = 100;            //  0..255!
 
     if (g_state == s_stop)
+    {
         g_state = s_start;
+        g_gate = true;
+        delay_ms(50);
+        g_gate = false;
+    }
 
     delay_ms(100);
 }
