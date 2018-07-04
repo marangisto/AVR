@@ -6,6 +6,9 @@
 #include <Arduino/Pins.h>
 
 typedef D13 led;
+typedef input_t<PD, 2> gate;
+typedef input_t<PD, 4> trig;
+
 typedef timer_t<0> pwm;
 typedef timer_t<1> time;
 
@@ -155,6 +158,8 @@ ISR(TIMER1_OVF_vect)
 void setup()
 {
     led::setup();
+    gate::setup();
+    trig::setup();
     adc::setup<128>();
 
     const wg_mode mode = pwm_phase_correct;
@@ -171,12 +176,14 @@ void setup()
     time::clock_select<1>();
     time::enable();
 
+    led::clear();
+
     sei();
 }
 
 void loop()
 {
-    static uint16_t i = 0;
+    static bool last_gate = false;
 
     g_stride = 1;
     g_mask = 0;
@@ -191,25 +198,17 @@ void loop()
     g_sustain = adc::read<adc_s>() >> 2;
     g_counts[s_release] = 100 + (adc::read<adc_r>() << 4);
 
-    switch (i)
+
+    g_gate = gate::read();
+
+    if (g_gate != last_gate)
     {
-    case 0:
-        led::set();
-        g_state = s_start;
-        g_gate = true;
-        break;
-    case 100:
-        led::clear();
-        g_gate = false;
-        break;
-    case 1000:
-        i = 65535;
-        break;
-    default:
-        ; // do nothing
+        if (g_gate)
+            g_state = s_start;
+        last_gate = g_gate;
+        led::write(g_gate);
     }
 
-    ++i;
     delay_ms(1);
 }
 
