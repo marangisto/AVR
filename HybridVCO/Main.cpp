@@ -36,10 +36,10 @@ static const int adc_btns = 5;
 
 typedef buttons_t<adc_btns> buttons;
 
-static const uint8_t btn_shape_a = 5;
-static const uint8_t btn_shape_b = 4;
-static const uint8_t btn_octave_a = 3;
-static const uint8_t btn_octave_b = 2;
+static const uint8_t btn_shape_a = 4;
+static const uint8_t btn_shape_b = 2;
+static const uint8_t btn_octave_a = 5;
+static const uint8_t btn_octave_b = 3;
 
 enum shape_t { shape_sin, shape_tri, shape_saw, shape_sqr };
 
