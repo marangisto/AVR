@@ -54,9 +54,9 @@ static inline void increment_shape(volatile shape_t& x)
 struct display_t
 {
     unsigned int shape_a : 4;
-    unsigned int shape_b : 4;
     unsigned int octave_a : 5;
     unsigned int octave_b : 3;
+    unsigned int shape_b : 4;
 };
 
 ISR(TIMER0_OVF_vect)
