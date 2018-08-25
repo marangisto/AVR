@@ -212,8 +212,8 @@ void loop()
     if ((i & 0x5) == 0)
         ssr_b::toggle();
 
-    uint16_t x_a = adc::read<tc_a>();
-    uint16_t x_b = adc::read<tc_b>();
+    uint16_t x_a = adc::read<tc_a, adc_ref_1_1_cap>();
+    uint16_t x_b = adc::read<tc_b, adc_ref_1_1_cap>();
 
     printf("%d %d\n", x_a, x_b);
 
