@@ -25,13 +25,14 @@ public:
     float compute(float rt, float yt)
     {
         float err = rt - yt;
-        float ut = m_kp * err;
+        float ut = m_kp * err;                          // proportional term
 
         m_int += err * m_dt;
+        m_int = min(max<double>(m_int, -10.), 10.);     // clamping
+        ut += m_ki * m_int;                             // integral term
 
-        m_int = min(max<double>(m_int, -10.), 10.); // clamp the integral
-
-        ut += m_ki * m_int;
+        ut += m_kd * (err - m_err) / m_dt;              // derivative term
+        m_err = err;
 
         return min(max<double>(ut, .0), 1.);
     }
@@ -117,7 +118,7 @@ static volatile float temp_b = 0;
 static volatile float rt = ambient;
 static volatile float ut = 0;
 
-static pid_reg_t pid_reg(0.1, 0.1, 0.01, 0);
+static pid_reg_t pid_reg(0.1, 0.1, 0.01, 0.1);
 
 typedef timer_t<1> control;
 
