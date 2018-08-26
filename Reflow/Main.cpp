@@ -64,8 +64,8 @@ class thermocouple
 public:
     static float voltage()
     {
-        static const uint8_t n = 30;  // should be some kind of timed wait!
-        static const uint8_t m = 10;
+        static const uint8_t n = 2;     // discard some readings
+        static const uint8_t m = 16;    // average over readings
         float v = 0;
 
         for (uint8_t i = 0; i < n; ++i)
