@@ -2,6 +2,7 @@
 #include <Arduino/Pins.h>
 #include <AVR/ADC.h>
 #include <AVR/UART.h>
+#include <AVR/Timer.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -64,14 +65,38 @@ bool thermocouple<CH>::m_ref1_1 = false;
 typedef thermocouple<2> couple_a;
 typedef thermocouple<1> couple_b;
 
+typedef timer_t<0> clock;
+
+static volatile uint16_t clock_ticks = 0;
+
+static void clock_isr()
+{
+    static bool tick_tock = false;
+
+    if (tick_tock)
+        ++clock_ticks;
+
+    tick_tock = !tick_tock;
+}
+
+static float clock_time() { return 20e-3 * clock_ticks; }
+
 void setup()
 {
     led::setup();
     ssr_a::setup();
     ssr_b::setup();
     adc::setup<128>();
-    UART::setup<19200>();
+    UART::setup<115200>();
     printf("Marangisto Reflow 1.0\n");
+    clock::setup<ctc_mode, top_ocra>();
+    clock::clock_select<1024>();
+    clock::output_pin<channel_a>::setup();
+    clock::compare_output_mode<channel_a, toggle_on_compare_match>();
+    clock::output_compare_register<channel_a>() = 155; // 20ms period
+    clock::isr_oca(clock_isr);
+    clock::enable_oca();
+    sei();
 }
 
 void loop()
@@ -79,7 +104,7 @@ void loop()
     static uint8_t i = 0;
 
     led::toggle();
- 
+
     if ((i & 0x3) == 0)
         ssr_a::toggle();
     if ((i & 0x5) == 0)
@@ -90,9 +115,9 @@ void loop()
     float t_a = v_a / 5e-3;
     float t_b = v_b / 5e-3;
 
-    printf("%.2fV %.1fC %.2fV %.1fC\n", (double) v_a, (double) t_a, (double) v_b, (double) t_b);
+    printf("%.2f %.2fV %.1fC %.2fV %.1fC\n", (double) clock_time(), (double) v_a, (double) t_a, (double) v_b, (double) t_b);
 
     ++i;
-    delay_ms(100);
+//    delay_ms(100);
 }
 
