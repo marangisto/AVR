@@ -27,6 +27,12 @@ public:
         float err = rt - yt;
         float ut = m_kp * err;
 
+        m_int += err * m_dt;
+
+        m_int = min(max<double>(m_int, -10.), 10.); // clamp the integral
+
+        ut += m_ki * m_int;
+
         return min(max<double>(ut, .0), 1.);
     }
 
@@ -111,7 +117,7 @@ static volatile float temp_b = 0;
 static volatile float rt = ambient;
 static volatile float ut = 0;
 
-static pid_reg_t pid_reg(0.1, 0.1, 0, 0);
+static pid_reg_t pid_reg(0.1, 0.1, 0.01, 0);
 
 typedef timer_t<1> control;
 
