@@ -15,6 +15,26 @@ typedef D3 ssr_a;
 typedef D2 ssr_b;
 typedef D12 aref_on;
 
+class pid_reg_t
+{
+public:
+    pid_reg_t(float dt, float kp, float ki, float kd)
+        : m_dt(dt), m_kp(kp), m_ki(ki), m_kd(kd), m_int(0), m_err(0)
+    {}
+
+    float compute(float rt, float yt)
+    {
+        float err = rt - yt;
+        float ut = m_kp * err;
+
+        return min(max<double>(ut, .0), 1.);
+    }
+
+private:
+    float m_dt, m_kp, m_ki, m_kd, m_int, m_err;
+};
+
+
 template<class PIN>
 class slow_pwm
 {
@@ -85,8 +105,13 @@ public:
 typedef thermocouple<2> couple_a;
 typedef thermocouple<1> couple_b;
 
+static const float ambient = 20;
 static volatile float temp_a = 0;
 static volatile float temp_b = 0;
+static volatile float rt = ambient;
+static volatile float ut = 0;
+
+static pid_reg_t pid_reg(0.1, 0.1, 0, 0);
 
 typedef timer_t<1> control;
 
@@ -100,7 +125,11 @@ static void control_isr()
     temp_a = v_a / 5e-3;
     temp_b = v_b / 5e-3;
 
-    pwm_a::set(0.5);
+    float temp = 0.5 * (temp_a + temp_b);
+
+    ut = pid_reg.compute(rt, temp);
+
+    pwm_a::set(ut);
 }
 
 void setup()
@@ -134,11 +163,30 @@ void setup()
 void loop()
 {
     static uint8_t i = 0;
+    static bool running = true;
 
     if ((i & 0x5) == 0)
         ssr_b::toggle();
 
-    printf("%.2f %.1f %.1f\n", (double) clock_time(clock_ticks), (double) temp_a, (double) temp_b);
+    float t = clock_time(clock_ticks);
+
+    if (t < 10)
+        rt = ambient;
+    else if (t < 200)
+        rt = 150;
+    else if (t < 300)
+        rt = ambient;
+    else
+        running = false;
+
+    if (running)
+    printf("%.2f %.0f %.1f %.1f %.2f\n"
+        , (double) t
+        , (double) rt
+        , (double) temp_a
+        , (double) temp_b
+        , (double) ut
+    );
 
     ++i;
     delay_ms(100);
