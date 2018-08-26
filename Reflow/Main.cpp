@@ -115,6 +115,7 @@ typedef thermocouple<1> couple_b;
 static const float ambient = 20;
 static volatile float temp_a = 0;
 static volatile float temp_b = 0;
+static volatile float yt = 0;
 static volatile float rt = ambient;
 static volatile float ut = 0;
 
@@ -131,10 +132,9 @@ static void control_isr()
 
     temp_a = v_a / 5e-3;
     temp_b = v_b / 5e-3;
+    yt = 0.5 * (temp_a + temp_b);
 
-    float temp = 0.5 * (temp_a + temp_b);
-
-    ut = pid_reg.compute(rt, temp);
+    ut = pid_reg.compute(rt, yt);
 
     pwm_a::set(ut);
 }
@@ -167,33 +167,94 @@ void setup()
     sei();
 }
 
+// 0 = not started, 1 = ramp, 2 = soak, 3 = ramp, 4 = reflow, 5 = cool, 6 = stop
+//
+enum state_t { init, ramp1, soak, ramp2, reflow, cool, stop };
+
+static const char *show_state(state_t s)
+{
+    switch (s)
+    {
+    case init: return "init";
+    case ramp1: return "ramp1";
+    case soak: return "soak";
+    case ramp2: return "ramp2";
+    case reflow: return "reflow";
+    case cool: return "cool";
+    case stop: return "stop";
+    default: return "????";
+    }
+}
+
 void loop()
 {
     static uint8_t i = 0;
-    static bool running = true;
+    static state_t state = init;
+    static float soak_start = 0;
+    static float reflow_start = 0;
 
     if ((i & 0x5) == 0)
         ssr_b::toggle();
 
     float t = clock_time(clock_ticks);
 
-    if (t < 10)
+    switch (state)
+    {
+    case init:
+        if (t > 10)
+        {
+            rt = 150;
+            state = ramp1;
+        }
+        break;
+    case ramp1:
+        if (yt > 145)
+        {
+            soak_start = t;
+            state = soak;
+        }
+        break;
+    case soak:
+        if (t - soak_start > 90)
+        {
+            rt = 220;
+            state = ramp2;
+        }
+        break;
+    case ramp2:
+        if (yt > 215)
+        {
+            reflow_start = t;
+            state = reflow;
+        }
+        break;
+    case reflow:
+        if (t - reflow_start > 30)
+        {
+            rt = ambient;
+            state = cool;
+        }
+        break;
+    case cool:
+        if (yt < 100)
+        {
+            state = stop;
+        }
+        break;
+    default:
         rt = ambient;
-    else if (t < 200)
-        rt = 150;
-    else if (t < 300)
-        rt = ambient;
-    else
-        running = false;
+    }
 
-    if (running)
-    printf("%.2f %.0f %.1f %.1f %.2f\n"
-        , (double) t
-        , (double) rt
-        , (double) temp_a
-        , (double) temp_b
-        , (double) ut
-    );
+    if (state < stop)
+        printf("%-6.6s %.2f %.0f %.1f %.1f %.1f %.2f\n"
+            , show_state(state)
+            , (double) t
+            , (double) rt
+            , (double) yt
+            , (double) temp_a
+            , (double) temp_b
+            , (double) ut
+        );
 
     ++i;
     delay_ms(100);
