@@ -11,6 +11,22 @@ typedef D13 led;
 typedef D3 ssr_a;
 typedef D2 ssr_b;
 
+typedef timer_t<0> clock;
+
+static volatile uint16_t clock_ticks = 0;
+
+static void clock_isr()
+{
+    static bool tick_tock = false;
+
+    if (tick_tock)
+        ++clock_ticks;
+
+    tick_tock = !tick_tock;
+}
+
+static float clock_time(uint16_t ticks) { return 20e-3 * ticks; }
+
 template<int CH>
 class thermocouple
 {
@@ -65,21 +81,21 @@ bool thermocouple<CH>::m_ref1_1 = false;
 typedef thermocouple<2> couple_a;
 typedef thermocouple<1> couple_b;
 
-typedef timer_t<0> clock;
+static volatile float temp_a = 0;
+static volatile float temp_b = 0;
 
-static volatile uint16_t clock_ticks = 0;
+typedef timer_t<1> control;
 
-static void clock_isr()
+static void control_isr()
 {
-    static bool tick_tock = false;
+    led::toggle();  // show we are alive
 
-    if (tick_tock)
-        ++clock_ticks;
+    float v_a = couple_a::voltage();
+    float v_b = couple_b::voltage();
 
-    tick_tock = !tick_tock;
+    temp_a = v_a / 5e-3;
+    temp_b = v_b / 5e-3;
 }
-
-static float clock_time() { return 20e-3 * clock_ticks; }
 
 void setup()
 {
@@ -89,6 +105,13 @@ void setup()
     adc::setup<128>();
     UART::setup<115200>();
     printf("Marangisto Reflow 1.0\n");
+
+    control::setup<ctc_mode, top_ocra>();
+    control::clock_select<1024>();
+    control::output_compare_register<channel_a>() = 1561; // 0.1s period
+    control::isr_oca(control_isr);
+    control::enable_oca();
+
     clock::setup<ctc_mode, top_ocra>();
     clock::clock_select<1024>();
     clock::output_pin<channel_a>::setup();
@@ -96,6 +119,7 @@ void setup()
     clock::output_compare_register<channel_a>() = 155; // 20ms period
     clock::isr_oca(clock_isr);
     clock::enable_oca();
+
     sei();
 }
 
@@ -103,21 +127,14 @@ void loop()
 {
     static uint8_t i = 0;
 
-    led::toggle();
-
     if ((i & 0x3) == 0)
         ssr_a::toggle();
     if ((i & 0x5) == 0)
         ssr_b::toggle();
 
-    float v_a = couple_a::voltage();
-    float v_b = couple_b::voltage();
-    float t_a = v_a / 5e-3;
-    float t_b = v_b / 5e-3;
-
-    printf("%.2f %.2fV %.1fC %.2fV %.1fC\n", (double) clock_time(), (double) v_a, (double) t_a, (double) v_b, (double) t_b);
+    printf("%.2f %.1f %.1f\n", (double) clock_time(clock_ticks), (double) temp_a, (double) temp_b);
 
     ++i;
-//    delay_ms(100);
+    delay_ms(100);
 }
 
