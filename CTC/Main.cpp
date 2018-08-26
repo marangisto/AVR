@@ -1,27 +1,40 @@
-#if 0
+#if 1
 
 #include <AVR/Main.h>
 #include <AVR/Delay.h>
 #include <AVR/Timer.h>
-#include <Arduino//DFR0009.h>
+#include <Arduino/Pins.h>
 
-typedef timer_t<1> W;
+typedef timer_t<1> clock;
+typedef D13 led;
 
+static volatile uint16_t clock_ticks = 0;
+
+void clock_isr()
+{
+    ++clock_ticks;
+}
 
 void setup()
 {
-    W::setup<ctc_mode, top_ocra>();
-    W::clock_select<1024>();
-    W::output_pin<channel_a>::setup();
-    W::compare_output_mode<channel_a, toggle_on_compare_match>();
+    led::setup();
+    clock::setup<ctc_mode, top_ocra>();
+    clock::clock_select<1024>();
+    clock::output_pin<channel_a>::setup();
+    clock::compare_output_mode<channel_a, toggle_on_compare_match>();
+    clock::isr_oca(clock_isr);
+    clock::enable_oca();
+    sei();
 }
-
 
 void loop()
 {
-    W::output_compare_register<channel_a>() = 77;
+    clock::output_compare_register<channel_a>() = 77;
 
-    delay_ms(2000);
+    if ((clock_ticks & 0xff) == 0)
+        led::toggle();
+
+    delay_ms(1);
 }
 
 #else

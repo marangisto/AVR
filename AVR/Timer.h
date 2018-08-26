@@ -30,6 +30,7 @@ struct timer_traits<0>
     static inline volatile uint8_t& timsk() { return TIMSK0; }
     static inline volatile count_t& tcnt() { return TCNT0; }
     static const uint8_t toie = TOIE0;
+    static const uint8_t ocaie = OCIE0A;
 };
 
 template<> struct channel_traits<0, channel_a>
@@ -171,6 +172,7 @@ struct timer_traits<1>
     static inline volatile uint8_t& timsk() { return TIMSK1; }
     static inline volatile count_t& tcnt() { return TCNT1; }
     static const uint8_t toie = TOIE1;
+    static const uint8_t ocaie = OCIE1A;
 };
 
 template<> struct channel_traits<1, channel_a>
@@ -362,6 +364,7 @@ struct timer_traits<2>
     static inline volatile uint8_t& timsk() { return TIMSK2; }
     static inline volatile count_t& tcnt() { return TCNT2; }
     static const uint8_t toie = TOIE2;
+    static const uint8_t ocaie = OCIE2A;
 };
 
 template<> struct channel_traits<2, channel_a>
@@ -545,9 +548,19 @@ struct timer_t
         timer_traits<TNO>::timsk() |= _BV(timer_traits<TNO>::toie);     // enable timer overflow interrupt
     }
 
+    static void enable_oca()
+    {
+        timer_traits<TNO>::timsk() |= _BV(timer_traits<TNO>::ocaie);     // enable timer compare match interrupt
+    }
+
     static void disable()
     {
         timer_traits<TNO>::timsk() &= ~_BV(timer_traits<TNO>::toie);    // disable timer overflow interrupt
+    }
+
+    static void disable_oca()
+    {
+        timer_traits<TNO>::timsk() &= ~_BV(timer_traits<TNO>::ocaie);    // disable timer overflow interrupt
     }
 
     static void isr(isr_t f)
@@ -555,15 +568,24 @@ struct timer_t
         g_isr = f;
     }
 
+    static void isr_oca(isr_t f)
+    {
+        g_isr_oca = f;
+    }
+
     static void dummy_isr()
     {
     }
 
     static isr_t g_isr;
+    static isr_t g_isr_oca;
 };
 
 template<int TNO>
 typename timer_t<TNO>::isr_t timer_t<TNO>::g_isr = timer_t<TNO>::dummy_isr;
+
+template<int TNO>
+typename timer_t<TNO>::isr_t timer_t<TNO>::g_isr_oca = timer_t<TNO>::dummy_isr;
 
 #if defined(NO_TIMER_VECTORS)
 #else
@@ -591,6 +613,21 @@ ISR(TIMER1_OVF_vect)
 ISR(TIMER2_OVF_vect)
 {
     timer_t<2>::g_isr();
+}
+
+ISR(TIMER0_COMPA_vect)
+{
+    timer_t<0>::g_isr_oca();
+}
+
+ISR(TIMER1_COMPA_vect)
+{
+    timer_t<1>::g_isr_oca();
+}
+
+ISR(TIMER2_COMPA_vect)
+{
+    timer_t<2>::g_isr_oca();
 }
 #endif
 #endif

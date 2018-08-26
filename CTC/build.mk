@@ -1,2 +1,2 @@
 BOARD=Uno
-MANUAL_BOOT=True
+#MANUAL_BOOT=True
