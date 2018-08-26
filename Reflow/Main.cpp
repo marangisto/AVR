@@ -13,6 +13,7 @@ template <class T> const T& min(const T& a, const T& b) { return (a<b) ? a : b; 
 typedef D13 led;
 typedef D3 ssr_a;
 typedef D2 ssr_b;
+typedef D12 aref_on;
 
 template<class PIN>
 class slow_pwm
@@ -55,6 +56,8 @@ static void clock_isr()
 
 static float clock_time(uint16_t ticks) { return 20e-3 * ticks; }
 
+static const float vref = 1.346;
+
 template<int CH>
 class thermocouple
 {
@@ -63,48 +66,21 @@ public:
     {
         static const uint8_t n = 30;  // should be some kind of timed wait!
         static const uint8_t m = 10;
-        uint16_t x = 0;
         float v = 0;
 
         for (uint8_t i = 0; i < n; ++i)
-            x = adc::read<CH>();
+            adc::read<CH, adc_ref_aref>();
 
-        if (m_ref1_1)
-            m_ref1_1 = x < 210;
-        else
-            m_ref1_1 = x < 200;
+        uint16_t t = 0;
 
-        if (m_ref1_1)
-        {
-            for (uint8_t i = 0; i < n; ++i)         // stabilize reference
-                x = adc::read<CH, adc_ref_1_1_cap>();
+        for (uint8_t i = 0; i < m; ++i)
+            t += adc::read<CH, adc_ref_aref>();
 
-            uint16_t t = 0;
-
-            for (uint8_t i = 0; i < m; ++i)
-                t += adc::read<CH, adc_ref_1_1_cap>();
-
-            v = 1.1 * static_cast<float>(t) / (m * 1023);
-        }
-        else
-        {
-            uint16_t t = 0;
-
-            for (uint8_t i = 0; i < m; ++i)
-                t += adc::read<CH>();
-
-            v = 4.72 * static_cast<float>(t) / (m * 1023);
-        }
+        v = vref * static_cast<float>(t) / (m * 1023);
 
         return v;
     }
-
-private:
-    static bool m_ref1_1;
 };
-
-template<int CH>
-bool thermocouple<CH>::m_ref1_1 = false;
 
 typedef thermocouple<2> couple_a;
 typedef thermocouple<1> couple_b;
@@ -132,6 +108,8 @@ void setup()
     led::setup();
     ssr_a::setup();
     ssr_b::setup();
+    aref_on::setup();
+    aref_on::set();
     adc::setup<128>();
     UART::setup<115200>();
     printf("Marangisto Reflow 1.0\n");
