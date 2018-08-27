@@ -15,6 +15,8 @@ typedef D3 ssr_a;
 typedef D2 ssr_b;
 typedef D12 aref_on;
 
+static volatile float g_p = 0, g_i = 0, g_d = 0;
+
 class pid_reg_t
 {
 public:
@@ -25,16 +27,19 @@ public:
     float compute(float rt, float yt)
     {
         float err = rt - yt;
-        float ut = m_kp * err;                          // proportional term
+        float p = m_kp * err;                           // proportional term
 
         m_int += err * m_dt;
         m_int = min(max<double>(m_int, -10.), 10.);     // clamping
-        ut += m_ki * m_int;                             // integral term
 
-        ut += m_kd * (err - m_err) / m_dt;              // derivative term
+        float i = m_ki * m_int;                         // integral term
+        float d = m_kd * (err - m_err) / m_dt;          // derivative term
+
         m_err = err;
 
-        return min(max<double>(ut, .0), 1.);
+        g_p = p; g_i = i; g_d = d;
+
+        return min(max<double>(p + i + d, .0), 1.);
     }
 
 private:
@@ -48,20 +53,25 @@ class slow_pwm
 public:
     static void update()
     {
+        if (m_i == 0)           // consider new duty-cycle at beginning of period only
+            m_x = m_x_;
+
         PIN::write(m_x && m_x >= m_i++);
     }
 
     static void set(float x)    // [0..1] range
     {
-        m_x = static_cast<uint8_t>(min(max(.0, 255. * x), 255.));
+        m_x_ = static_cast<uint8_t>(min(max(.0, 255. * x), 255.));
     }
 
 private:
-    static volatile uint8_t m_x;
+    static volatile uint8_t m_x_;
+    static uint8_t m_x;
     static uint8_t m_i;
 };
 
-template<class PIN> volatile uint8_t slow_pwm<PIN>::m_x = 0;
+template<class PIN> volatile uint8_t slow_pwm<PIN>::m_x_ = 0;
+template<class PIN> uint8_t slow_pwm<PIN>::m_x = 0;
 template<class PIN> uint8_t slow_pwm<PIN>::m_i = 0;
 
 typedef slow_pwm<ssr_a> pwm_a;
@@ -246,7 +256,7 @@ void loop()
     }
 
     if (state < stop)
-        printf("%-6.6s %.2f %.0f %.1f %.1f %.1f %.2f\n"
+        printf("%-6.6s %.2f %.0f %.1f %.1f %.1f %.2f (%.3f, %.3f, %.3f)\n"
             , show_state(state)
             , (double) t
             , (double) rt
@@ -254,6 +264,9 @@ void loop()
             , (double) temp_a
             , (double) temp_b
             , (double) ut
+            , (double) g_p
+            , (double) g_i
+            , (double) g_d
         );
 
     ++i;
