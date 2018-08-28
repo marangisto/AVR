@@ -211,7 +211,7 @@ void loop()
     switch (state)
     {
     case init:
-        if (t > 10)
+        if (t > 15)
         {
             rt = 150;
             state = ramp1;
@@ -227,7 +227,7 @@ void loop()
     case soak:
         if (t - soak_start > 90)
         {
-            rt = 220;
+            rt = 230;
             state = ramp2;
         }
         break;
@@ -270,6 +270,6 @@ void loop()
         );
 
     ++i;
-    delay_ms(100);
+    delay_ms(500);
 }
 
