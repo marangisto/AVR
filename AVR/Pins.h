@@ -58,11 +58,11 @@ struct PA;
 
 struct PB;
 
-#if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__) || defined(__AVR_ATmega32U4__)
+#if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__) || defined(__AVR_ATmega32U4__) || defined(__AVR_ATmega328PB__)
 struct PC;
 #endif
 
-#if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__) || defined(__AVR_ATmega32U4__)
+#if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__) || defined(__AVR_ATmega32U4__) || defined(__AVR_ATmega328PB__)
 struct PD;
 #endif
 
@@ -92,7 +92,7 @@ template<> struct port_t<PB>
     static inline volatile const uint8_t& pin() { return PINB; }
 };
 
-#if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__) || defined(__AVR_ATmega32U4__)
+#if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__) || defined(__AVR_ATmega32U4__) || defined(__AVR_ATmega328PB__)
 template<> struct port_t<PC>
 {
     typedef PC port;
@@ -102,7 +102,7 @@ template<> struct port_t<PC>
 };
 #endif
 
-#if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__) || defined(__AVR_ATmega32U4__)
+#if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__) || defined(__AVR_ATmega32U4__) || defined(__AVR_ATmega328PB__)
 template<> struct port_t<PD>
 {
     typedef PD port;
@@ -207,7 +207,7 @@ struct outputs_t
     static void setup()
     {
         write_bits_impl<PB, T0, T1, T2, T3, T4, T5, T6, T7, map_bits_impl<PB, T0, T1, T2, T3, T4, T5, T6, T7>::mask>::write_bits(DDRB, 0xff);
-#if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__) || defined(__AVR_ATmega32U4__)
+#if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__) || defined(__AVR_ATmega32U4__) || defined(__AVR_ATmega328PB__)
         write_bits_impl<PC, T0, T1, T2, T3, T4, T5, T6, T7, map_bits_impl<PC, T0, T1, T2, T3, T4, T5, T6, T7>::mask>::write_bits(DDRC, 0xff);
         write_bits_impl<PD, T0, T1, T2, T3, T4, T5, T6, T7, map_bits_impl<PD, T0, T1, T2, T3, T4, T5, T6, T7>::mask>::write_bits(DDRD, 0xff);
 #endif
@@ -219,7 +219,7 @@ struct outputs_t
     static void write(uint8_t x)
     {
         write_bits_impl<PB, T0, T1, T2, T3, T4, T5, T6, T7, map_bits_impl<PB, T0, T1, T2, T3, T4, T5, T6, T7>::mask>::write_bits(PORTB, x);
-#if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__) || defined(__AVR_ATmega32U4__)
+#if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__) || defined(__AVR_ATmega32U4__) || defined(__AVR_ATmega328PB__)
         write_bits_impl<PC, T0, T1, T2, T3, T4, T5, T6, T7, map_bits_impl<PC, T0, T1, T2, T3, T4, T5, T6, T7>::mask>::write_bits(PORTC, x);
         write_bits_impl<PD, T0, T1, T2, T3, T4, T5, T6, T7, map_bits_impl<PD, T0, T1, T2, T3, T4, T5, T6, T7>::mask>::write_bits(PORTD, x);
 #endif

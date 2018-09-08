@@ -16,7 +16,7 @@ struct spi_clock_traits
     static inline uint8_t spr10() { return 0; }
 };
 
-#if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__)
+#if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__) || defined(__AVR_ATmega328PB__)
 template <>
 struct spi_clock_traits<4>
 {
@@ -64,7 +64,7 @@ struct spi_clock_traits<32>
 #if defined(__AVR_ATtiny84__)
 typedef output_t<PA, 5> MOSI;   // DO
 typedef output_t<PA, 4> SCK;
-#elif defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__)
+#elif defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__) || defined(__AVR_ATmega328PB__)
 typedef output_t<PB, 3> MOSI;
 typedef output_t<PB, 5> SCK;
 #endif
@@ -82,7 +82,7 @@ struct spi_t
 
 #if defined(__AVR_ATtiny84__)
         USICR = _BV(USIWM0) | _BV(USICS1) | _BV(USICLK);
-#elif defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__)
+#elif defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__) || defined(__AVR_ATmega328PB__)
         SPCR = _BV(SPE) | _BV(MSTR) | (SHIFT_ORD<<DORD) | spi_clock_traits<CLOCK_DIV>::spr10();
         SPSR = spi_clock_traits<CLOCK_DIV>::spi2x();
 #endif
@@ -96,7 +96,7 @@ struct spi_t
         USISR = _BV(USIOIF);
         while (!(USISR & _BV(USIOIF)))
             USICR |= _BV(USITC);
-#elif defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__)
+#elif defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__) || defined(__AVR_ATmega328PB__)
         SPDR = x;
         loop_until_bit_is_set(SPSR, SPIF);
 #endif
@@ -115,7 +115,7 @@ struct spi_t
         USISR = _BV(USIOIF);
         while (!(USISR & _BV(USIOIF)))
             USICR |= _BV(USITC);
-#elif defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__)
+#elif defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__) || defined(__AVR_ATmega328PB__)
         SPDR = SHIFT_ORD ? (x & 0xff) : (x >> 8);
         loop_until_bit_is_set(SPSR, SPIF);
         SPDR = SHIFT_ORD ? (x >> 8) : (x & 0xff);
