@@ -3,11 +3,15 @@
 #include <AVR/Delay.h>
 #include <AVR/Timer.h>
 #include <AVR/ADC.h>
-#include <Arduino/Pins.h>
+#include <AVR/Pins.h>
 
-typedef D13 led;
-typedef input_t<PD, 2> gate;
-typedef input_t<PD, 4> trig;
+typedef output_t<PD, 2> led_gate;
+typedef output_t<PD, 3> led_trig;
+typedef output_t<PD, 4> led_out;
+typedef output_t<PD, 7> led_rear;
+
+typedef input_t<PB, 0> gate;
+typedef input_t<PB, 2> trig;
 
 typedef timer_t<0> pwm;
 typedef timer_t<1> time;
@@ -156,7 +160,7 @@ ISR(TIMER1_OVF_vect)
 }
 
 
-ISR(PCINT2_vect)
+ISR(PCINT0_vect)
 {
     static bool last_gate = false;
 
@@ -167,14 +171,17 @@ ISR(PCINT2_vect)
         if (g_gate)
             g_state = s_start;
         last_gate = g_gate;
-        led::write(g_gate);
+        led_gate::write(g_gate);
     }
 }
 
 
 void setup()
 {
-    led::setup();
+    led_gate::setup();
+    led_trig::setup();
+    led_out::setup();
+    led_rear::setup();
     gate::setup();
     trig::setup();
     adc::setup<128>();
@@ -193,15 +200,15 @@ void setup()
     time::clock_select<1>();
     time::enable();
 
-    led::clear();
+    PCMSK0 |= _BV(PCINT0);
+    PCICR |= _BV(PCIE0);
 
-    PCMSK2 |= _BV(PCINT18);
-    PCICR |= _BV(PCIE2);
     sei();
 }
 
 void loop()
 {
+    static uint8_t i = 0;
     g_stride = 1;
     g_mask = 0;
 
@@ -215,6 +222,8 @@ void loop()
     g_sustain = adc::read<adc_s>() >> 2;
     g_counts[s_release] = 100 + (adc::read<adc_r>() << 4);
 
-    delay_ms(1);
+    led_rear::toggle();
+    i++;
+    delay_ms(10);
 }
 
