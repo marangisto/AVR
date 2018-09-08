@@ -13,8 +13,8 @@ typedef output_t<PD, 7> led_rear;
 typedef input_t<PB, 0> gate;
 typedef input_t<PB, 2> trig;
 
-typedef timer_t<0> pwm;
-typedef timer_t<1> time;
+typedef timer_t<1> pwm;
+typedef timer_t<2> time;
 
 static const int adc_a = 0;
 static const int adc_h = 1;
@@ -193,12 +193,14 @@ void setup()
     pwm::setup<mode, top_0xff>();
     pwm::clock_select<prescale>();
     pwm::output_pin<channel_a>::setup();
-    pwm::output_pin<channel_b>::setup();
+    //pwm::output_pin<channel_b>::setup();
     pwm::compare_output_mode<channel_a, clear_on_compare_match>();
 
+    /*
     time::setup<normal_mode>();
     time::clock_select<1>();
     time::enable();
+    */
 
     PCMSK0 |= _BV(PCINT0);
     PCICR |= _BV(PCIE0);
@@ -212,6 +214,7 @@ void loop()
     g_stride = 1;
     g_mask = 0;
 
+    pwm::output_compare_register<channel_a>() = adc::read<adc_r>() >> 2;
     // 200-500 is lowest practically reliable count for exponential envelope, for square we can go to 50 for really fast edge
 
     g_counts[s_sustain] = 100;  // not really used
