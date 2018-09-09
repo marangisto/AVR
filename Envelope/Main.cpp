@@ -21,6 +21,11 @@ typedef output_t<PD, 7> led_rear;
 typedef input_t<PB, 0> gate;
 typedef input_t<PB, 2> trig;
 
+typedef input_t<PE, 0, enable_pullup> sw_1a;
+typedef input_t<PE, 1, enable_pullup> sw_1b;
+typedef input_t<PE, 2, enable_pullup> sw_2a;
+typedef input_t<PE, 3, enable_pullup> sw_2b;
+
 typedef timer_t<0> time;
 typedef timer_t<1> pwm;
 typedef timer_t<2> aux;
@@ -66,17 +71,6 @@ static const uint8_t env_sin[] =
     , 245,246,246,247,248,248,249,249,250,250,250,251,251,252,252,252,253,253,253,253,254,254,254,254,254,255,255,255,255,255,255,255
     };
 
-static const uint8_t env_sqr[] =
-    { 255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255
-    , 255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255
-    , 255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255
-    , 255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255
-    , 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
-    , 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
-    , 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
-    , 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
-    };
-
 enum state_t { s_start, s_attack, s_hold, s_decay, s_sustain, s_release, s_stop };
 
 static volatile state_t g_state = s_start;
@@ -106,7 +100,6 @@ ISR(TIMER0_COMPA_vect)
         k = 0;
         start_v = v;
         sustain = g_counts[s_sustain] >> 2;
-        led_trig::set();
         break;
     case s_attack:
         if (k > n)
@@ -221,8 +214,8 @@ void setup()
     pwm::compare_output_mode<channel_a, clear_on_compare_match>();
 
     time::setup<ctc_mode, top_ocra>();
-    time::clock_select<64>();
-    time::output_compare_register<channel_a>() = 124; // 1ms period
+    time::clock_select<8>();
+    time::output_compare_register<channel_a>() = 249; // 250ms period
     time::enable_oca();
 
     aux::setup<normal_mode>();
@@ -239,6 +232,20 @@ void loop()
 {
     static uint8_t i = 0;
 
+    if (!sw_1a::read())
+        time::clock_select<8>();
+    else if (!sw_1b::read())
+        time::clock_select<256>();
+    else
+        time::clock_select<64>();
+
+    if (!sw_2a::read())
+        g_env = env_sin;
+    else if (!sw_2b::read())
+        g_env = env_exp;
+    else
+        g_env = env_lin;
+
     g_counts[s_attack] = max<uint16_t>(adc::read<adc_a>(), 1);
     g_counts[s_hold] = adc::read<adc_h>();
     g_counts[s_decay] = max<uint16_t>(adc::read<adc_d>(), 1);
@@ -246,6 +253,5 @@ void loop()
     g_counts[s_release] = adc::read<adc_r>();
 
     i++;
-    delay_ms(10);
 }
 
