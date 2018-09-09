@@ -118,7 +118,7 @@ ISR(TIMER0_COMPA_vect)
         }
         else
         {
-            uint8_t j = k < n ? (k << 8) / n : 255;
+            uint8_t j = k < n ? ((uint32_t) k << 8) / n : 255;
 
             v = map(g_env[j], 0, 255, start_v, 255);
         }
@@ -142,7 +142,7 @@ ISR(TIMER0_COMPA_vect)
         }
         else
         {
-            uint8_t j = k < n ? (k << 8) / n : 255;
+            uint8_t j = k < n ? ((uint32_t) k << 8) / n : 255;
 
             v = map(g_env[j], 0, 255, start_v, sustain);
         }
@@ -164,7 +164,7 @@ ISR(TIMER0_COMPA_vect)
         }
         else
         {
-            uint8_t j = k < n ? (k << 8) / n : 255;
+            uint8_t j = k < n ? ((uint32_t) k << 8) / n : 255;
 
             v = map(g_env[j], 0, 255, start_v, 0);
         }
