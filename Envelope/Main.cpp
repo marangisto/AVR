@@ -5,6 +5,14 @@
 #include <AVR/ADC.h>
 #include <AVR/Pins.h>
 
+template <class T> const T& max(const T& a, const T& b) { return (a<b) ? b : a; }
+template <class T> const T& min(const T& a, const T& b) { return (a<b) ? a : b; }
+
+static uint32_t map(uint32_t x, uint32_t in_min, uint32_t in_max, uint32_t out_min, uint32_t out_max)
+{
+    return (x - in_min) * (out_max - out_min + 1) / (in_max - in_min + 1) + out_min;
+}
+
 typedef output_t<PD, 2> led_gate;
 typedef output_t<PD, 3> led_trig;
 typedef output_t<PD, 4> led_out;
@@ -75,103 +83,108 @@ static volatile uint16_t g_counts[7] = { 0, 0, 0, 0, 0, 0, 0 };
 static volatile uint8_t g_stride = 1;
 static volatile uint8_t g_mask = 0;
 static volatile shape_t g_shape = shape_sin;
-//static volatile const uint8_t *g_env = env_lin;
+static volatile const uint8_t *g_env = env_lin;
 static volatile bool g_gate = false;
 static volatile bool g_trig = false;
-static volatile uint8_t g_sustain = 0;
-
+//static volatile uint8_t g_sustain = 0;
 
 
 ISR(TIMER0_COMPA_vect)
 {
     static uint8_t i = 0;
+    static uint16_t k = 0;
+    static uint16_t n = 255;
+    static uint8_t v = 0;
+    static uint8_t start_v = 0;
+    static uint8_t sustain = 0;
 
     if (++i == 0)
         led_rear::toggle();
-}
-
-/*
-ISR(TIMER3_OVF_vect)
-{
-    static uint16_t count = 1079;
-    static uint8_t stride = 0;
-    static uint8_t mask = 0;
-    static uint8_t i = 0, k = 0;
-    static uint8_t decay_floor = 0;
-
-    time::counter() = 65536 - count;                // timing correct on next cycle
-
-
-    if (g_state == s_start)
-    {
-        i = 0;
-    }
-
-    if (i == 0)
-    {
-        switch (g_state)
-        {
-        case s_start:
-            g_state = s_attack;
-            break;
-        case s_attack:
-            g_state = s_hold;
-            break;
-        case s_hold:
-            g_state = s_decay;
-            break;
-        case s_decay:
-            if (g_gate)
-            {
-                g_state = s_sustain;
-                decay_floor = g_sustain;
-            }
-            else
-            {
-                g_state = s_stop;
-                decay_floor = 0;
-            }
-            break;
-        case s_sustain:
-            g_state = s_release;
-            break;
-        case s_release:
-            g_state = s_stop;
-            break;
-        default:
-            return; // ignore all unhandled states
-        }
-        count = g_counts[g_state];
-        stride = g_stride;
-        mask = g_mask;
-    }
 
     switch (g_state)
     {
+    case s_start:
+        g_state = s_attack;
+        n = g_counts[g_state];
+        k = 0;
+        start_v = v;
+        sustain = g_counts[s_sustain] >> 2;
+        led_trig::set();
+        break;
     case s_attack:
-        pwm::output_compare_register<channel_a>() = g_env[i];
+        if (k > n)
+        {
+            g_state = g_counts[s_hold] > 0 ? s_hold : s_decay;
+            n = g_counts[g_state];
+            k = 0;
+            start_v = v;
+            led_trig::clear();
+            led_out::set();
+        }
+        else
+        {
+            uint8_t j = k < n ? (k << 8) / n : 255;
+
+            v = map(g_env[j], 0, 255, start_v, 255);
+        }
         break;
-    case s_decay: ;
-        pwm::output_compare_register<channel_a>() = decay_floor + (((255 - decay_floor) * (255 - g_env[i])) >> 8);
+    case s_hold:
+        if (k > n)
+        {
+            g_state = s_decay;
+            n = g_counts[g_state];
+            k = 0;
+            start_v = v;
+            led_trig::clear();
+            led_out::set();
+        }
         break;
-    case s_release:
-        pwm::output_compare_register<channel_a>() = ((g_sustain * (255 - g_env[i])) >> 8);
+    case s_decay:
+        if (k > n)
+        {
+            g_state = sustain ? s_sustain : s_stop;
+            n = g_counts[g_state];
+            k = 0;
+            start_v = v;
+            led_out::clear();
+        }
+        else
+        {
+            uint8_t j = k < n ? (k << 8) / n : 255;
+
+            v = map(g_env[j], 0, 255, start_v, sustain);
+        }
         break;
     case s_sustain:
-        if (i == 0)
-            pwm::output_compare_register<channel_a>() = g_sustain;
-        i = g_gate ? 1 : 255 - (stride - 1);   // gate down -> force overflow
+        if (!g_gate)
+        {
+            g_state = s_release;
+            n = g_counts[g_state];
+            k = 0;
+            start_v = v;
+        }
+        break;
+    case s_release:
+        if (k > n)
+        {
+            g_state = s_stop;
+            v = 0;
+        }
+        else
+        {
+            uint8_t j = k < n ? (k << 8) / n : 255;
+
+            v = map(g_env[j], 0, 255, start_v, 0);
+        }
         break;
     default:
-            ; // nothing to do
+        v = 0;
     }
 
-    if ((k & mask) == 0)
-        i += stride;
+    pwm::output_compare_register<channel_a>() = v;
+
     ++k;
 }
-*/
-
 
 ISR(PCINT0_vect)
 {
@@ -230,16 +243,11 @@ void loop()
     g_stride = 1;
     g_mask = 0;
 
-//    pwm::output_compare_register<channel_a>() = adc::read<adc_r>() >> 2;
-    // 200-500 is lowest practically reliable count for exponential envelope, for square we can go to 50 for really fast edge
-
-    g_counts[s_sustain] = 100;  // not really used
-
-    g_counts[s_attack] = 100 + (adc::read<adc_a>() << 4);
-    g_counts[s_hold] = 100 + (adc::read<adc_h>() << 4);
-    g_counts[s_decay] = 100 + (adc::read<adc_d>() << 4);
-    g_sustain = adc::read<adc_s>() >> 2;
-    g_counts[s_release] = 100 + (adc::read<adc_r>() << 4);
+    g_counts[s_attack] = max<uint16_t>(adc::read<adc_a>(), 1);
+    g_counts[s_hold] = adc::read<adc_h>();
+    g_counts[s_decay] = max<uint16_t>(adc::read<adc_d>(), 1);
+    g_counts[s_sustain] = adc::read<adc_s>();
+    g_counts[s_release] = adc::read<adc_r>();
 
     i++;
     delay_ms(10);
