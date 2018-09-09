@@ -66,7 +66,7 @@ struct PC;
 struct PD;
 #endif
 
-#if defined(__AVR_ATmega32U4__)
+#if defined(__AVR_ATmega32U4__) || defined(__AVR_ATmega328PB__)
 struct PE;
 #endif
 
