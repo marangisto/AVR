@@ -23,6 +23,7 @@ typedef input_t<PB, 2> trig;
 
 typedef timer_t<0> time;
 typedef timer_t<1> pwm;
+typedef timer_t<2> aux;
 
 static const int adc_a = 0;
 static const int adc_h = 1;
@@ -80,14 +81,10 @@ enum state_t { s_start, s_attack, s_hold, s_decay, s_sustain, s_release, s_stop 
 
 static volatile state_t g_state = s_start;
 static volatile uint16_t g_counts[7] = { 0, 0, 0, 0, 0, 0, 0 };
-static volatile uint8_t g_stride = 1;
-static volatile uint8_t g_mask = 0;
 static volatile shape_t g_shape = shape_sin;
 static volatile const uint8_t *g_env = env_lin;
 static volatile bool g_gate = false;
 static volatile bool g_trig = false;
-//static volatile uint8_t g_sustain = 0;
-
 
 ISR(TIMER0_COMPA_vect)
 {
@@ -118,8 +115,6 @@ ISR(TIMER0_COMPA_vect)
             n = g_counts[g_state];
             k = 0;
             start_v = v;
-            led_trig::clear();
-            led_out::set();
         }
         else
         {
@@ -135,8 +130,6 @@ ISR(TIMER0_COMPA_vect)
             n = g_counts[g_state];
             k = 0;
             start_v = v;
-            led_trig::clear();
-            led_out::set();
         }
         break;
     case s_decay:
@@ -146,7 +139,6 @@ ISR(TIMER0_COMPA_vect)
             n = g_counts[g_state];
             k = 0;
             start_v = v;
-            led_out::clear();
         }
         else
         {
@@ -186,6 +178,14 @@ ISR(TIMER0_COMPA_vect)
     ++k;
 }
 
+ISR(TIMER2_OVF_vect)
+{
+    static uint8_t i = 0;
+
+    led_out::write(i < pwm::output_compare_register<channel_a>());
+    ++i;
+}
+
 ISR(PCINT0_vect)
 {
     static bool last_gate = false;
@@ -213,7 +213,6 @@ void setup()
     adc::setup<128>();
 
     const wg_mode mode = pwm_phase_correct;
-    //const wg_mode mode = fast_pwm;
     const int prescale = 1;
 
     pwm::setup<mode, top_0xff>();
@@ -225,11 +224,10 @@ void setup()
     time::clock_select<64>();
     time::output_compare_register<channel_a>() = 124; // 1ms period
     time::enable_oca();
-    /*
-    time::setup<normal_mode>();
-    time::clock_select<64>();
-    time::enable();
-    */
+
+    aux::setup<normal_mode>();
+    aux::clock_select<1>();
+    aux::enable();
 
     PCMSK0 |= _BV(PCINT0);
     PCICR |= _BV(PCIE0);
@@ -240,8 +238,6 @@ void setup()
 void loop()
 {
     static uint8_t i = 0;
-    g_stride = 1;
-    g_mask = 0;
 
     g_counts[s_attack] = max<uint16_t>(adc::read<adc_a>(), 1);
     g_counts[s_hold] = adc::read<adc_h>();
