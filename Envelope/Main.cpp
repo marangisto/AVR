@@ -13,8 +13,8 @@ typedef output_t<PD, 7> led_rear;
 typedef input_t<PB, 0> gate;
 typedef input_t<PB, 2> trig;
 
+typedef timer_t<0> time;
 typedef timer_t<1> pwm;
-typedef timer_t<2> time;
 
 static const int adc_a = 0;
 static const int adc_h = 1;
@@ -75,12 +75,23 @@ static volatile uint16_t g_counts[7] = { 0, 0, 0, 0, 0, 0, 0 };
 static volatile uint8_t g_stride = 1;
 static volatile uint8_t g_mask = 0;
 static volatile shape_t g_shape = shape_sin;
-static volatile const uint8_t *g_env = env_lin;
+//static volatile const uint8_t *g_env = env_lin;
 static volatile bool g_gate = false;
 static volatile bool g_trig = false;
 static volatile uint8_t g_sustain = 0;
 
-ISR(TIMER1_OVF_vect)
+
+
+ISR(TIMER0_COMPA_vect)
+{
+    static uint8_t i = 0;
+
+    if (++i == 0)
+        led_rear::toggle();
+}
+
+/*
+ISR(TIMER3_OVF_vect)
 {
     static uint16_t count = 1079;
     static uint8_t stride = 0;
@@ -89,6 +100,7 @@ ISR(TIMER1_OVF_vect)
     static uint8_t decay_floor = 0;
 
     time::counter() = 65536 - count;                // timing correct on next cycle
+
 
     if (g_state == s_start)
     {
@@ -158,6 +170,7 @@ ISR(TIMER1_OVF_vect)
         i += stride;
     ++k;
 }
+*/
 
 
 ISR(PCINT0_vect)
@@ -193,12 +206,15 @@ void setup()
     pwm::setup<mode, top_0xff>();
     pwm::clock_select<prescale>();
     pwm::output_pin<channel_a>::setup();
-    //pwm::output_pin<channel_b>::setup();
     pwm::compare_output_mode<channel_a, clear_on_compare_match>();
 
+    time::setup<ctc_mode, top_ocra>();
+    time::clock_select<64>();
+    time::output_compare_register<channel_a>() = 124; // 1ms period
+    time::enable_oca();
     /*
     time::setup<normal_mode>();
-    time::clock_select<1>();
+    time::clock_select<64>();
     time::enable();
     */
 
@@ -214,7 +230,7 @@ void loop()
     g_stride = 1;
     g_mask = 0;
 
-    pwm::output_compare_register<channel_a>() = adc::read<adc_r>() >> 2;
+//    pwm::output_compare_register<channel_a>() = adc::read<adc_r>() >> 2;
     // 200-500 is lowest practically reliable count for exponential envelope, for square we can go to 50 for really fast edge
 
     g_counts[s_sustain] = 100;  // not really used
@@ -225,7 +241,6 @@ void loop()
     g_sustain = adc::read<adc_s>() >> 2;
     g_counts[s_release] = 100 + (adc::read<adc_r>() << 4);
 
-    led_rear::toggle();
     i++;
     delay_ms(10);
 }
