@@ -501,6 +501,199 @@ template<> struct compare_match_traits<2, channel_b, set_on_compare_match>
 };
 #endif
 
+#if defined(__AVR_ATmega328PB__)
+template<>
+struct timer_traits<3>
+{
+    typedef uint16_t count_t;
+
+    static inline volatile uint8_t& tccra() { return TCCR3A; }
+    static inline volatile uint8_t& tccrb() { return TCCR3B; }
+    static inline volatile uint8_t& timsk() { return TIMSK3; }
+    static inline volatile count_t& tcnt() { return TCNT3; }
+    static const uint8_t toie = TOIE3;
+    static const uint8_t ocaie = OCIE3A;
+};
+
+template<> struct channel_traits<3, channel_a>
+{
+    typedef output_t<PB, 3> pin_t;
+
+    static inline volatile timer_traits<3>::count_t& ocr() { return OCR3A; }
+};
+
+template<> struct channel_traits<3, channel_b>
+{
+    typedef output_t<PB, 2> pin_t;
+
+    static inline volatile timer_traits<3>::count_t& ocr() { return OCR3B; }
+};
+
+template<> struct waveform_generator_traits<3, normal_mode, top_default>
+{ 
+    static const uint8_t bitsa = 0;
+    static const uint8_t bitsb = 0;
+};
+
+template<> struct waveform_generator_traits<3, pwm_phase_correct, top_0xff>
+{ 
+    static const uint8_t bitsa = _BV(WGM30);
+    static const uint8_t bitsb = 0;
+};
+
+template<> struct waveform_generator_traits<3, pwm_phase_correct, top_0x1ff>
+{ 
+    static const uint8_t bitsa = _BV(WGM31);
+    static const uint8_t bitsb = 0;
+};
+
+template<> struct waveform_generator_traits<3, pwm_phase_correct, top_0x3ff>
+{ 
+    static const uint8_t bitsa = _BV(WGM31) | _BV(WGM30);
+    static const uint8_t bitsb = 0;
+};
+
+template<> struct waveform_generator_traits<3, ctc_mode, top_ocra>
+{ 
+    static const uint8_t bitsa = 0;
+    static const uint8_t bitsb = _BV(WGM32);
+};
+
+template<> struct waveform_generator_traits<3, fast_pwm, top_0xff>
+{ 
+    static const uint8_t bitsa = _BV(WGM30);
+    static const uint8_t bitsb = _BV(WGM32);
+};
+
+template<> struct waveform_generator_traits<3, fast_pwm, top_0x1ff>
+{ 
+    static const uint8_t bitsa = _BV(WGM31);
+    static const uint8_t bitsb = _BV(WGM32);
+};
+
+template<> struct waveform_generator_traits<3, fast_pwm, top_0x3ff>
+{ 
+    static const uint8_t bitsa = _BV(WGM31) | _BV(WGM30);
+    static const uint8_t bitsb = _BV(WGM32);
+};
+
+template<> struct waveform_generator_traits<3, pwm_phase_frequency_correct, top_icr>
+{ 
+    static const uint8_t bitsa = 0;
+    static const uint8_t bitsb = _BV(WGM33);
+};
+
+template<> struct waveform_generator_traits<3, pwm_phase_frequency_correct, top_ocra>
+{ 
+    static const uint8_t bitsa = _BV(WGM30);
+    static const uint8_t bitsb = _BV(WGM33);
+};
+
+template<> struct waveform_generator_traits<3, pwm_phase_correct, top_icr>
+{ 
+    static const uint8_t bitsa = _BV(WGM31);
+    static const uint8_t bitsb = _BV(WGM33);
+};
+
+template<> struct waveform_generator_traits<3, pwm_phase_correct, top_ocra>
+{ 
+    static const uint8_t bitsa = _BV(WGM31) | _BV(WGM30);
+    static const uint8_t bitsb = _BV(WGM33);
+};
+
+template<> struct waveform_generator_traits<3, ctc_mode, top_icr>
+{ 
+    static const uint8_t bitsa = 0;
+    static const uint8_t bitsb = _BV(WGM33) | _BV(WGM32);
+};
+
+template<> struct waveform_generator_traits<3, fast_pwm, top_icr>
+{ 
+    static const uint8_t bitsa = _BV(WGM31);
+    static const uint8_t bitsb = _BV(WGM33) | _BV(WGM32);
+};
+
+template<> struct waveform_generator_traits<3, fast_pwm, top_ocra>
+{ 
+    static const uint8_t bitsa = _BV(WGM31) | _BV(WGM30);
+    static const uint8_t bitsb = _BV(WGM33) | _BV(WGM32);
+};
+
+template<> struct clock_select_traits<3, 0>
+{
+    static const uint8_t mask = _BV(CS32) | _BV(CS31) | _BV(CS30);
+    static const uint8_t bits = 0;
+};
+
+template<> struct clock_select_traits<3, 1>
+{
+    static const uint8_t bits = _BV(CS30);
+};
+
+template<> struct clock_select_traits<3, 8>
+{
+    static const uint8_t bits = _BV(CS31);
+};
+
+template<> struct clock_select_traits<3, 64>
+{
+    static const uint8_t bits = _BV(CS31) | _BV(CS30);
+};
+
+template<> struct clock_select_traits<3, 256>
+{
+    static const uint8_t bits = _BV(CS32);
+};
+
+template<> struct clock_select_traits<3, 1024>
+{
+    static const uint8_t bits = _BV(CS32) | _BV(CS30);
+};
+
+template<> struct compare_match_traits<3, channel_a, normal_port>
+{
+    static const uint8_t mask = _BV(COM3A1) | _BV(COM3A0);
+    static const uint8_t bits = 0;
+};
+
+template<> struct compare_match_traits<3, channel_a, toggle_on_compare_match>
+{
+    static const uint8_t bits = _BV(COM3A0);
+};
+
+template<> struct compare_match_traits<3, channel_a, clear_on_compare_match>
+{
+    static const uint8_t bits = _BV(COM3A1);
+};
+
+template<> struct compare_match_traits<3, channel_a, set_on_compare_match>
+{
+    static const uint8_t bits = _BV(COM3A1) | _BV(COM3A0);
+};
+
+template<> struct compare_match_traits<3, channel_b, normal_port>
+{
+    static const uint8_t mask = _BV(COM3B1) | _BV(COM3B0);
+    static const uint8_t bits = 0;
+};
+
+template<> struct compare_match_traits<3, channel_b, toggle_on_compare_match>
+{
+    static const uint8_t bits = _BV(COM3B0);
+};
+
+template<> struct compare_match_traits<3, channel_b, clear_on_compare_match>
+{
+    static const uint8_t bits = _BV(COM3B1);
+};
+
+template<> struct compare_match_traits<3, channel_b, set_on_compare_match>
+{
+    static const uint8_t bits = _BV(COM3B1) | _BV(COM3B0);
+};
+
+#endif
+
 template<int TNO>
 struct timer_t
 {
