@@ -112,7 +112,7 @@ template<> struct port_t<PD>
 };
 #endif
 
-#if defined(__AVR_ATmega32U4__)
+#if defined(__AVR_ATmega32U4__) || defined(__AVR_ATmega328PB__)
 template<> struct port_t<PE>
 {
     typedef PE port;
@@ -211,7 +211,7 @@ struct outputs_t
         write_bits_impl<PC, T0, T1, T2, T3, T4, T5, T6, T7, map_bits_impl<PC, T0, T1, T2, T3, T4, T5, T6, T7>::mask>::write_bits(DDRC, 0xff);
         write_bits_impl<PD, T0, T1, T2, T3, T4, T5, T6, T7, map_bits_impl<PD, T0, T1, T2, T3, T4, T5, T6, T7>::mask>::write_bits(DDRD, 0xff);
 #endif
-#if defined(__AVR_ATmega32U4__)
+#if defined(__AVR_ATmega32U4__) || defined(__AVR_ATmega328PB__)
         write_bits_impl<PE, T0, T1, T2, T3, T4, T5, T6, T7, map_bits_impl<PE, T0, T1, T2, T3, T4, T5, T6, T7>::mask>::write_bits(DDRE, 0xff);
 #endif
     }
@@ -223,7 +223,7 @@ struct outputs_t
         write_bits_impl<PC, T0, T1, T2, T3, T4, T5, T6, T7, map_bits_impl<PC, T0, T1, T2, T3, T4, T5, T6, T7>::mask>::write_bits(PORTC, x);
         write_bits_impl<PD, T0, T1, T2, T3, T4, T5, T6, T7, map_bits_impl<PD, T0, T1, T2, T3, T4, T5, T6, T7>::mask>::write_bits(PORTD, x);
 #endif
-#if defined(__AVR_ATmega32U4__)
+#if defined(__AVR_ATmega32U4__) || defined(__AVR_ATmega328PB__)
         write_bits_impl<PE, T0, T1, T2, T3, T4, T5, T6, T7, map_bits_impl<PE, T0, T1, T2, T3, T4, T5, T6, T7>::mask>::write_bits(PORTE, x);
 #endif
     }
