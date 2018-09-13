@@ -193,7 +193,9 @@ ISR(PCINT0_vect)
 
 
 static const uint8_t time_prescale = 8;
-static const uint8_t time_count = 249;
+static const float time_period = time_prescale / F_CPU;
+static const float time_tick = 250e-6;    // in seconds
+static const uint8_t time_count = static_cast<uint8_t>(time_tick / time_period) - 1;
 static const float ticks_per_second = F_CPU / (time_prescale * (time_count + 1));
 static const int adc_max = 1023;
 
