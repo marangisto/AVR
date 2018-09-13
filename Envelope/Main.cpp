@@ -76,6 +76,8 @@ static volatile uint32_t g_counts[7] = { 0, 0, 0, 0, 0, 0, 0 };
 static volatile const uint8_t *g_env = env_lin;
 static volatile bool g_gate = false;
 static volatile bool g_trig = false;
+static volatile bool free_run = false;
+static volatile uint16_t free_count = 0;
 
 ISR(TIMER0_COMPA_vect)
 {
@@ -125,7 +127,7 @@ ISR(TIMER0_COMPA_vect)
     case s_decay:
         if (k > n)
         {
-            g_state = sustain ? s_sustain : s_stop;
+            g_state = free_run ? s_start : (sustain ? s_sustain : s_stop);
             n = g_counts[g_state];
             k = 0;
             start_v = v;
@@ -171,9 +173,24 @@ ISR(TIMER0_COMPA_vect)
 ISR(TIMER2_OVF_vect)
 {
     static uint8_t i = 0;
+    static const uint16_t free_start = 2000;
 
-    led_out::write(i < pwm::output_compare_register<channel_a>());
-    ++i;
+    led_out::write(i++ < pwm::output_compare_register<channel_a>());
+    bool g = gate::read();
+    bool t = trig::read();
+    led_gate::write(g);
+    led_trig::write(t);
+
+    if (!i)
+    {
+        if (!free_run && free_count == free_start)
+        {
+            free_run = true;
+            g_state = s_start;
+        }
+        else if (free_count < free_start && g && t)
+            ++free_count;
+    }
 }
 
 ISR(PCINT0_vect)
@@ -188,6 +205,8 @@ ISR(PCINT0_vect)
             g_state = s_start;
         last_gate = g_gate;
         led_gate::write(g_gate);
+        free_count = 0;
+        free_run = false;
     }
 }
 
@@ -258,11 +277,9 @@ void loop()
     else
         g_env = env_lin;
 
-    led_trig::write(trig::read());
-
     g_counts[s_attack] = 1 + count(adc::read<adc_a>(), tmax);
     g_counts[s_hold] = count(adc::read<adc_h>(), tmax);
-    g_counts[s_decay] = count(adc::read<adc_d>(), tmax);
+    g_counts[s_decay] = 1 + count(adc::read<adc_d>(), tmax);
     g_counts[s_sustain] = adc::read<adc_s>();
     g_counts[s_release] = count(adc::read<adc_r>(), tmax);
 
