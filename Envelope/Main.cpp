@@ -13,8 +13,6 @@ static uint32_t map(uint32_t x, uint32_t in_min, uint32_t in_max, uint32_t out_m
     return (x - in_min) * (out_max - out_min + 1) / (in_max - in_min + 1) + out_min;
 }
 
-static inline float fsqr(float x) { return x * x; }
-
 typedef output_t<PD, 2> led_gate;
 typedef output_t<PD, 3> led_trig;
 typedef output_t<PD, 4> led_out;
@@ -37,8 +35,6 @@ static const int adc_h = 1;
 static const int adc_d = 2;
 static const int adc_s = 3;
 static const int adc_r = 4;
-
-enum shape_t { shape_lin, shape_exp, shape_sin, shape_sqr };
 
 static const uint8_t env_lin[] =
     { 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31
@@ -76,8 +72,7 @@ static const uint8_t env_sin[] =
 enum state_t { s_start, s_attack, s_hold, s_decay, s_sustain, s_release, s_stop };
 
 static volatile state_t g_state = s_start;
-static volatile uint16_t g_counts[7] = { 0, 0, 0, 0, 0, 0, 0 };
-static volatile shape_t g_shape = shape_sin;
+static volatile uint32_t g_counts[7] = { 0, 0, 0, 0, 0, 0, 0 };
 static volatile const uint8_t *g_env = env_lin;
 static volatile bool g_gate = false;
 static volatile bool g_trig = false;
@@ -85,8 +80,8 @@ static volatile bool g_trig = false;
 ISR(TIMER0_COMPA_vect)
 {
     static uint8_t i = 0;
-    static uint16_t k = 0;
-    static uint16_t n = 255;
+    static uint32_t k = 0;
+    static uint32_t n = 255;
     static uint8_t v = 0;
     static uint8_t start_v = 0;
     static uint8_t sustain = 0;
@@ -197,12 +192,15 @@ ISR(PCINT0_vect)
 }
 
 
-static const int time_prescale = 8;
-static const int time_count = 249;
+static const uint8_t time_prescale = 8;
+static const uint8_t time_count = 249;
+static const float ticks_per_second = F_CPU / (time_prescale * (time_count + 1));
 static const int adc_max = 1023;
 
-static uint32_t periods(float x, float k)
+static uint32_t count(float x, float tmax)
 {
+    float k = tmax * ticks_per_second / (adc_max * (float) adc_max);
+
     return k * x * x;
 }
 
@@ -242,20 +240,14 @@ void setup()
 void loop()
 {
     static uint8_t i = 0;
-    float k = 0;
+    float tmax = 0;
 
     if (!sw_1a::read())
-    {
-        k = 4000. / fsqr(adc_max);
-    }
+        tmax = 1;                   // fast
     else if (!sw_1b::read())
-    {
-        k = 400000. / fsqr(adc_max);
-    }
+        tmax = 1000;                // slow
     else
-    {
-        k = 40000. / fsqr(adc_max);
-    }
+        tmax = 20;                  // medium
 
     if (!sw_2a::read())
         g_env = env_sin;
@@ -266,11 +258,11 @@ void loop()
 
     led_trig::write(trig::read());
 
-    g_counts[s_attack] = 1 + periods(adc::read<adc_a>(), k);
-    g_counts[s_hold] = periods(adc::read<adc_h>(), k);
-    g_counts[s_decay] = periods(adc::read<adc_d>(), k);
+    g_counts[s_attack] = 1 + count(adc::read<adc_a>(), tmax);
+    g_counts[s_hold] = count(adc::read<adc_h>(), tmax);
+    g_counts[s_decay] = count(adc::read<adc_d>(), tmax);
     g_counts[s_sustain] = adc::read<adc_s>();
-    g_counts[s_release] = periods(adc::read<adc_r>(), k);
+    g_counts[s_release] = count(adc::read<adc_r>(), tmax);
 
     i++;
 }
