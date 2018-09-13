@@ -13,6 +13,8 @@ static uint32_t map(uint32_t x, uint32_t in_min, uint32_t in_max, uint32_t out_m
     return (x - in_min) * (out_max - out_min + 1) / (in_max - in_min + 1) + out_min;
 }
 
+static inline float fsqr(float x) { return x * x; }
+
 typedef output_t<PD, 2> led_gate;
 typedef output_t<PD, 3> led_trig;
 typedef output_t<PD, 4> led_out;
@@ -195,6 +197,15 @@ ISR(PCINT0_vect)
 }
 
 
+static const int time_prescale = 8;
+static const int time_count = 249;
+static const int adc_max = 1023;
+
+static uint32_t periods(float x, float k)
+{
+    return k * x * x;
+}
+
 void setup()
 {
     led_gate::setup();
@@ -214,8 +225,8 @@ void setup()
     pwm::compare_output_mode<channel_a, clear_on_compare_match>();
 
     time::setup<ctc_mode, top_ocra>();
-    time::clock_select<8>();
-    time::output_compare_register<channel_a>() = 249; // 250ms period
+    time::clock_select<time_prescale>();
+    time::output_compare_register<channel_a>() = time_count; // 250ms period
     time::enable_oca();
 
     aux::setup<normal_mode>();
@@ -231,13 +242,20 @@ void setup()
 void loop()
 {
     static uint8_t i = 0;
+    float k = 0;
 
     if (!sw_1a::read())
-        time::clock_select<8>();
+    {
+        k = 4000. / fsqr(adc_max);
+    }
     else if (!sw_1b::read())
-        time::clock_select<256>();
+    {
+        k = 400000. / fsqr(adc_max);
+    }
     else
-        time::clock_select<64>();
+    {
+        k = 40000. / fsqr(adc_max);
+    }
 
     if (!sw_2a::read())
         g_env = env_sin;
@@ -246,11 +264,13 @@ void loop()
     else
         g_env = env_lin;
 
-    g_counts[s_attack] = max<uint16_t>(adc::read<adc_a>(), 1);
-    g_counts[s_hold] = adc::read<adc_h>();
-    g_counts[s_decay] = max<uint16_t>(adc::read<adc_d>(), 1);
+    led_trig::write(trig::read());
+
+    g_counts[s_attack] = 1 + periods(adc::read<adc_a>(), k);
+    g_counts[s_hold] = periods(adc::read<adc_h>(), k);
+    g_counts[s_decay] = periods(adc::read<adc_d>(), k);
     g_counts[s_sustain] = adc::read<adc_s>();
-    g_counts[s_release] = adc::read<adc_r>();
+    g_counts[s_release] = periods(adc::read<adc_r>(), k);
 
     i++;
 }
