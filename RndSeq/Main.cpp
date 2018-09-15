@@ -4,6 +4,7 @@
 #include <AVR/Timer.h>
 #include <AVR/ADC.h>
 #include <AVR/Pins.h>
+#include <AVR/Buttons.h>
 #include <stdlib.h>
 
 template <class T> const T& max(const T& a, const T& b) { return (a<b) ? b : a; }
@@ -23,6 +24,17 @@ typedef input_t<PB, 0> clk;
 
 static const int adc_pot = 0;
 static const int adc_cv = 1;
+static const int adc_bup = 2;
+static const int adc_bdn = 3;
+
+typedef buttons_t<adc_bup> btns_up;
+typedef buttons_t<adc_bdn> btns_dn;
+
+static const int sw_1 = 5;
+static const int sw_2 = 4;
+static const int sw_3 = 3;
+static const int sw_4 = 2;
+static const int sw_5 = 1;
 
 typedef timer_t<1> pwm;
 typedef timer_t<2> aux;
@@ -33,10 +45,9 @@ static volatile uint16_t g_randomness = 0;
 static const float min_V = 0.197;
 static const float max_V = 4.721;
 
-static const uint8_t n_notes = (max_V - min_V) * 12;    // 
+static const uint8_t n_notes = (max_V - min_V) * 12;
 
 static uint16_t g_notes[n_notes];
-
 
 static void initialize_notes()
 {
@@ -51,8 +62,8 @@ static void initialize_notes()
 
 static volatile uint16_t g_sequence[256] = { 0, 2, 4, 3, 6, 7, 12, 5 };
 
-static volatile uint8_t g_steps = 8;
-static volatile uint8_t g_range = 24;
+static volatile uint8_t g_steps = 4;
+static volatile uint8_t g_range = 12;
 
 static void step()
 {
@@ -108,6 +119,8 @@ void setup()
     trig::setup();
     clk::setup();
     adc::setup<128>();
+    btns_up::setup();
+    btns_dn::setup();
 
     trig::set();      // because output buffer is inverted
 
@@ -131,6 +144,41 @@ void loop()
 {
 //    pwm::output_compare_register<channel_a>() = 0x1ff;   // inverted output
     g_randomness = adc::read<adc_pot>();
+    uint8_t x = btns_up::read();
+    uint8_t y = btns_dn::read();
+
+    switch (x & btns_up::mask)
+    {
+    case sw_1:
+        break;
+    case sw_2:
+        g_display = ++g_steps;
+        break;
+    case sw_3:
+        break;
+    case sw_4:
+        break;
+    case sw_5:
+        break;
+    default: ;
+    }
+
+    switch (y & btns_dn::mask)
+    {
+    case sw_1:
+        break;
+    case sw_2:
+        g_display = --g_steps;
+        break;
+    case sw_3:
+        break;
+    case sw_4:
+        break;
+    case sw_5:
+        break;
+    default: ;
+    }
+
     delay_ms(10);
 }
 
