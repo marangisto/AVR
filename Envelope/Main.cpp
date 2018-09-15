@@ -99,6 +99,11 @@ ISR(TIMER0_COMPA_vect)
         k = 0;
         start_v = v;
         sustain = g_counts[s_sustain] >> 2;
+        if (free_run)
+        {
+            led_gate::set();
+            led_trig::clear();
+        }
         break;
     case s_attack:
         if (k > n)
@@ -107,6 +112,11 @@ ISR(TIMER0_COMPA_vect)
             n = g_counts[g_state];
             k = 0;
             start_v = v;
+            if (free_run)
+            {
+                led_gate::clear();
+                led_trig::set();
+            }
         }
         else
         {
@@ -178,8 +188,12 @@ ISR(TIMER2_OVF_vect)
     led_out::write(i++ < pwm::output_compare_register<channel_a>());
     bool g = gate::read();
     bool t = trig::read();
-    led_gate::write(g);
-    led_trig::write(t);
+
+    if (!free_run)
+    {
+        led_gate::write(g);
+        led_trig::write(t);
+    }
 
     if (!i)
     {
