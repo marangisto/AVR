@@ -4,6 +4,7 @@
 #include <AVR/Timer.h>
 #include <AVR/ADC.h>
 #include <AVR/Pins.h>
+#include <stdlib.h>
 
 template <class T> const T& max(const T& a, const T& b) { return (a<b) ? b : a; }
 template <class T> const T& min(const T& a, const T& b) { return (a<b) ? a : b; }
@@ -20,10 +21,14 @@ typedef outputs_t<led_0, led_1, led_2, led_3> led_0123;
 
 typedef input_t<PB, 0> clk;
 
+static const int adc_pot = 0;
+static const int adc_cv = 1;
+
 typedef timer_t<1> pwm;
 typedef timer_t<2> aux;
 
-static volatile uint8_t display = 0;
+static volatile uint8_t g_display = 0;
+static volatile uint16_t g_randomness = 0;
 
 static uint16_t notes[] =
     { 0, 18, 37, 55, 73, 91, 110, 128, 146, 164, 183, 201, 219, 238, 256
@@ -35,29 +40,36 @@ static uint16_t notes[] =
 
 static const uint8_t n_notes = sizeof(notes) / sizeof(*notes);
 
-static volatile uint16_t sequence[256] = { 0, 2, 4, 3, 6, 7, 12, 5 };
+static volatile uint16_t g_sequence[256] = { 0, 2, 4, 3, 6, 7, 12, 5 };
 
-static volatile uint8_t n_steps = 8;
+static volatile uint8_t g_steps = 8;
+static volatile uint8_t g_range = 12;
 
 static void step()
 {
     static uint8_t i = 0;
-    uint8_t note = sequence[i];
+
+    if ((rand() & 0x3ff) < g_randomness)
+    {
+        g_sequence[i] = rand() % g_range;
+    }
+
+    uint8_t note = g_sequence[i];
     uint16_t duty = notes[min(note, n_notes)];
 
     pwm::output_compare_register<channel_a>() = 0x3ff - duty;   // inverted output
     trig::clear();
     delay_ms(10);
     trig::set();
-    display = i;
-    i = ++i < n_steps ? i : 0;
+    g_display = i;
+    i = ++i < g_steps ? i : 0;
 }
 
 ISR(TIMER2_OVF_vect)
 {
     static uint8_t i = 0;
 
-    led_0123::write(i++ < 15 ? display : 0);
+    led_0123::write(i++ < 15 ? g_display : 0);
 }
 
 ISR(PCINT0_vect)
@@ -101,21 +113,12 @@ void setup()
     PCICR |= _BV(PCIE0);
 
     sei();
+    srand(1);
 }
 
 void loop()
 {
-    /*
-    pwm::output_compare_register<channel_a>() = 0x3ff - notes[i % 12];
-    trig::clear();      // because output buffer is inverted
-    led_trig::set();
-    delay_ms(1);
-    trig::set();
-    led_trig::clear();
-
-    display = i;
-    */
-//    step();
-    delay_ms(100);
+    g_randomness = adc::read<adc_pot>();
+    delay_ms(10);
 }
 
