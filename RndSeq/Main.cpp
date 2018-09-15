@@ -30,20 +30,29 @@ typedef timer_t<2> aux;
 static volatile uint8_t g_display = 0;
 static volatile uint16_t g_randomness = 0;
 
-static uint16_t notes[] =
-    { 0, 18, 37, 55, 73, 91, 110, 128, 146, 164, 183, 201, 219, 238, 256
-    , 274, 292, 311, 329, 347, 365, 384, 402, 420, 439, 457, 475, 493, 512
-    , 530, 548, 566, 585, 603, 621, 640, 658, 676, 694, 713, 731, 749, 767
-    , 786, 804, 822, 841, 859, 877, 895, 914, 932, 950, 968, 987, 1005
-    , 1023, 1042, 1060, 1078, 1096
-    };
+static const float min_V = 0.197;
+static const float max_V = 4.721;
 
-static const uint8_t n_notes = sizeof(notes) / sizeof(*notes);
+static const uint8_t n_notes = (max_V - min_V) * 12;    // 
+
+static uint16_t g_notes[n_notes];
+
+
+static void initialize_notes()
+{
+    int steps = 0x1ff;              // must agree with pwm timer top count
+    float range = max_V - min_V;
+    float dV = range / steps;
+    float note = 1. / 12.;
+
+    for (size_t i = 0; i < n_notes; ++i)
+        g_notes[i] = i * note / dV;
+}
 
 static volatile uint16_t g_sequence[256] = { 0, 2, 4, 3, 6, 7, 12, 5 };
 
 static volatile uint8_t g_steps = 8;
-static volatile uint8_t g_range = 12;
+static volatile uint8_t g_range = 24;
 
 static void step()
 {
@@ -55,9 +64,9 @@ static void step()
     }
 
     uint8_t note = g_sequence[i];
-    uint16_t duty = notes[min(note, n_notes)];
+    uint16_t duty = g_notes[min(note, n_notes)];
 
-    pwm::output_compare_register<channel_a>() = 0x3ff - duty;   // inverted output
+    pwm::output_compare_register<channel_a>() = 0x1ff - duty;   // inverted output
     trig::clear();
     delay_ms(10);
     trig::set();
@@ -89,6 +98,8 @@ ISR(PCINT0_vect)
 
 void setup()
 {
+    initialize_notes();
+
     led_0::setup();
     led_1::setup();
     led_2::setup();
@@ -100,7 +111,7 @@ void setup()
 
     trig::set();      // because output buffer is inverted
 
-    pwm::setup<fast_pwm, top_0x3ff>();
+    pwm::setup<fast_pwm, top_0x1ff>();
     pwm::clock_select<1>();
     pwm::output_pin<channel_a>::setup();
     pwm::compare_output_mode<channel_a, clear_on_compare_match>();
@@ -118,6 +129,7 @@ void setup()
 
 void loop()
 {
+//    pwm::output_compare_register<channel_a>() = 0x1ff;   // inverted output
     g_randomness = adc::read<adc_pot>();
     delay_ms(10);
 }
