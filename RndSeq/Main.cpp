@@ -100,7 +100,7 @@ void setup()
 
     trig::set();      // because output buffer is inverted
 
-    pwm::setup<pwm_phase_correct, top_0x3ff>();
+    pwm::setup<fast_pwm, top_0x3ff>();
     pwm::clock_select<1>();
     pwm::output_pin<channel_a>::setup();
     pwm::compare_output_mode<channel_a, clear_on_compare_match>();
