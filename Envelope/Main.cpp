@@ -173,7 +173,7 @@ ISR(TIMER0_COMPA_vect)
 ISR(TIMER2_OVF_vect)
 {
     static uint8_t i = 0;
-    static const uint16_t free_start = 2000;
+    static const uint16_t free_start = 100;
 
     led_out::write(i++ < pwm::output_compare_register<channel_a>());
     bool g = gate::read();
@@ -183,7 +183,7 @@ ISR(TIMER2_OVF_vect)
 
     if (!i)
     {
-        if (!free_run && free_count == free_start)
+        if (!free_run && g_state == s_stop && free_count == free_start)
         {
             free_run = true;
             g_state = s_start;
