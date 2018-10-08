@@ -2,26 +2,20 @@ module Main where
 
 import Data.List.Split (chunksOf)
 import Data.List (intercalate)
-import Data.Word
 
-stepsPerOctave = 12 * 8
-maxSamples = 512
-minFreq = 27.5 * 2 ** (8/12)
-octaves = 7
-cpuFreq = 16e6
-fudge = 58
+cpuFreq = 20e6          -- Hz
+maxFreq = 279           -- Hz 
+minCount = 232          -- ()
+minPeriod = 1/maxFreq   -- s
+clockTick = 1/cpuFreq   -- s
+samples = 256           -- ()
+fudge = 50              -- ()
+startFreq = 100         -- Hz (half of max practical frequency)
+stepsPerOctave = 12 * 8 -- ()
+noteStep = 2**(1/stepsPerOctave)
 
-computeStep :: Int -> (Int, Double, Int, Int, Int, Int)
-computeStep i = (i, freq, stride, samples, count - fudge, index)
-    where freq = minFreq * 2 ** (fromIntegral i / fromIntegral stepsPerOctave)
-          stride = 2 ^ (i `div` stepsPerOctave)
-          samples = maxSamples `div` stride
-          count = floor $ (cpuFreq - 1) / (freq * fromIntegral samples) + 1
-          index = i `mod` stepsPerOctave
-
-count :: Int -> Int
-count i = (floor $ (cpuFreq - 1) / (freq * fromIntegral maxSamples) + 1) - fudge
-    where freq = minFreq * 2 ** (fromIntegral i / fromIntegral stepsPerOctave)
+f2c :: Double -> Int
+f2c f = round ((1/f) / clockTick / samples) - fudge
 
 output :: [Int] -> [String]
 output xs = decl : (map ("    "++) $ (zipWith g [0..] $ map f $ chunksOf 16 xs) ++ [ "};", "" ])
@@ -29,11 +23,12 @@ output xs = decl : (map ("    "++) $ (zipWith g [0..] $ map f $ chunksOf 16 xs) 
           g 0 s = "{ " ++ s
           g _ s = ", " ++ s
           decl = "static const uint16_t counts[] ="
-
+ 
 main :: IO ()
 main = do
-    let xs = map computeStep [0..(octaves * stepsPerOctave)]
-        ys = [ c | (_, _, _, _, c, _) <- xs ]
-    mapM_ print xs
-    mapM_ putStrLn $ output $ take stepsPerOctave ys
-    print $ count 0
+    let fs = scanl (\f _ -> f * noteStep) startFreq [1..stepsPerOctave] 
+    print fs
+    print $ map f2c fs
+    putStrLn ""
+    mapM_ putStrLn $ output $ map f2c $ init fs
+
