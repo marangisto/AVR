@@ -7,7 +7,6 @@
 #include <AVR/Delay.h>
 #include <AVR/Timer.h>
 #include <AVR/Buttons.h>
-#include <AVR/UART.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -67,22 +66,25 @@ ISR(TIMER0_OVF_vect)
         led::toggle();
 }
 
-static const uint16_t steps_per_octave = 12 * 8;
-static const uint8_t max_octave_downshifts = 4;
+// We scale the control voltage range (nominally +-5V) so that we maximize frequency resolution
+// while keeping the math even and simple. We choose to use 8 substeps per note which gives us
+// 12 * 8 = 96 steps per octave. Thus our ADC range of 1024 translates into just over 10.5 octaves
+// theoretically and we rely on gain calibration to get correct tracking of 1V/octave.
 
-// we have max(cv) = 1024 / steps_per_octave < 12 possible octaves so we allocate this many
-// strides and masks even though some of these won't produce sound
+static const uint16_t steps_per_octave = 12 * 8;            // 8 steps per note
+static const uint8_t max_octave_downshifts = 4;             // both channels down
+static const size_t max_index = 11 + max_octave_downshifts; // 1023 / steps_per_octave rounded up + max down-shifts
 
-static const uint8_t strides[] = {    1,    1,    1,    1,    1,    1,    1,   1,   1,   2,   4,    8,   16,   32,  64,   0,   0,   0,   0 };
-static const uint8_t masks[] =   { 0x7f, 0x3f, 0x1f, 0x0f, 0x07, 0x03, 0x01, 0x0, 0x0, 0x0, 0x0,  0x0,  0x0,  0x0, 0x0, 0x0, 0x0, 0x0, 0x0 };
+static const uint8_t strides[max_index] = {    0,    0,    1,    1,    1,    1,    1,    1,    1,    1,    2,    4,    8,   16,   32 };
+static const uint8_t masks[max_index] =   { 0xff, 0xff, 0x7f, 0x3f, 0x1f, 0x0f, 0x07, 0x03, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
 static const uint16_t counts[] =
-    { 658,653,648,643,638,633,628,623,618,613,608,604,599,594,590,585
-    , 580,576,571,567,562,558,553,549,544,540,536,532,527,523,519,515
-    , 511,507,503,499,495,491,487,483,479,475,471,467,464,460,456,452
-    , 449,445,441,438,434,431,427,424,420,417,413,410,407,403,400,397
-    , 393,390,387,384,381,377,374,371,368,365,362,359,356,353,350,347
-    , 344,341,339,336,333,330,327,324,322,319,316,314,311,308,306,303
+    { 660,655,650,645,640,635,630,625,620,616,611,606,601,597,592,587
+    , 583,578,574,569,565,560,556,552,547,543,539,534,530,526,522,518
+    , 514,510,506,502,498,494,490,486,482,478,474,471,467,463,460,456
+    , 452,449,445,441,438,434,431,427,424,421,417,414,411,407,404,401
+    , 397,394,391,388,385,382,378,375,372,369,366,363,360,357,354,351
+    , 349,346,343,340,337,334,332,329,326,324,321,318,316,313,310,308
     };
 
 static const uint8_t wave_sin[] =
@@ -210,11 +212,7 @@ void setup()
     wave::clock_select<1>();
     wave::enable();
 
-    UART::setup<9600>();
-
     sei();
-
-    printf("Hybrid VCO 1.0\n");
 }
 
 void loop()
@@ -222,7 +220,6 @@ void loop()
     static bool init = true;
     static bool use_adc_cv = true;
     static union { display_t d; uint16_t i; } display_data, last_display;
-    bool got_input = false;
     uint8_t x = buttons::read();
 
     switch (x & buttons::mask)
@@ -241,61 +238,34 @@ void loop()
         display_data.d.octave_a = 1 << g_octave_a;
         display_data.d.octave_b = 1 << g_octave_b;
         if (display_data.i != last_display.i)
-        {
             display::write(display_data.i);
-            got_input = true;
-        }
         last_display = display_data;
     }
 
-    static uint16_t cv = 512;
+    static uint16_t cv = 511;
 
     if (use_adc_cv)
         cv = 1023 - adc::read<adc_cv>();        // input is inverted
 
     g_phase_b = adc::read<adc_phase>() >> 2;    // [0..1023] -> [0..255]
 
-    static char buf[80] = "";
-
-    if (!init && UART::hasChar() && fgets(buf, sizeof(buf), stdin))
-    {
-        cv = atoi(buf);
-        printf("%d\n", cv);
-        got_input = true;
-        use_adc_cv = false;                     // manual mode from now on
-    }
-
-#if 1
+#if 1   // normal mode
     uint8_t index = cv / steps_per_octave + max_octave_downshifts;
     uint8_t index_a = index + g_octave_a - 2;
     uint8_t index_b = index_a - 2 + g_octave_b;
+
     g_stride_a = strides[index_a];
     g_mask_a = masks[index_a];
     g_stride_b = strides[index_b];
     g_mask_b = masks[index_b];
-    g_count = counts[cv % steps_per_octave];
 
-    if (got_input || init)
-    {
-        printf("cv = %d, index = (%d, %d, %d), ", cv, index, index_a, index_b);
-        printf("count = %d, ", g_count);
-        printf("a = (%d, %d), ", g_stride_a, g_mask_a);
-        printf("b = (%d, %d)\n", g_stride_b, g_mask_b);
-        printf("cv> ");
-    }
-#else
+    g_count = counts[cv % steps_per_octave];
+#else   // calibration mode
     g_stride_a = g_stride_b = 1;
     g_mask_a = g_mask_b = 0;
-    g_count = cv;
-
-    if (got_input || init)
-    {
-        printf("cv = %d, ", cv);
-        printf("count = %d, ", g_count);
-        printf("a = (%d, %d), ", g_stride_a, g_mask_a);
-        printf("b = (%d, %d)\n", g_stride_b, g_mask_b);
-        printf("cv> ");
-    }
+    g_count = counts[cv % steps_per_octave];
+    g_count = counts[0];
+    g_count = counts[steps_per_octave - 1];
 #endif
 
     init = false;
