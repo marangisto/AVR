@@ -10,7 +10,7 @@ minPeriod = 1/maxFreq   -- s
 clockTick = 1/cpuFreq   -- s
 samples = 256           -- ()
 fudge = 50              -- ()
-startFreq = 100         -- Hz (half of max practical frequency)
+startFreq = 110         -- Hz (half of max practical frequency)
 stepsPerOctave = 12 * 8 -- ()
 noteStep = 2**(1/stepsPerOctave)
 
