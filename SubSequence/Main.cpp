@@ -91,6 +91,16 @@ void setup()
     aux::clock_select<1>();
     aux::enable();
     sei();
+
+    srand(1);
+
+    for (uint8_t i = 0; i < 100; ++i)
+    {
+        led_state = i < 50 ? rand() : (1 << (i & 0x07));
+        delay_ms(25);
+    }
+
+    led_state = 0;
 }
 
 void loop()
