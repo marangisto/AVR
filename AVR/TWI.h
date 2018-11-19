@@ -64,6 +64,7 @@ public:
     {
         inst::twsr() = 0;                                           // set prescaler to 1
         inst::twbr() = ((F_CPU / twi_freq) - 16) / 2;               // assuming prescaler 1
+        inst::twdr() = 0xff;                                        // release SDA
         inst::twcr() = _BV(inst::twen);                             // enable TWI
     }
 
