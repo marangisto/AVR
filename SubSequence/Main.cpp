@@ -2,6 +2,7 @@
 #include <AVR/Main.h>
 #include <AVR/Delay.h>
 #include <AVR/Timer.h>
+#include <AVR/TWI.h>
 #include <AVR/ADC.h>
 #include <AVR/Pins.h>
 #include <AVR/Buttons.h>
@@ -9,6 +10,11 @@
 
 template <class T> const T& max(const T& a, const T& b) { return (a<b) ? b : a; }
 template <class T> const T& min(const T& a, const T& b) { return (a<b) ? a : b; }
+
+typedef twi_t<1> twi;
+
+typedef input_t<PE, 0, enable_pullup> pe0;
+typedef input_t<PE, 1, enable_pullup> pe1;
 
 typedef output_t<PB, 2> leds;
 
@@ -81,6 +87,11 @@ ISR(TIMER2_OVF_vect)
     i++;
 }
 
+ISR(TWI1_vect)
+{
+    twi::isr();
+}
+
 void setup()
 {
     leds::setup();
@@ -90,13 +101,18 @@ void setup()
     aux::setup<normal_mode>();
     aux::clock_select<1>();
     aux::enable();
+
+    pe0::setup();   // FIXME: remove these if we have use pullups on master!
+    pe1::setup();
+    twi::setup();
+
     sei();
 
     srand(1);
 
-    for (uint8_t i = 0; i < 100; ++i)
+    for (uint8_t i = 0; i < 50; ++i)
     {
-        led_state = i < 50 ? rand() : (1 << (i & 0x07));
+        led_state = i < 25 ? rand() : (1 << (i & 0x07));
         delay_ms(25);
     }
 
@@ -122,6 +138,10 @@ void loop()
     for (uint8_t j = 0; j < 8; ++j)
         if (swa_state & (1 << j))
             led_state = adc_value[j] >> 2;
+
+    static uint8_t buf[256] = { 0x00, i };
+
+    twi::write(0x61, buf, 2);
 
     delay_ms(1);
 }
