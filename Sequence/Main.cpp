@@ -6,8 +6,9 @@
 
 typedef D13 LED;
 
-//typedef twi_slave_t<0> twi;
 typedef twi_master_t<0> twi;
+
+static uint8_t twi_addr = 0;
 
 ISR(TWI_vect)
 {
@@ -25,7 +26,6 @@ void setup()
 
     printf("Marangisto Sequence 0.1\n");
 
-/*
     for (uint8_t a = 0; a < 128; ++a)
     {
         uint8_t buf[1];
@@ -34,21 +34,15 @@ void setup()
             continue;   // reserved address
         if (twi::write(a, buf, 0) == 0)
         {
-            lcd::clear();
-            lcd::write("TWI DEVICE: 0x");
-            lcd::write(a, 16);
-            delay_ms(1000);
+            twi_addr = a;
         }
     }
-
-*/
 }
 
 void loop()
 {
     static uint8_t i = 0;
     static uint8_t j = 0;
-    static const uint8_t twi_addr = 0x20;
 
     if (j++ == 0)
     {
