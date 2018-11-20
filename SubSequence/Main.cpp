@@ -11,7 +11,10 @@
 template <class T> const T& max(const T& a, const T& b) { return (a<b) ? b : a; }
 template <class T> const T& min(const T& a, const T& b) { return (a<b) ? a : b; }
 
-typedef twi_master_t<1> twi;
+static const uint8_t twi_addr = 0x20;   // FIXME: use EEPROM and reset config
+
+//typedef twi_master_t<1> twi;
+typedef twi_slave_t<1> twi;
 
 typedef output_t<PB, 2> leds;
 
@@ -99,7 +102,7 @@ void setup()
     aux::clock_select<1>();
     aux::enable();
 
-    twi::setup();
+    twi::setup(twi_addr);
 
     sei();
 
@@ -130,14 +133,11 @@ void loop()
         case 7: adc_value[7] = adc::read<ch7>(); break;
     }
 
-    for (uint8_t j = 0; j < 8; ++j)
-        if (swa_state & (1 << j))
-            led_state = adc_value[j] >> 2;
+    uint8_t buf[2] = { 0, 0 };
 
-    uint8_t buf[256] = { i, i < 64 };
-
-    twi::write(0x20, buf, 2);
+    twi::start_with_data(buf, sizeof(buf));
     twi::wait_idle();
+    led_state = twi::get_buf()[1];
 
     delay_ms(1);
 }
