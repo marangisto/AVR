@@ -55,7 +55,7 @@ struct twi_traits<1>
 #endif
 
 template<int INST>
-class twi_t
+class twi_master_t
 {
 public:
     typedef twi_traits<INST> inst;
@@ -162,20 +162,11 @@ private:
     static volatile uint8_t            *s_dst;
 };
 
-template<int INST> volatile bool twi_t<INST>::s_busy = false;
-template<int INST> volatile uint8_t twi_t<INST>::s_addr;
-template<int INST> volatile uint8_t twi_t<INST>::s_nw;
-template<int INST> volatile uint8_t twi_t<INST>::s_nr;
-template<int INST> volatile uint8_t twi_t<INST>::s_err;
-template<int INST> volatile const uint8_t *twi_t<INST>::s_src;
-template<int INST> volatile uint8_t *twi_t<INST>::s_dst;
-
-// Error handling suppory. User must provide required twi_error handler
-// in scope before using this macro.
-#define TWI(expr) do { \
-    void twi_error(uint8_t err, const char *file, uint16_t line); \
-    uint8_t _err = expr; \
-    if (_err) \
-        twi_error(_err, __FILE__, __LINE__); \
-} while (false)
+template<int INST> volatile bool twi_master_t<INST>::s_busy = false;
+template<int INST> volatile uint8_t twi_master_t<INST>::s_addr;
+template<int INST> volatile uint8_t twi_master_t<INST>::s_nw;
+template<int INST> volatile uint8_t twi_master_t<INST>::s_nr;
+template<int INST> volatile uint8_t twi_master_t<INST>::s_err;
+template<int INST> volatile const uint8_t *twi_master_t<INST>::s_src;
+template<int INST> volatile uint8_t *twi_master_t<INST>::s_dst;
 
