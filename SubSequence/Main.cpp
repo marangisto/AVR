@@ -11,10 +11,7 @@
 template <class T> const T& max(const T& a, const T& b) { return (a<b) ? b : a; }
 template <class T> const T& min(const T& a, const T& b) { return (a<b) ? a : b; }
 
-typedef twi_t<1> twi;
-
-typedef input_t<PE, 0, enable_pullup> pe0;
-typedef input_t<PE, 1, enable_pullup> pe1;
+typedef twi_master_t<1> twi;
 
 typedef output_t<PB, 2> leds;
 
@@ -102,8 +99,6 @@ void setup()
     aux::clock_select<1>();
     aux::enable();
 
-    pe0::setup();   // FIXME: remove these if we have use pullups on master!
-    pe1::setup();
     twi::setup();
 
     sei();
@@ -139,9 +134,10 @@ void loop()
         if (swa_state & (1 << j))
             led_state = adc_value[j] >> 2;
 
-    static uint8_t buf[256] = { 0x00, i };
+    uint8_t buf[256] = { i, i < 64 };
 
-    twi::write(0x61, buf, 2);
+    twi::write(0x20, buf, 2);
+    twi::wait_idle();
 
     delay_ms(1);
 }
