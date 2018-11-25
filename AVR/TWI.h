@@ -31,12 +31,12 @@ struct twi_traits<0>
     static inline volatile uint8_t& twcr() { return TWCR0; }
     static inline volatile uint8_t& twdr() { return TWDR0; }
     static inline volatile uint8_t& twar() { return TWAR0; }
-    static const uint8_t twint = TWINT0;
-    static const uint8_t twea = TWEA0;
-    static const uint8_t twen = TWEN0;
-    static const uint8_t twie = TWIE0;
-    static const uint8_t twsta = TWSTA0;
-    static const uint8_t twsto = TWSTO0;
+    static const uint8_t twint = TWINT;
+    static const uint8_t twea = TWEA;
+    static const uint8_t twen = TWEN;
+    static const uint8_t twie = TWIE;
+    static const uint8_t twsta = TWSTA;
+    static const uint8_t twsto = TWSTO;
 };
 
 #if defined(__AVR_ATmega328PB__)
@@ -133,7 +133,10 @@ public:
                 inst::twcr() = TWINT_TWEN_TWIE;                     // send
             }
             else if (s_nr)
+            {
+                s_src = 0;                                          // next cycle is read mode
                 inst::twcr() = TWINT_TWEN_TWIE | _BV(inst::twsta);  // repeated start condition
+            }
             else
                 break;                                              // stop
             return;
@@ -157,12 +160,12 @@ private:
     static const uint8_t TWINT_TWEN_TWIE = _BV(inst::twint) | _BV(inst::twen) | _BV(inst::twie);
 
     static volatile bool            s_busy;
-    static volatile uint8_t            s_addr;
-    static volatile uint8_t            s_nw;
-    static volatile uint8_t            s_nr;
+    static volatile uint8_t         s_addr;
+    static volatile uint8_t         s_nw;
+    static volatile uint8_t         s_nr;
     static volatile uint8_t         s_err;
-    static volatile const uint8_t    *s_src;
-    static volatile uint8_t            *s_dst;
+    static volatile const uint8_t   *s_src;
+    static volatile uint8_t         *s_dst;
 };
 
 template<int INST> volatile bool twi_master_t<INST>::s_busy = false;
@@ -216,10 +219,12 @@ public:
         {
         case TW_ST_SLA_ACK:
             s_ptr = s_buf;
+            s_status |= 1 << 0;
         case TW_ST_DATA_ACK:
             inst::twdr() = *s_ptr++;
             s_busy = true;
             inst::twcr() = TWINT_TWEN_TWIE_TWEA;
+            s_status |= 1 << 1;
             break;
         case TW_ST_DATA_NACK:
             if (s_ptr - s_buf == s_len)
@@ -228,6 +233,7 @@ public:
                 s_err = inst::twsr();
             s_busy = false;
             inst::twcr() = TWINT_TWEN_TWIE_TWEA;
+            s_status |= 1 << 2;
             break;
         case TW_SR_GCALL_ACK:
             // gen_addr_call = true;
@@ -236,6 +242,7 @@ public:
             s_ptr = s_buf;
             s_busy = true;
             inst::twcr() = TWINT_TWEN_TWIE_TWEA;
+            s_status |= 1 << 3;
             break;
         case TW_SR_DATA_ACK:
         case TW_SR_GCALL_DATA_ACK:
@@ -243,10 +250,12 @@ public:
             // last_trans_ok = true;
             s_busy = true;
             inst::twcr() = TWINT_TWEN_TWIE_TWEA;
+            s_status |= 1 << 4;
             break;
         case TW_SR_STOP:
             inst::twcr() = TWINT_TWEN_TWIE_TWEA;
             s_busy = false;
+            s_status |= 1 << 5;
             break;
         case TW_SR_DATA_NACK:
         case TW_SR_GCALL_DATA_NACK:
@@ -254,12 +263,19 @@ public:
         case TW_BUS_ERROR:
             s_err = inst::twsr();
             inst::twcr() = _BV(inst::twsto) | _BV(inst::twint);     // release bus
+            s_status |= 1 << 6;
             break;
         default:
             s_err = inst::twsr();
             s_busy = false;
             inst::twcr() = TWINT_TWEN_TWIE_TWEA;
+            s_status |= 1 << 7;
         }
+    }
+
+    static uint8_t status()
+    {
+        return s_status;
     }
 
 private:
@@ -270,6 +286,7 @@ private:
     static volatile uint8_t         s_len;
     static volatile bool            s_busy;
     static volatile uint8_t         s_err;
+    static volatile uint8_t         s_status;
 };
 
 template<int INST> volatile bool twi_slave_t<INST>::s_busy = false;
@@ -277,4 +294,5 @@ template<int INST> volatile uint8_t twi_slave_t<INST>::s_buf[16];
 template<int INST> volatile uint8_t *twi_slave_t<INST>::s_ptr;
 template<int INST> volatile uint8_t twi_slave_t<INST>::s_len;
 template<int INST> volatile uint8_t twi_slave_t<INST>::s_err;
+template<int INST> volatile uint8_t twi_slave_t<INST>::s_status = 0;
 
