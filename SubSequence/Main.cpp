@@ -1,4 +1,5 @@
 #define NO_TIMER_VECTORS 1
+#include <AVR/UART.h>
 #include <AVR/Main.h>
 #include <AVR/Delay.h>
 #include <AVR/Timer.h>
@@ -11,7 +12,7 @@
 template <class T> const T& max(const T& a, const T& b) { return (a<b) ? b : a; }
 template <class T> const T& min(const T& a, const T& b) { return (a<b) ? a : b; }
 
-static const uint8_t twi_addr = 0x20;   // FIXME: use EEPROM and reset config
+static const uint8_t twi_addr = 0x62;   // FIXME: use EEPROM and reset config
 
 //typedef twi_master_t<1> twi;
 typedef twi_slave_t<1> twi;
@@ -137,7 +138,24 @@ void loop()
 
     twi::start_with_data(buf, sizeof(buf));
     twi::wait_idle();
-    led_state = twi::get_buf()[1];
+
+    switch (twi::get_buf()[0])
+    {
+    case 0:                                 // write leds
+        led_state = twi::get_buf()[1];
+        break;
+    case 1:                                 // read step
+        {
+            uint16_t value = adc_value[twi::get_buf()[1]];
+            twi::start_with_data(reinterpret_cast<uint8_t*>(&value), sizeof(value));
+            twi::wait_idle();
+        }
+        break;
+    default:
+        ;                                   // ignore illegal command
+    }
+
+    //led_state = twi::status();
 
     delay_ms(1);
 }
