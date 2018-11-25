@@ -83,11 +83,10 @@ public:
 
     static uint8_t write_read(uint8_t addr, volatile const uint8_t *src, uint8_t nw, volatile uint8_t *dst, uint8_t nr)
     {
-        if (s_busy)
+        if (busy())
             return s_err = 0xfe;                                    // busy
 
         s_err = 0;
-        s_busy = true;
         s_addr = addr;
         s_nw = nw;
         s_nr = nr;
@@ -97,11 +96,16 @@ public:
         return wait_idle();
     }
 
+    static inline bool busy()
+    {
+        return (inst::twcr() & _BV(inst::twie)) != 0;
+    }
+
     static inline uint8_t wait_idle()
     {
         for (uint16_t i = 0; i < 100000; ++i)                       // wait up to 1 second
         {
-            if (!s_busy)
+            if (!busy())
                 return s_err;
             delay_us(10);
         }
@@ -116,16 +120,16 @@ public:
         case TW_REP_START:
             inst::twdr() = (s_addr << 1) | (s_src ? 0 : 1);         // SLA+R/W
             inst::twcr() = TWINT_TWEN_TWIE;                         // send
-            return;
+            break;
         case TW_MT_SLA_ACK:                                         // from SLA+W
             if (s_nw)
             {
                 inst::twdr() = *s_src++;                            // data
                 inst::twcr() = TWINT_TWEN_TWIE;                     // send
-                return;
             }
             else
-                break;                                              // stop
+                inst::twcr() = TWINT_TWEN_TWSTO;                    // stop condition
+            break;
         case TW_MT_DATA_ACK:                                        // from data write
             if (--s_nw)
             {
@@ -138,28 +142,27 @@ public:
                 inst::twcr() = TWINT_TWEN_TWIE | _BV(inst::twsta);  // repeated start condition
             }
             else
-                break;                                              // stop
-            return;
+                inst::twcr() = TWINT_TWEN_TWSTO;                    // stop condition
+            break;
         case TW_MR_DATA_ACK:
             *s_dst++ = inst::twdr();                                // fall through, same code as SLA_ACK
         case TW_MR_SLA_ACK:
             inst::twcr() = TWINT_TWEN_TWIE |  (--s_nr ? _BV(inst::twea) : 0); // ack if more to read
-            return;
+            break;
         case TW_MR_DATA_NACK:
             *s_dst++ = inst::twdr();
+            inst::twcr() = TWINT_TWEN_TWSTO;                        // stop condition
             break;                                                  // stop
         default:
             s_err = inst::twsr() & 0xf8;                            // stop + error
+            inst::twcr() = TWINT_TWEN_TWSTO;                        // stop condition
         }
-
-        inst::twcr() = _BV(inst::twint) | _BV(inst::twsto) | _BV(inst::twen); // stop condition
-        s_busy = false;
     }
 
 private:
     static const uint8_t TWINT_TWEN_TWIE = _BV(inst::twint) | _BV(inst::twen) | _BV(inst::twie);
+    static const uint8_t TWINT_TWEN_TWSTO = _BV(inst::twint) | _BV(inst::twen) | _BV(inst::twsto);
 
-    static volatile bool            s_busy;
     static volatile uint8_t         s_addr;
     static volatile uint8_t         s_nw;
     static volatile uint8_t         s_nr;
@@ -168,7 +171,6 @@ private:
     static volatile uint8_t         *s_dst;
 };
 
-template<int INST> volatile bool twi_master_t<INST>::s_busy = false;
 template<int INST> volatile uint8_t twi_master_t<INST>::s_addr;
 template<int INST> volatile uint8_t twi_master_t<INST>::s_nw;
 template<int INST> volatile uint8_t twi_master_t<INST>::s_nr;
@@ -181,22 +183,21 @@ class twi_slave_t
 {
 public:
     typedef twi_traits<INST> inst;
+    typedef void (*callback_t)(bool read, volatile uint8_t *buf, uint8_t len);
 
-    static inline void setup(uint8_t own_addr)
+    static inline void setup(uint8_t own_addr, callback_t callback)
     {
         inst::twar() = own_addr << 1;       // own address
         inst::twcr() = _BV(inst::twen);     // enable TWI interface
+        s_callback = callback;
         s_busy = false;
     }
 
-    static void start_with_data(const uint8_t *msg, uint8_t len)
+    static void start()
     {
         wait_idle();
         s_err = TW_NO_INFO;
         s_busy = true;
-        s_len = len;
-        for (volatile uint8_t *p = s_ptr = s_buf; len > 0; --len)
-            *p++ = *msg++;
         inst::twcr() = TWINT_TWEN_TWIE_TWEA;
     }
 
@@ -218,6 +219,7 @@ public:
         switch (inst::twsr())
         {
         case TW_ST_SLA_ACK:
+            s_callback(true, s_buf, s_ptr - s_buf);
             s_ptr = s_buf;
             s_status |= 1 << 0;
         case TW_ST_DATA_ACK:
@@ -253,6 +255,7 @@ public:
             s_status |= 1 << 4;
             break;
         case TW_SR_STOP:
+            s_callback(false, s_buf, s_ptr - s_buf);
             inst::twcr() = TWINT_TWEN_TWIE_TWEA;
             s_busy = false;
             s_status |= 1 << 5;
@@ -280,6 +283,7 @@ public:
 
 private:
     static const uint8_t TWINT_TWEN_TWIE_TWEA = _BV(inst::twint) | _BV(inst::twen) | _BV(inst::twie) | _BV(inst::twea);
+    static void dummy_callback(bool read, volatile uint8_t *buf, uint8_t len) {}
 
     static volatile uint8_t         s_buf[16];  // FIXME: parameterize size or use caller space?
     static volatile uint8_t         *s_ptr;
@@ -287,6 +291,7 @@ private:
     static volatile bool            s_busy;
     static volatile uint8_t         s_err;
     static volatile uint8_t         s_status;
+    static callback_t               s_callback;
 };
 
 template<int INST> volatile bool twi_slave_t<INST>::s_busy = false;
@@ -295,4 +300,5 @@ template<int INST> volatile uint8_t *twi_slave_t<INST>::s_ptr;
 template<int INST> volatile uint8_t twi_slave_t<INST>::s_len;
 template<int INST> volatile uint8_t twi_slave_t<INST>::s_err;
 template<int INST> volatile uint8_t twi_slave_t<INST>::s_status = 0;
+template<int INST> typename twi_slave_t<INST>::callback_t twi_slave_t<INST>::s_callback = twi_slave_t<INST>::dummy_callback;
 

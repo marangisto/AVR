@@ -45,17 +45,17 @@ void loop()
     static uint8_t i = 0;
     static uint8_t j = 0;
 
-    if (++j > 250)
+    if (++j > 50)
     {
         j = 0;
         i = (i + 1) & 0x07;
+
         uint8_t bit = 1 << i;
         uint8_t led_cmd[2] = { 0, bit };
 
         twi::write(twi_addr, led_cmd, sizeof(led_cmd));
         twi::wait_idle();
-
-        delay_ms(500);
+        delay_us(100);
 
         uint8_t read_cmd[2] = { 1, i };
         uint16_t value = 0;
@@ -63,7 +63,6 @@ void loop()
         twi::write_read(twi_addr, read_cmd, sizeof(read_cmd), reinterpret_cast<uint8_t*>(&value), sizeof(value));
         twi::wait_idle();
         printf("%d %d\n", i, value);
-
         LED::toggle();
     }
 

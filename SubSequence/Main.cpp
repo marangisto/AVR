@@ -46,8 +46,6 @@ static const uint8_t ch5 = 2;
 static const uint8_t ch6 = 1;
 static const uint8_t ch7 = 7;
 
-static uint16_t adc_value[8];
-
 typedef timer_t<2> aux;
 
 ISR(TIMER2_OVF_vect)
@@ -93,6 +91,46 @@ ISR(TWI1_vect)
     twi::isr();
 }
 
+static inline uint16_t sw_bit(uint8_t i, uint8_t sw)
+{
+    return (sw & (1 << i)) >> i;
+}
+
+static void slave_callback(bool read, volatile uint8_t *buf, uint8_t len)
+{
+    uint8_t cmd = buf[0];
+
+    switch (cmd)
+    {
+    case 0:                         // write leds
+        if (!read)
+            led_state = buf[1];
+        break;
+    case 1:                         // read adc
+        if (read)
+        {
+            uint8_t step = buf[1];
+            volatile uint16_t *value = reinterpret_cast<volatile uint16_t*>(buf);
+            
+            switch (step)
+            {
+                case 0: *value = adc::read<ch0>() | sw_bit(0, swa_state) << 13 | sw_bit(0, swb_state) << 14; break;
+                case 1: *value = adc::read<ch1>() | sw_bit(1, swa_state) << 13 | sw_bit(1, swb_state) << 14; break;
+                case 2: *value = adc::read<ch2>() | sw_bit(2, swa_state) << 13 | sw_bit(2, swb_state) << 14; break;
+                case 3: *value = adc::read<ch3>() | sw_bit(3, swa_state) << 13 | sw_bit(3, swb_state) << 14; break;
+                case 4: *value = adc::read<ch4>() | sw_bit(4, swa_state) << 13 | sw_bit(4, swb_state) << 14; break;
+                case 5: *value = adc::read<ch5>() | sw_bit(5, swa_state) << 13 | sw_bit(5, swb_state) << 14; break;
+                case 6: *value = adc::read<ch6>() | sw_bit(6, swa_state) << 13 | sw_bit(6, swb_state) << 14; break;
+                case 7: *value = adc::read<ch7>() | sw_bit(7, swa_state) << 13 | sw_bit(7, swb_state) << 14; break;
+                default: *value = 0;
+            }
+        }
+        break;
+    default:
+        ; // ignore illegal command
+    }
+}
+
 void setup()
 {
     leds::setup();
@@ -103,7 +141,7 @@ void setup()
     aux::clock_select<1>();
     aux::enable();
 
-    twi::setup(twi_addr);
+    twi::setup(twi_addr, slave_callback);
 
     sei();
 
@@ -116,47 +154,11 @@ void setup()
     }
 
     led_state = 0;
+    twi::start();
 }
 
 void loop()
 {
-    static uint8_t i = 0;
-
-    switch (i++ & 0x07)
-    {
-        case 0: adc_value[0] = adc::read<ch0>(); break;
-        case 1: adc_value[1] = adc::read<ch1>(); break;
-        case 2: adc_value[2] = adc::read<ch2>(); break;
-        case 3: adc_value[3] = adc::read<ch3>(); break;
-        case 4: adc_value[4] = adc::read<ch4>(); break;
-        case 5: adc_value[5] = adc::read<ch5>(); break;
-        case 6: adc_value[6] = adc::read<ch6>(); break;
-        case 7: adc_value[7] = adc::read<ch7>(); break;
-    }
-
-    uint8_t buf[2] = { 0, 0 };
-
-    twi::start_with_data(buf, sizeof(buf));
-    twi::wait_idle();
-
-    switch (twi::get_buf()[0])
-    {
-    case 0:                                 // write leds
-        led_state = twi::get_buf()[1];
-        break;
-    case 1:                                 // read step
-        {
-            uint16_t value = adc_value[twi::get_buf()[1]];
-            twi::start_with_data(reinterpret_cast<uint8_t*>(&value), sizeof(value));
-            twi::wait_idle();
-        }
-        break;
-    default:
-        ;                                   // ignore illegal command
-    }
-
-    //led_state = twi::status();
-
     delay_ms(1);
 }
 
