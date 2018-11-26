@@ -1,7 +1,10 @@
+#define NO_TIMER_VECTORS 1
 #include <AVR/UART.h>
 #include <AVR/TWI.h>
+#include <AVR/ADC.h>
 #include <AVR/Main.h>
 #include <AVR/Delay.h>
+#include <AVR/Timer.h>
 #include <Arduino/Pins.h>
 
 typedef D13 LED;
@@ -15,13 +18,34 @@ ISR(TWI_vect)
     twi::isr();
 }
 
+static const int adc_bpm = 3;
+
+typedef timer_t<2> aux;
+
+static const uint16_t aux_prescale = 64;
+static volatile uint16_t aux_count = 0;
+static volatile bool do_step = false;
+
+ISR(TIMER2_OVF_vect)
+{
+    static uint16_t i = 0;
+
+    if (i++ >= aux_count)
+    {
+        do_step = true;
+        i = 0;
+    }
+}
+
 void setup()
 {
     LED::setup();
     UART::setup<115200>();
-    //twi::setup(0x20);
+    adc::setup<128>();
+    aux::setup<normal_mode>();
+    aux::clock_select<aux_prescale>();
+    aux::enable();
     twi::setup();
-
     sei();
 
     printf("Marangisto Sequence 0.1\n");
@@ -43,11 +67,13 @@ void setup()
 void loop()
 {
     static uint8_t i = 0;
-    static uint8_t j = 0;
 
-    if (++j > 50)
+    aux_count = 1 + adc::read<adc_bpm>();
+
+    if (do_step)
     {
-        j = 0;
+        LED::toggle();
+        do_step = false;
         i = (i + 1) & 0x07;
 
         uint8_t bit = 1 << i;
@@ -63,7 +89,6 @@ void loop()
         twi::write_read(twi_addr, read_cmd, sizeof(read_cmd), reinterpret_cast<uint8_t*>(&value), sizeof(value));
         twi::wait_idle();
         printf("%d %d\n", i, value);
-        LED::toggle();
     }
 
     delay_us(500);
