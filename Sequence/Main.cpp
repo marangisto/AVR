@@ -8,6 +8,7 @@
 #include <Arduino/Pins.h>
 
 typedef D13 LED;
+typedef output_t<PD, 2> trig;
 
 typedef twi_master_t<0> twi;
 
@@ -20,6 +21,7 @@ ISR(TWI_vect)
 
 static const int adc_bpm = 3;
 
+typedef timer_t<1> pwm;
 typedef timer_t<2> aux;
 
 static const uint16_t aux_prescale = 64;
@@ -42,9 +44,17 @@ void setup()
     LED::setup();
     UART::setup<115200>();
     adc::setup<128>();
+    trig::setup();
+
+    pwm::setup<fast_pwm, top_0x1ff>();
+    pwm::clock_select<1>();
+    pwm::output_pin<channel_a>::setup();
+    pwm::compare_output_mode<channel_a, clear_on_compare_match>();
+
     aux::setup<normal_mode>();
     aux::clock_select<aux_prescale>();
     aux::enable();
+
     twi::setup();
     sei();
 
@@ -88,7 +98,16 @@ void loop()
 
         twi::write_read(twi_addr, read_cmd, sizeof(read_cmd), reinterpret_cast<uint8_t*>(&value), sizeof(value));
         twi::wait_idle();
-        printf("%d %d\n", i, value);
+        bool sw_a = (value & (1 << 13)) != 0;
+        bool sw_b = (value & (1 << 14)) != 0;
+        printf("%d %d %s\n", i, value, sw_a ? "a" : (sw_b ? "b" : " "));
+        if (sw_a || sw_b)
+        {
+            pwm::output_compare_register<channel_a>() = 0x1ff - (value >> 1);   // inverted output
+            trig::set();
+            delay_us(100);
+            trig::clear();
+        }
     }
 
     delay_us(500);
