@@ -8,7 +8,8 @@
 #include <Arduino/Pins.h>
 
 typedef D13 LED;
-typedef output_t<PD, 2> trig;
+typedef output_t<PD, 2> trig_a;
+typedef output_t<PD, 3> trig_b;
 
 typedef twi_master_t<0> twi;
 
@@ -44,12 +45,15 @@ void setup()
     LED::setup();
     UART::setup<115200>();
     adc::setup<128>();
-    trig::setup();
+    trig_a::setup();
+    trig_b::setup();
 
     pwm::setup<fast_pwm, top_0x1ff>();
     pwm::clock_select<1>();
     pwm::output_pin<channel_a>::setup();
+    pwm::output_pin<channel_b>::setup();
     pwm::compare_output_mode<channel_a, clear_on_compare_match>();
+    pwm::compare_output_mode<channel_b, clear_on_compare_match>();
 
     aux::setup<normal_mode>();
     aux::clock_select<aux_prescale>();
@@ -101,12 +105,19 @@ void loop()
         bool sw_a = (value & (1 << 13)) != 0;
         bool sw_b = (value & (1 << 14)) != 0;
         printf("%d %d %s\n", i, value, sw_a ? "a" : (sw_b ? "b" : " "));
-        if (sw_a || sw_b)
+        if (sw_a )
         {
-            pwm::output_compare_register<channel_a>() = 0x1ff - (value >> 1);   // inverted output
-            trig::set();
+            pwm::output_compare_register<channel_a>() = /* 0x1ff - */ (value >> 1);   // inverted output
+            trig_a::set();
             delay_us(100);
-            trig::clear();
+            trig_a::clear();
+        }
+        else if (sw_b)
+        {
+            pwm::output_compare_register<channel_b>() = /* 0x1ff - */ (value >> 1);   // inverted output
+            trig_b::set();
+            delay_us(100);
+            trig_b::clear();
         }
     }
 
