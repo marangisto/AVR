@@ -13,6 +13,7 @@ typedef output_t<PD, 3> trig_b;
 
 typedef input_t<PD, 4, enable_pullup> btn_a;
 typedef input_t<PD, 5, enable_pullup> btn_b;
+typedef input_t<PD, 6, enable_pullup> btn_c;
 
 typedef twi_master_t<0> twi;
 
@@ -28,10 +29,12 @@ static const int adc_bpm = 3;
 typedef timer_t<1> pwm;
 typedef timer_t<2> aux;
 
+enum action_t { no_action, play_step, play_no_advance };
+
 static const uint16_t aux_prescale = 64;
 static volatile uint16_t aux_count = 0;
 static volatile bool auto_step = true;
-static volatile bool do_step = false;
+static volatile action_t action = no_action;
 
 ISR(TIMER2_OVF_vect)
 {
@@ -39,7 +42,7 @@ ISR(TIMER2_OVF_vect)
 
     if (auto_step && i++ >= aux_count)
     {
-        do_step = true;
+        action = play_step;
         i = 0;
     }
 }
@@ -53,6 +56,7 @@ void setup()
     trig_b::setup();
     btn_a::setup();
     btn_b::setup();
+    btn_c::setup();
 
     pwm::setup<fast_pwm, top_0x1ff>();
     pwm::clock_select<1>();
@@ -89,26 +93,34 @@ void loop()
     static uint8_t i = 0;
     static bool last_btn_a = true;
     static bool last_btn_b = true;
+    static bool last_btn_c = true;
 
     aux_count = 1 + adc::read<adc_bpm>();
 
     bool b = btn_a::read();
 
     if (b != last_btn_a && !b)                      // run / stop toggle
-            auto_step = !auto_step;
+        auto_step = !auto_step;
     last_btn_a = b;
 
     b = btn_b::read();
 
     if (b != last_btn_b && !b)                      // run / stop toggle
-            do_step = true;
+        action = play_step;
     last_btn_b = b;
 
-    if (do_step)
+    b = btn_c::read();
+
+    if (b != last_btn_c && !b)                      // run / stop toggle
+        action = play_no_advance;
+    last_btn_c = b;
+
+    if (action != no_action)
     {
         LED::toggle();
-        do_step = false;
-        i = (i + 1) & 0x07;
+
+        if (action == play_step)
+            i = (i + 1) & 0x07;
 
         uint8_t bit = 1 << i;
         uint8_t led_cmd[2] = { 0, bit };
@@ -139,6 +151,7 @@ void loop()
             delay_us(100);
             trig_b::clear();
         }
+        action = no_action;
     }
 
     delay_us(500);
