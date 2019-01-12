@@ -38,68 +38,66 @@ void setup()
     // sei();
 }
 
+static bool update(uint8_t& c, uint8_t m)
+{
+    if (c++ >= m)
+    {
+        c = 0;
+        return true;
+    }
+
+    return false;
+}
+
 void loop()
 {
     static uint32_t clock = 0;
     static bool tick = false;
     static uint8_t i = 0;
-    static bool b0 = false;
-    static bool b1 = false;
-    static bool b2 = false;
-    static bool b3 = false;
-    static bool b4 = false;
-    static bool b5 = false;
-    static bool b6 = false;
-    static bool b7 = false;
+    static uint8_t m0 = 1;
+    static uint8_t m1 = 2;
+    static uint8_t m2 = 3;
+    static uint8_t m3 = 4;
+    static uint8_t m4 = 5;
+    static uint8_t m5 = 6;
+    static uint8_t m6 = 6;
+    static uint8_t m7 = 7;
+    static uint8_t c0 = m0;
+    static uint8_t c1 = m1;
+    static uint8_t c2 = m2;
+    static uint8_t c3 = m3;
+    static uint8_t c4 = m4;
+    static uint8_t c5 = m5;
+    static uint8_t c6 = m6;
+    static uint8_t c7 = m7;
 
-    if (i++)
+    if (!i++)
         tick = true;
 
     if (tick)
     {
-        b0 = !b0;
-
-        if (b0)
-        {
-            b1 = !b1;
-            if (b1)
-            {
-                b2 = !b2;
-                if (b2)
-                {
-                    b3 = !b3;
-                    if (b3)
-                    {
-                        b4 = !b4;
-                        if (b4)
-                        {
-                            b5 = !b5;
-                            if (b5)
-                            {
-                                b6 = !b6;
-                                if (b6)
-                                    b7 = !b7;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        out_0::write(b0);
-        out_1::write(b1);
-        out_2::write(b2);
-        out_3::write(b3);
-        out_4::write(b4);
-        out_5::write(b5);
-        out_6::write(b6);
-        out_7::write(b7);
+        if (update(c0, m0))
+            out_0::toggle();
+        if (update(c1, m1))
+            out_1::toggle();
+        if (update(c2, m2))
+            out_2::toggle();
+        if (update(c3, m3))
+            out_3::toggle();
+        if (update(c4, m4))
+            out_4::toggle();
+        if (update(c5, m5))
+            out_5::toggle();
+        if (update(c6, m6))
+            out_6::toggle();
+        if (update(c7, m7))
+            out_7::toggle();
     }
 
     if (tick)
         ++clock;
 
     tick = false;
-    delay_ms(100);
+    delay_us(250);
 }
 
