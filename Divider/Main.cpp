@@ -53,16 +53,22 @@ void loop()
 {
     static uint32_t clock = 0;
     static bool tick = false;
+    static bool b0 = false;
+    static bool b1 = false;
+    static bool b2 = false;
+    static bool b3 = false;
+    static bool b4 = false;
+    static bool b5 = false;
+    static bool b6 = false;
+    static bool b7 = false;
     static uint8_t i = 0;
-    static uint8_t m0 = 1;
     static uint8_t m1 = 2;
-    static uint8_t m2 = 3;
-    static uint8_t m3 = 4;
-    static uint8_t m4 = 5;
-    static uint8_t m5 = 6;
-    static uint8_t m6 = 6;
-    static uint8_t m7 = 7;
-    static uint8_t c0 = m0;
+    static uint8_t m2 = 4;
+    static uint8_t m3 = 8;
+    static uint8_t m4 = 16;
+    static uint8_t m5 = 32;
+    static uint8_t m6 = 64;
+    static uint8_t m7 = 128;
     static uint8_t c1 = m1;
     static uint8_t c2 = m2;
     static uint8_t c3 = m3;
@@ -71,34 +77,36 @@ void loop()
     static uint8_t c6 = m6;
     static uint8_t c7 = m7;
 
-    if (!i++)
+    if (!i++)               // this should be the clock interrupt
+    {
         tick = true;
+        b0 = !b0;
+    }
 
     if (tick)
     {
-        bool b0 = update(c0, m0);
-        bool b1 = update(c1, m1);
-        bool b2 = update(c2, m2);
-        bool b3 = update(c3, m3);
-        bool b4 = update(c4, m4);
-        bool b5 = update(c5, m5);
-        bool b6 = update(c6, m6);
-        bool b7 = update(c7, m7);
-
-        out_0::write(b0);
-        out_1::write(b1);
-        out_2::write(b2);
-        out_3::write(b3);
-        out_4::write(b4);
-        out_5::write(b5);
-        out_6::write(b6);
-        out_7::write(b7);
+        b1 = update(c1, m1);
+        b2 = update(c2, m2);
+        b3 = update(c3, m3);
+        b4 = update(c4, m4);
+        b5 = update(c5, m5);
+        b6 = update(c6, m6);
+        b7 = update(c7, m7);
     }
+
+    out_0::write(b0);
+    out_1::write(b1);
+    out_2::write(b2);
+    out_3::write(b3);
+    out_4::write(b4);
+    out_5::write(b5);
+    out_6::write(b6);
+    out_7::write(b7);
 
     if (tick)
         ++clock;
 
     tick = false;
-    delay_us(250);
+    delay_ms(1);
 }
 
