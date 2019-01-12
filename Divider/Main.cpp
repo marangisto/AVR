@@ -76,22 +76,23 @@ void loop()
 
     if (tick)
     {
-        if (update(c0, m0))
-            out_0::toggle();
-        if (update(c1, m1))
-            out_1::toggle();
-        if (update(c2, m2))
-            out_2::toggle();
-        if (update(c3, m3))
-            out_3::toggle();
-        if (update(c4, m4))
-            out_4::toggle();
-        if (update(c5, m5))
-            out_5::toggle();
-        if (update(c6, m6))
-            out_6::toggle();
-        if (update(c7, m7))
-            out_7::toggle();
+        bool b0 = update(c0, m0);
+        bool b1 = update(c1, m1);
+        bool b2 = update(c2, m2);
+        bool b3 = update(c3, m3);
+        bool b4 = update(c4, m4);
+        bool b5 = update(c5, m5);
+        bool b6 = update(c6, m6);
+        bool b7 = update(c7, m7);
+
+        out_0::write(b0);
+        out_1::write(b1);
+        out_2::write(b2);
+        out_3::write(b3);
+        out_4::write(b4);
+        out_5::write(b5);
+        out_6::write(b6);
+        out_7::write(b7);
     }
 
     if (tick)
