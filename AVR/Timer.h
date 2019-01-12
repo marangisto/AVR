@@ -30,18 +30,25 @@ struct timer_traits<0>
     static inline volatile uint8_t& timsk() { return TIMSK0; }
     static inline volatile count_t& tcnt() { return TCNT0; }
     static const uint8_t toie = TOIE0;
+    static const uint8_t ocaie = OCIE0A;
 };
 
 template<> struct channel_traits<0, channel_a>
 {
+#if defined(__AVR_ATtiny84__)
+#else
     typedef output_t<PD, 6> pin_t;
+#endif
 
     static inline volatile timer_traits<0>::count_t& ocr() { return OCR0A; }
 };
 
 template<> struct channel_traits<0, channel_b>
 {
+#if defined(__AVR_ATtiny84__)
+#else
     typedef output_t<PD, 5> pin_t;
+#endif
 
     static inline volatile timer_traits<0>::count_t& ocr() { return OCR0B; }
 };
@@ -165,6 +172,7 @@ struct timer_traits<1>
     static inline volatile uint8_t& timsk() { return TIMSK1; }
     static inline volatile count_t& tcnt() { return TCNT1; }
     static const uint8_t toie = TOIE1;
+    static const uint8_t ocaie = OCIE1A;
 };
 
 template<> struct channel_traits<1, channel_a>
@@ -344,6 +352,8 @@ template<> struct compare_match_traits<1, channel_b, set_on_compare_match>
     static const uint8_t bits = _BV(COM1B1) | _BV(COM1B0);
 };
 
+#if defined(__AVR_ATtiny84__)
+#else
 template<>
 struct timer_traits<2>
 {
@@ -354,6 +364,7 @@ struct timer_traits<2>
     static inline volatile uint8_t& timsk() { return TIMSK2; }
     static inline volatile count_t& tcnt() { return TCNT2; }
     static const uint8_t toie = TOIE2;
+    static const uint8_t ocaie = OCIE2A;
 };
 
 template<> struct channel_traits<2, channel_a>
@@ -488,6 +499,200 @@ template<> struct compare_match_traits<2, channel_b, set_on_compare_match>
 {
     static const uint8_t bits = _BV(COM2B1) | _BV(COM2B0);
 };
+#endif
+
+#if defined(__AVR_ATmega328PB__)
+template<>
+struct timer_traits<3>
+{
+    typedef uint16_t count_t;
+
+    static inline volatile uint8_t& tccra() { return TCCR3A; }
+    static inline volatile uint8_t& tccrb() { return TCCR3B; }
+    static inline volatile uint8_t& timsk() { return TIMSK3; }
+    static inline volatile count_t& tcnt() { return TCNT3; }
+    static const uint8_t toie = TOIE3;
+    static const uint8_t ocaie = OCIE3A;
+};
+
+template<> struct channel_traits<3, channel_a>
+{
+    typedef output_t<PB, 3> pin_t;
+
+    static inline volatile timer_traits<3>::count_t& ocr() { return OCR3A; }
+};
+
+template<> struct channel_traits<3, channel_b>
+{
+    typedef output_t<PB, 2> pin_t;
+
+    static inline volatile timer_traits<3>::count_t& ocr() { return OCR3B; }
+};
+
+template<> struct waveform_generator_traits<3, normal_mode, top_default>
+{ 
+    static const uint8_t bitsa = 0;
+    static const uint8_t bitsb = 0;
+};
+
+template<> struct waveform_generator_traits<3, pwm_phase_correct, top_0xff>
+{ 
+    static const uint8_t bitsa = _BV(WGM30);
+    static const uint8_t bitsb = 0;
+};
+
+template<> struct waveform_generator_traits<3, pwm_phase_correct, top_0x1ff>
+{ 
+    static const uint8_t bitsa = _BV(WGM31);
+    static const uint8_t bitsb = 0;
+};
+
+template<> struct waveform_generator_traits<3, pwm_phase_correct, top_0x3ff>
+{ 
+    static const uint8_t bitsa = _BV(WGM31) | _BV(WGM30);
+    static const uint8_t bitsb = 0;
+};
+
+template<> struct waveform_generator_traits<3, ctc_mode, top_ocra>
+{ 
+    static const uint8_t bitsa = 0;
+    static const uint8_t bitsb = _BV(WGM32);
+};
+
+template<> struct waveform_generator_traits<3, fast_pwm, top_0xff>
+{ 
+    static const uint8_t bitsa = _BV(WGM30);
+    static const uint8_t bitsb = _BV(WGM32);
+};
+
+template<> struct waveform_generator_traits<3, fast_pwm, top_0x1ff>
+{ 
+    static const uint8_t bitsa = _BV(WGM31);
+    static const uint8_t bitsb = _BV(WGM32);
+};
+
+template<> struct waveform_generator_traits<3, fast_pwm, top_0x3ff>
+{ 
+    static const uint8_t bitsa = _BV(WGM31) | _BV(WGM30);
+    static const uint8_t bitsb = _BV(WGM32);
+};
+
+template<> struct waveform_generator_traits<3, pwm_phase_frequency_correct, top_icr>
+{ 
+    static const uint8_t bitsa = 0;
+    static const uint8_t bitsb = _BV(WGM33);
+};
+
+template<> struct waveform_generator_traits<3, pwm_phase_frequency_correct, top_ocra>
+{ 
+    static const uint8_t bitsa = _BV(WGM30);
+    static const uint8_t bitsb = _BV(WGM33);
+};
+
+template<> struct waveform_generator_traits<3, pwm_phase_correct, top_icr>
+{ 
+    static const uint8_t bitsa = _BV(WGM31);
+    static const uint8_t bitsb = _BV(WGM33);
+};
+
+template<> struct waveform_generator_traits<3, pwm_phase_correct, top_ocra>
+{ 
+    static const uint8_t bitsa = _BV(WGM31) | _BV(WGM30);
+    static const uint8_t bitsb = _BV(WGM33);
+};
+
+template<> struct waveform_generator_traits<3, ctc_mode, top_icr>
+{ 
+    static const uint8_t bitsa = 0;
+    static const uint8_t bitsb = _BV(WGM33) | _BV(WGM32);
+};
+
+template<> struct waveform_generator_traits<3, fast_pwm, top_icr>
+{ 
+    static const uint8_t bitsa = _BV(WGM31);
+    static const uint8_t bitsb = _BV(WGM33) | _BV(WGM32);
+};
+
+template<> struct waveform_generator_traits<3, fast_pwm, top_ocra>
+{ 
+    static const uint8_t bitsa = _BV(WGM31) | _BV(WGM30);
+    static const uint8_t bitsb = _BV(WGM33) | _BV(WGM32);
+};
+
+template<> struct clock_select_traits<3, 0>
+{
+    static const uint8_t mask = _BV(CS32) | _BV(CS31) | _BV(CS30);
+    static const uint8_t bits = 0;
+};
+
+template<> struct clock_select_traits<3, 1>
+{
+    static const uint8_t bits = _BV(CS30);
+};
+
+template<> struct clock_select_traits<3, 8>
+{
+    static const uint8_t bits = _BV(CS31);
+};
+
+template<> struct clock_select_traits<3, 64>
+{
+    static const uint8_t bits = _BV(CS31) | _BV(CS30);
+};
+
+template<> struct clock_select_traits<3, 256>
+{
+    static const uint8_t bits = _BV(CS32);
+};
+
+template<> struct clock_select_traits<3, 1024>
+{
+    static const uint8_t bits = _BV(CS32) | _BV(CS30);
+};
+
+template<> struct compare_match_traits<3, channel_a, normal_port>
+{
+    static const uint8_t mask = _BV(COM3A1) | _BV(COM3A0);
+    static const uint8_t bits = 0;
+};
+
+template<> struct compare_match_traits<3, channel_a, toggle_on_compare_match>
+{
+    static const uint8_t bits = _BV(COM3A0);
+};
+
+template<> struct compare_match_traits<3, channel_a, clear_on_compare_match>
+{
+    static const uint8_t bits = _BV(COM3A1);
+};
+
+template<> struct compare_match_traits<3, channel_a, set_on_compare_match>
+{
+    static const uint8_t bits = _BV(COM3A1) | _BV(COM3A0);
+};
+
+template<> struct compare_match_traits<3, channel_b, normal_port>
+{
+    static const uint8_t mask = _BV(COM3B1) | _BV(COM3B0);
+    static const uint8_t bits = 0;
+};
+
+template<> struct compare_match_traits<3, channel_b, toggle_on_compare_match>
+{
+    static const uint8_t bits = _BV(COM3B0);
+};
+
+template<> struct compare_match_traits<3, channel_b, clear_on_compare_match>
+{
+    static const uint8_t bits = _BV(COM3B1);
+};
+
+template<> struct compare_match_traits<3, channel_b, set_on_compare_match>
+{
+    static const uint8_t bits = _BV(COM3B1) | _BV(COM3B0);
+};
+
+#endif
 
 template<int TNO>
 struct timer_t
@@ -536,9 +741,19 @@ struct timer_t
         timer_traits<TNO>::timsk() |= _BV(timer_traits<TNO>::toie);     // enable timer overflow interrupt
     }
 
+    static void enable_oca()
+    {
+        timer_traits<TNO>::timsk() |= _BV(timer_traits<TNO>::ocaie);     // enable timer compare match interrupt
+    }
+
     static void disable()
     {
         timer_traits<TNO>::timsk() &= ~_BV(timer_traits<TNO>::toie);    // disable timer overflow interrupt
+    }
+
+    static void disable_oca()
+    {
+        timer_traits<TNO>::timsk() &= ~_BV(timer_traits<TNO>::ocaie);    // disable timer overflow interrupt
     }
 
     static void isr(isr_t f)
@@ -546,16 +761,38 @@ struct timer_t
         g_isr = f;
     }
 
+    static void isr_oca(isr_t f)
+    {
+        g_isr_oca = f;
+    }
+
     static void dummy_isr()
     {
     }
 
     static isr_t g_isr;
+    static isr_t g_isr_oca;
 };
 
 template<int TNO>
 typename timer_t<TNO>::isr_t timer_t<TNO>::g_isr = timer_t<TNO>::dummy_isr;
 
+template<int TNO>
+typename timer_t<TNO>::isr_t timer_t<TNO>::g_isr_oca = timer_t<TNO>::dummy_isr;
+
+#if defined(NO_TIMER_VECTORS)
+#else
+#if defined(__AVR_ATtiny84__)
+ISR(TIM0_OVF_vect)
+{
+    timer_t<0>::g_isr();
+}
+
+ISR(TIM1_OVF_vect)
+{
+    timer_t<1>::g_isr();
+}
+#else
 ISR(TIMER0_OVF_vect)
 {
     timer_t<0>::g_isr();
@@ -570,4 +807,21 @@ ISR(TIMER2_OVF_vect)
 {
     timer_t<2>::g_isr();
 }
+
+ISR(TIMER0_COMPA_vect)
+{
+    timer_t<0>::g_isr_oca();
+}
+
+ISR(TIMER1_COMPA_vect)
+{
+    timer_t<1>::g_isr_oca();
+}
+
+ISR(TIMER2_COMPA_vect)
+{
+    timer_t<2>::g_isr_oca();
+}
+#endif
+#endif
 

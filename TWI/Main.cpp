@@ -6,27 +6,14 @@
 typedef D13 LED;
 typedef dfr0009_t lcd;
 typedef buttons_t btns;
-
-static void twi_error(uint8_t err, const char *file, uint16_t line)
-{
-    lcd::clear();
-    lcd::set_pos(0, 0);
-    lcd::write("TWI ERROR: 0x");
-    lcd::write(err, 16);
-    lcd::set_pos(1, 0);
-    lcd::write(file);
-    lcd::write(", ");
-    lcd::write(line);
-
-    while (true) ;  // stay here forever
-}
+typedef twi_master_t<0> twi;
 
 void setup()
 {
     LED::setup();
     lcd::setup();
     btns::setup();
-    twi_t::setup();
+    twi::setup();
     sei();
 
     for (uint8_t a = 0; a < 128; ++a)
@@ -35,7 +22,7 @@ void setup()
 
         if ((a & 0x78) == 0 || (a & 0x78) == 0x78)
             continue;   // reserved address
-        if (twi_t::write(a, buf, 0) == 0)
+        if (twi::write(a, buf, 0) == 0)
         {
             lcd::clear();
             lcd::write("TWI DEVICE: 0x");
@@ -72,9 +59,7 @@ void loop()
         {
             uint8_t buf[256] = { 0x00, 0x0 };
 
-            TWI(twi_t::write(0x60, buf, 2));
-            //TWI(err = twi_t::read(0x60, buf, x));
-            //TWI(err = twi_t::write(0x60, buf, 0));
+            twi::write(0x60, buf, 2);
         }
         update = true;
         break;
@@ -110,17 +95,17 @@ void loop()
     {
         uint8_t buf[] = { 0, i,  i, i + 1, i + 2, i + 3 };
 
-        twi_t::write(0xA0, buf, sizeof(buf));
+        twi::write(0xA0, buf, sizeof(buf));
         delay_ms(10);
-        twi_t::wait_idle();
+        twi::wait_idle();
         i += 4;
     }
     else
     {
         uint8_t adr[2] = { 0, j++ }, xs[8];
 
-        twi_t::write_read(sla, adr, sizeof(adr), xs, sizeof(xs));
-        twi_t::wait_idle();
+        twi::write_read(sla, adr, sizeof(adr), xs, sizeof(xs));
+        twi::wait_idle();
         for (uint8_t k = 0; k < sizeof(xs); ++k)
         {
             seg7::write(xs[k]);

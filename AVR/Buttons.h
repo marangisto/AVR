@@ -17,9 +17,6 @@ public:
 
     static uint8_t read()
     {
-        static uint8_t last_x = 0;
-        static uint8_t last_y = 0;
-        static uint16_t count = 0;
 
         uint8_t x = raw_read();
 
@@ -68,6 +65,14 @@ private:
 
         return n_limits;
     }
+
+    static uint8_t last_x;
+    static uint8_t last_y;
+    static uint16_t count;
 };
+
+template<int CH> uint8_t buttons_t<CH>::last_x = 0;
+template<int CH> uint8_t buttons_t<CH>::last_y = 0;
+template<int CH> uint16_t buttons_t<CH>::count = 0;
 
 #endif // BUTTONS_H
