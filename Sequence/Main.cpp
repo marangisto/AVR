@@ -28,7 +28,8 @@ typedef input_t<PD, 7> sense2;
 
 typedef twi_master_t<0> twi;
 
-static uint8_t twi_addr = 0;
+static uint8_t twi_addr[4];
+static uint8_t n_subseqs = 0;
 
 ISR(TWI0_vect)
 {
@@ -150,9 +151,9 @@ void setup()
 
         if ((a & 0x78) == 0 || (a & 0x78) == 0x78)
             continue;   // reserved address
-        if (twi::write(a, buf, 0) == 0)
+        if (twi::write(a, buf, 0) == 0 && n_subseqs < sizeof(twi_addr) / sizeof(*twi_addr))
         {
-            twi_addr = a;
+            twi_addr[n_subseqs++] = a;
             //printf("found sub-sequence at 0x%02x\n", a);
         }
     }
@@ -173,15 +174,16 @@ void loop()
 
         uint8_t bit = 1 << i;
         uint8_t led_cmd[2] = { 0, bit };
+        uint8_t subseq = twi_addr[i & 1];
 
-        twi::write(twi_addr, led_cmd, sizeof(led_cmd));
+        twi::write(subseq, led_cmd, sizeof(led_cmd));
         twi::wait_idle();
         delay_us(100);
 
         uint8_t read_cmd[2] = { 1, i };
         uint16_t value = 0;
 
-        twi::write_read(twi_addr, read_cmd, sizeof(read_cmd), reinterpret_cast<uint8_t*>(&value), sizeof(value));
+        twi::write_read(subseq, read_cmd, sizeof(read_cmd), reinterpret_cast<uint8_t*>(&value), sizeof(value));
         twi::wait_idle();
         bool sw_a = (value & (1 << 13)) != 0;
         bool sw_b = (value & (1 << 14)) != 0;
