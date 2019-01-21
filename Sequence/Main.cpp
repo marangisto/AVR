@@ -41,7 +41,7 @@ typedef timer_t<2> aux;
 enum action_t { no_action, play_step, play_no_advance };
 
 static const uint16_t aux_prescale = 64;
-static volatile uint16_t aux_count = 0;
+static volatile uint16_t aux_count = 100;
 static volatile bool auto_step = true;
 static volatile action_t action = no_action;
 
@@ -94,6 +94,7 @@ static uint16_t scan_switches()
     return x;
 }
 
+/*
 static uint8_t bit(uint16_t x)
 {
     for (uint8_t i = 0; i < 16; ++i)
@@ -101,6 +102,7 @@ static uint8_t bit(uint16_t x)
             return i + 1;
     return 0xf0;
 }
+*/
 
 void setup()
 {
@@ -158,19 +160,12 @@ void setup()
 
 void loop()
 {
-    //static uint8_t i = 0;
-
-    aux_count = 1 ;// FIXME + adc::read<adc_bpm>();
+    static uint8_t i = 0;
 
     uint16_t sw = scan_switches();
-    uint8_t b = bit(sw);
 
-    trig_1a::write((b & 0x01) != 0);
-    trig_1b::write((b & 0x02) != 0);
-    trig_2a::write((b & 0x04) != 0);
-    trig_2b::write((b & 0x08) != 0);
+    auto_step = sw & sw_run_a;
 
-    /*
     if (action != no_action)
     {
         if (action == play_step)
@@ -194,36 +189,20 @@ void loop()
         if (sw_a )
         {
             pwm::output_compare_register<channel_a>() = 0x1ff / (value >> 2);   // inverted output
-            trig_a::set();
+            trig_1a::set();
             delay_us(100);
-            trig_a::clear();
+            trig_1a::clear();
         }
         else if (sw_b)
         {
             pwm::output_compare_register<channel_b>() = 0x1ff - (value >> 2);   // inverted output
-            trig_b::set();
+            trig_1b::set();
             delay_us(100);
-            trig_b::clear();
+            trig_1b::clear();
         }
         action = no_action;
     }
 
     delay_us(500);
-    */
-
-
-
-    // REMOVE ME!
-    //
-
-    //trig_1a::toggle();
-    //trig_1b::toggle();
-    //trig_2a::toggle();
-    //trig_2b::toggle();
-    cv_1a::toggle();
-    cv_1b::toggle();
-    cv_2a::toggle();
-    cv_2b::toggle();
-    delay_ms(100);
 }
 
