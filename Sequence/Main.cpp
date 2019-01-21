@@ -1,30 +1,34 @@
 #define NO_TIMER_VECTORS 1
-#include <AVR/UART.h>
+//#include <AVR/UART.h>
 #include <AVR/TWI.h>
 #include <AVR/ADC.h>
 #include <AVR/Main.h>
 #include <AVR/Delay.h>
 #include <AVR/Timer.h>
-#include <Arduino/Pins.h>
+#include <AVR/Pins.h>
 
-typedef D13 LED;
-typedef output_t<PD, 2> trig_a;
-typedef output_t<PD, 3> trig_b;
+typedef output_t<PB, 1> cv_1a;
+typedef output_t<PB, 2> cv_1b;
+typedef output_t<PD, 2> cv_2a;
+typedef output_t<PD, 0> cv_2b;
 
-typedef input_t<PD, 4, enable_pullup> btn_a;
-typedef input_t<PD, 5, enable_pullup> btn_b;
-typedef input_t<PD, 6, enable_pullup> btn_c;
+typedef output_t<PB, 0> trig_1a;
+typedef output_t<PB, 3> trig_1b;
+typedef output_t<PB, 4> trig_2a;
+typedef output_t<PB, 5> trig_2b;
 
-typedef twi_master_t<0> twi;
+typedef input_t<PD, 1, enable_pullup> btn_a;
+typedef input_t<PB, 7, enable_pullup> btn_b;
+typedef input_t<PD, 7, enable_pullup> btn_c;
 
-static uint8_t twi_addr = 0;
+typedef twi_master_t<1> twi;
 
-ISR(TWI_vect)
+//static uint8_t twi_addr = 0;
+
+ISR(TWI1_vect)
 {
     twi::isr();
 }
-
-static const int adc_bpm = 3;
 
 typedef timer_t<1> pwm;
 typedef timer_t<2> aux;
@@ -49,15 +53,21 @@ ISR(TIMER2_OVF_vect)
 
 void setup()
 {
-    LED::setup();
-    UART::setup<115200>();
+    //UART::setup<115200>();
     adc::setup<128>();
-    trig_a::setup();
-    trig_b::setup();
+    trig_1a::setup();
+    trig_1b::setup();
+    trig_2a::setup();
+    trig_2b::setup();
+    cv_1a::setup();
+    cv_1b::setup();
+    cv_2a::setup();
+    cv_2b::setup();
     btn_a::setup();
     btn_b::setup();
     btn_c::setup();
 
+    /*
     pwm::setup<fast_pwm, top_0x1ff>();
     pwm::clock_select<1>();
     pwm::output_pin<channel_a>::setup();
@@ -72,7 +82,7 @@ void setup()
     twi::setup();
     sei();
 
-    printf("Marangisto Sequence 0.1\n");
+    //printf("Marangisto Sequence 0.1\n");
 
     for (uint8_t a = 0; a < 128; ++a)
     {
@@ -83,19 +93,20 @@ void setup()
         if (twi::write(a, buf, 0) == 0)
         {
             twi_addr = a;
-            printf("found sub-sequence at 0x%02x\n", a);
+            //printf("found sub-sequence at 0x%02x\n", a);
         }
     }
+    */
 }
 
 void loop()
 {
-    static uint8_t i = 0;
+    //static uint8_t i = 0;
     static bool last_btn_a = true;
     static bool last_btn_b = true;
     static bool last_btn_c = true;
 
-    aux_count = 1 + adc::read<adc_bpm>();
+    aux_count = 1 ;// FIXME + adc::read<adc_bpm>();
 
     bool b = btn_a::read();
 
@@ -115,10 +126,9 @@ void loop()
         action = play_no_advance;
     last_btn_c = b;
 
+    /*
     if (action != no_action)
     {
-        LED::toggle();
-
         if (action == play_step)
             i = (i + 1) & 0x07;
 
@@ -136,17 +146,17 @@ void loop()
         twi::wait_idle();
         bool sw_a = (value & (1 << 13)) != 0;
         bool sw_b = (value & (1 << 14)) != 0;
-        printf("%d %d %s\n", i, value, sw_a ? "a" : (sw_b ? "b" : " "));
+        //printf("%d %d %s\n", i, value, sw_a ? "a" : (sw_b ? "b" : " "));
         if (sw_a )
         {
-            pwm::output_compare_register<channel_a>() = /* 0x1ff - */ (value >> 2);   // inverted output
+            pwm::output_compare_register<channel_a>() = 0x1ff / (value >> 2);   // inverted output
             trig_a::set();
             delay_us(100);
             trig_a::clear();
         }
         else if (sw_b)
         {
-            pwm::output_compare_register<channel_b>() = /* 0x1ff - */ (value >> 2);   // inverted output
+            pwm::output_compare_register<channel_b>() = 0x1ff - (value >> 2);   // inverted output
             trig_b::set();
             delay_us(100);
             trig_b::clear();
@@ -155,5 +165,18 @@ void loop()
     }
 
     delay_us(500);
+    */
+
+    // REMOVE ME!
+    //
+    trig_1a::toggle();
+    trig_1b::toggle();
+    trig_2a::toggle();
+    trig_2b::toggle();
+    cv_1a::toggle();
+    cv_1b::toggle();
+    cv_2a::toggle();
+    cv_2b::toggle();
+    delay_ms(100);
 }
 
