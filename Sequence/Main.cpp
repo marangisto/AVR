@@ -17,15 +17,20 @@ typedef output_t<PB, 3> trig_1b;
 typedef output_t<PB, 4> trig_2a;
 typedef output_t<PB, 5> trig_2b;
 
-typedef input_t<PD, 1, enable_pullup> btn_a;
-typedef input_t<PB, 7, enable_pullup> btn_b;
-typedef input_t<PD, 7, enable_pullup> btn_c;
+typedef output_t<PE, 0> scan0;
+typedef output_t<PE, 1> scan1;
+typedef output_t<PE, 2> scan2;
+typedef output_t<PE, 3> scan3;
 
-typedef twi_master_t<1> twi;
+typedef input_t<PD, 1> sense0;
+typedef input_t<PB, 7> sense1;
+typedef input_t<PD, 7> sense2;
 
-//static uint8_t twi_addr = 0;
+typedef twi_master_t<0> twi;
 
-ISR(TWI1_vect)
+static uint8_t twi_addr = 0;
+
+ISR(TWI0_vect)
 {
     twi::isr();
 }
@@ -51,23 +56,76 @@ ISR(TIMER2_OVF_vect)
     }
 }
 
+// We have 3 sense lines and 4 scan lines. We encode the 3
+// sense inputs into 3 adjacent bits and shift these left
+// for each scan increment. Note the reads are inverted.
+
+static const uint16_t sw_run_a = (1 << 9);   // run state a
+static const uint16_t sw_rst_a = (1 << 1);   // reset a
+static const uint16_t sw_up_a = (1 << 0);    // a mode swith up
+static const uint16_t sw_dn_a = (1 << 4);    // a mode swith down
+
+static const uint16_t sw_run_b = (1 << 3);   // run state b
+static const uint16_t sw_rst_b = (1 << 7);   // reset b
+static const uint16_t sw_up_b = (1 << 6);    // b mode switch up
+static const uint16_t sw_dn_b = (1 << 10);   // b mode switch down
+
+static const uint16_t sw_side = (1 << 8);    // manual action side
+static const uint16_t sw_inc = (1 << 5);     // increment step
+static const uint16_t sw_dec = (1 << 2);     // decrement step
+static const uint16_t sw_trg = (1 << 11);    // manual trigger
+
+static uint16_t scan_switches()
+{
+    typedef outputs_t<scan3, scan2, scan1, scan0> scan;
+
+    uint16_t x = 0;
+
+    for (uint8_t i = 0; i < 4; ++i)
+    {
+        scan::write(~(1 << i));
+        x = (x << 3)
+          | (sense0::read() ? 0 : 0x01)
+          | (sense1::read() ? 0 : 0x02)
+          | (sense2::read() ? 0 : 0x04)
+          ;
+    }
+ 
+    return x;
+}
+
+static uint8_t bit(uint16_t x)
+{
+    for (uint8_t i = 0; i < 16; ++i)
+        if (x & (1 << i))
+            return i + 1;
+    return 0xf0;
+}
+
 void setup()
 {
     //UART::setup<115200>();
     adc::setup<128>();
+
     trig_1a::setup();
     trig_1b::setup();
     trig_2a::setup();
     trig_2b::setup();
+
     cv_1a::setup();
     cv_1b::setup();
     cv_2a::setup();
     cv_2b::setup();
-    btn_a::setup();
-    btn_b::setup();
-    btn_c::setup();
 
-    /*
+    sense0::setup();
+    sense1::setup();
+    sense2::setup();
+
+    scan0::setup();
+    scan1::setup();
+    scan2::setup();
+    scan3::setup();
+
     pwm::setup<fast_pwm, top_0x1ff>();
     pwm::clock_select<1>();
     pwm::output_pin<channel_a>::setup();
@@ -96,35 +154,21 @@ void setup()
             //printf("found sub-sequence at 0x%02x\n", a);
         }
     }
-    */
 }
 
 void loop()
 {
     //static uint8_t i = 0;
-    static bool last_btn_a = true;
-    static bool last_btn_b = true;
-    static bool last_btn_c = true;
 
     aux_count = 1 ;// FIXME + adc::read<adc_bpm>();
 
-    bool b = btn_a::read();
+    uint16_t sw = scan_switches();
+    uint8_t b = bit(sw);
 
-    if (b != last_btn_a && !b)                      // run / stop toggle
-        auto_step = !auto_step;
-    last_btn_a = b;
-
-    b = btn_b::read();
-
-    if (b != last_btn_b && !b)                      // run / stop toggle
-        action = play_step;
-    last_btn_b = b;
-
-    b = btn_c::read();
-
-    if (b != last_btn_c && !b)                      // run / stop toggle
-        action = play_no_advance;
-    last_btn_c = b;
+    trig_1a::write((b & 0x01) != 0);
+    trig_1b::write((b & 0x02) != 0);
+    trig_2a::write((b & 0x04) != 0);
+    trig_2b::write((b & 0x08) != 0);
 
     /*
     if (action != no_action)
@@ -167,12 +211,15 @@ void loop()
     delay_us(500);
     */
 
+
+
     // REMOVE ME!
     //
-    trig_1a::toggle();
-    trig_1b::toggle();
-    trig_2a::toggle();
-    trig_2b::toggle();
+
+    //trig_1a::toggle();
+    //trig_1b::toggle();
+    //trig_2a::toggle();
+    //trig_2b::toggle();
     cv_1a::toggle();
     cv_1b::toggle();
     cv_2a::toggle();
