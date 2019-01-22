@@ -7,10 +7,12 @@
 #include <AVR/Timer.h>
 #include <AVR/Pins.h>
 
+/*
 typedef output_t<PB, 1> cv_1a;
 typedef output_t<PB, 2> cv_1b;
 typedef output_t<PD, 2> cv_2a;
 typedef output_t<PD, 0> cv_2b;
+*/
 
 typedef output_t<PB, 0> trig_1a;
 typedef output_t<PB, 3> trig_1b;
@@ -28,12 +30,33 @@ typedef input_t<PD, 7> sense2;
 
 typedef twi_master_t<0> twi;
 
-static uint8_t twi_addr[4];
+static const uint8_t max_subseqs = 8;
+static uint8_t twi_addr[max_subseqs];
+static volatile uint8_t led_state[max_subseqs];
 static uint8_t n_subseqs = 0;
 
 ISR(TWI0_vect)
 {
     twi::isr();
+}
+
+static void attach_subseqs()
+{
+    n_subseqs = 0;
+
+    for (uint8_t a = 0; a < 128; ++a)
+    {
+        uint8_t buf[1];
+
+        if ((a & 0x78) == 0 || (a & 0x78) == 0x78)
+            continue;   // reserved address
+        if (twi::write(a, buf, 0) == 0 && n_subseqs < max_subseqs)
+        {
+            led_state[n_subseqs] = 0;
+            twi_addr[n_subseqs++] = a;
+            //printf("found sub-sequence at 0x%02x\n", a);
+        }
+    }
 }
 
 typedef timer_t<1> pwm;
@@ -95,6 +118,20 @@ static uint16_t scan_switches()
     return x;
 }
 
+static void get_subseq_slot(bool side, uint8_t step, uint8_t& subseq, uint8_t& slot)
+{
+    uint8_t n_steps = n_subseqs << 2;   // 4-slots per sub-sequence module
+
+    if (step < n_steps)
+    {
+        subseq = step >> 2;
+        slot = (step & 0x03) + (side ? 4 : 0);
+    }
+    else
+        subseq = slot = 0;                // this is an illegal step value...
+}
+
+
 /*
 static uint8_t bit(uint16_t x)
 {
@@ -115,10 +152,12 @@ void setup()
     trig_2a::setup();
     trig_2b::setup();
 
+    /*
     cv_1a::setup();
     cv_1b::setup();
     cv_2a::setup();
     cv_2b::setup();
+    */
 
     sense0::setup();
     sense1::setup();
@@ -145,18 +184,7 @@ void setup()
 
     //printf("Marangisto Sequence 0.1\n");
 
-    for (uint8_t a = 0; a < 128; ++a)
-    {
-        uint8_t buf[1];
-
-        if ((a & 0x78) == 0 || (a & 0x78) == 0x78)
-            continue;   // reserved address
-        if (twi::write(a, buf, 0) == 0 && n_subseqs < sizeof(twi_addr) / sizeof(*twi_addr))
-        {
-            twi_addr[n_subseqs++] = a;
-            //printf("found sub-sequence at 0x%02x\n", a);
-        }
-    }
+    attach_subseqs();
 }
 
 void loop()
@@ -169,21 +197,32 @@ void loop()
 
     if (action != no_action)
     {
+        uint8_t last_i = i;
+
         if (action == play_step)
             i = (i + 1) & 0x07;
 
-        uint8_t bit = 1 << i;
-        uint8_t led_cmd[2] = { 0, bit };
-        uint8_t subseq = twi_addr[i & 1];
+        uint8_t led_cmd[2] = { 0, 0 };
+        uint8_t subseq, slot;
 
-        twi::write(subseq, led_cmd, sizeof(led_cmd));
+        get_subseq_slot(false, last_i, subseq, slot);
+        led_state[subseq] &= ~(1 << slot);
+        led_cmd[1] = led_state[subseq];
+        twi::write(twi_addr[subseq], led_cmd, sizeof(led_cmd));
         twi::wait_idle();
         delay_us(100);
 
-        uint8_t read_cmd[2] = { 1, i };
+        get_subseq_slot(false, i, subseq, slot);
+        led_state[subseq] |= (1 << slot);
+        led_cmd[1] = led_state[subseq];
+        twi::write(twi_addr[subseq], led_cmd, sizeof(led_cmd));
+        twi::wait_idle();
+        delay_us(100);
+
+        uint8_t read_cmd[2] = { 1, slot };
         uint16_t value = 0;
 
-        twi::write_read(subseq, read_cmd, sizeof(read_cmd), reinterpret_cast<uint8_t*>(&value), sizeof(value));
+        twi::write_read(twi_addr[subseq], read_cmd, sizeof(read_cmd), reinterpret_cast<uint8_t*>(&value), sizeof(value));
         twi::wait_idle();
         bool sw_a = (value & (1 << 13)) != 0;
         bool sw_b = (value & (1 << 14)) != 0;
