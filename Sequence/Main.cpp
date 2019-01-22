@@ -59,7 +59,7 @@ static void attach_subseqs()
     }
 }
 
-typedef timer_t<1> pwm;
+typedef timer_t<3> pwm;     // channel-a (cv0, cv1)
 typedef timer_t<2> aux;
 
 enum action_t { no_action, play_step, play_no_advance };
@@ -229,14 +229,14 @@ void loop()
         //printf("%d %d %s\n", i, value, sw_a ? "a" : (sw_b ? "b" : " "));
         if (sw_a )
         {
-            pwm::output_compare_register<channel_a>() = 0x1ff / (value >> 2);   // inverted output
+            pwm::output_compare_register<channel_a>() = (value >> 2);
             trig_1a::set();
             delay_us(100);
             trig_1a::clear();
         }
         else if (sw_b)
         {
-            pwm::output_compare_register<channel_b>() = 0x1ff - (value >> 2);   // inverted output
+            pwm::output_compare_register<channel_b>() = (value >> 2);
             trig_1b::set();
             delay_us(100);
             trig_1b::clear();

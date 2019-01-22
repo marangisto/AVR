@@ -517,14 +517,14 @@ struct timer_traits<3>
 
 template<> struct channel_traits<3, channel_a>
 {
-    typedef output_t<PB, 3> pin_t;
+    typedef output_t<PD, 0> pin_t;
 
     static inline volatile timer_traits<3>::count_t& ocr() { return OCR3A; }
 };
 
 template<> struct channel_traits<3, channel_b>
 {
-    typedef output_t<PB, 2> pin_t;
+    typedef output_t<PD, 2> pin_t;
 
     static inline volatile timer_traits<3>::count_t& ocr() { return OCR3B; }
 };
