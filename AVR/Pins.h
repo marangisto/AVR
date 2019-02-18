@@ -206,6 +206,9 @@ struct outputs_t
 {
     static void setup()
     {
+#if defined(__AVR_ATtiny84__)
+        write_bits_impl<PA, T0, T1, T2, T3, T4, T5, T6, T7, map_bits_impl<PA, T0, T1, T2, T3, T4, T5, T6, T7>::mask>::write_bits(DDRA, 0xff);
+#endif
         write_bits_impl<PB, T0, T1, T2, T3, T4, T5, T6, T7, map_bits_impl<PB, T0, T1, T2, T3, T4, T5, T6, T7>::mask>::write_bits(DDRB, 0xff);
 #if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__) || defined(__AVR_ATmega32U4__) || defined(__AVR_ATmega328PB__)
         write_bits_impl<PC, T0, T1, T2, T3, T4, T5, T6, T7, map_bits_impl<PC, T0, T1, T2, T3, T4, T5, T6, T7>::mask>::write_bits(DDRC, 0xff);
@@ -218,6 +221,9 @@ struct outputs_t
 
     static void write(uint8_t x)
     {
+#if defined(__AVR_ATtiny84__)
+        write_bits_impl<PA, T0, T1, T2, T3, T4, T5, T6, T7, map_bits_impl<PA, T0, T1, T2, T3, T4, T5, T6, T7>::mask>::write_bits(PORTA, x);
+#endif
         write_bits_impl<PB, T0, T1, T2, T3, T4, T5, T6, T7, map_bits_impl<PB, T0, T1, T2, T3, T4, T5, T6, T7>::mask>::write_bits(PORTB, x);
 #if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328__) || defined(__AVR_ATmega32U4__) || defined(__AVR_ATmega328PB__)
         write_bits_impl<PC, T0, T1, T2, T3, T4, T5, T6, T7, map_bits_impl<PC, T0, T1, T2, T3, T4, T5, T6, T7>::mask>::write_bits(PORTC, x);

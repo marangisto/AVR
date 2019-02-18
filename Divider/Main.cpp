@@ -8,14 +8,16 @@
 template <class T> const T& max(const T& a, const T& b) { return (a<b) ? b : a; }
 template <class T> const T& min(const T& a, const T& b) { return (a<b) ? a : b; }
 
-typedef output_t<PB, 2> out_0; // 0
-typedef output_t<PA, 2> out_4; // 4
-typedef output_t<PB, 0> out_1; // 1
-typedef output_t<PA, 1> out_5; // 5
-typedef output_t<PA, 4> out_2; // 2
-typedef output_t<PA, 5> out_6; // 6
-typedef output_t<PA, 6> out_3; // 3
-typedef output_t<PA, 0> out_7; // 7
+typedef output_t<PB, 2> out_0;
+typedef output_t<PA, 2> out_4;
+typedef output_t<PB, 0> out_1;
+typedef output_t<PA, 1> out_5;
+typedef output_t<PA, 4> out_2;
+typedef output_t<PA, 5> out_6;
+typedef output_t<PA, 6> out_3;
+typedef output_t<PA, 0> out_7;
+
+typedef outputs_t<out_7, out_3, out_6, out_2, out_5, out_1, out_4, out_0> output;
 
 typedef input_t<PA, 3> in_rst;  // PCINT3
 typedef input_t<PB, 1> in_clk;  // PCINT9
@@ -39,6 +41,19 @@ ISR(PCINT1_vect)
         clk_falling = true;
 }
 
+static uint8_t read_spdts()     // 1-9 is valid state, 0 is an error condition
+{
+    static uint16_t midpoints[] = { 956, 846, 757, 659, 559, 459, 365, 281, 119 };
+
+    uint16_t x = adc::read<spdts>();
+
+    for (uint8_t i = 0; i < sizeof(midpoints) / sizeof(*midpoints); ++i)
+        if (x > midpoints[i])
+            return i + 1;
+
+    return 0;
+}
+
 void setup()
 {
     out_0::setup();
@@ -49,6 +64,9 @@ void setup()
     out_5::setup();
     out_6::setup();
     out_7::setup();
+
+    output::setup();
+
     in_rst::setup();
     in_clk::setup();
     adc::setup<128>();
@@ -133,6 +151,7 @@ void loop()
         ++clock;
 
     */
+    /*
     static uint8_t i = 0;
 
     if (clk_rising)
@@ -163,5 +182,8 @@ void loop()
         out_6::clear();
         out_7::clear();
     }
+    */
+    output::write(read_spdts());
+    output::write(255);
 }
 

@@ -12,7 +12,7 @@
 template <class T> const T& max(const T& a, const T& b) { return (a<b) ? b : a; }
 template <class T> const T& min(const T& a, const T& b) { return (a<b) ? a : b; }
 
-static const uint8_t twi_addr = 0x62;   // FIXME: use EEPROM and reset config
+static const uint8_t twi_addr = 0x63;   // FIXME: use EEPROM and reset config
 
 //typedef twi_master_t<1> twi;
 typedef twi_slave_t<1> twi;
