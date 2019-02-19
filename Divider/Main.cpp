@@ -24,6 +24,11 @@ typedef input_t<PB, 1> in_clk;  // PCINT9
 
 static const uint8_t spdts = 7;
 
+static const uint16_t arith[8] = { 2, 3, 4, 5, 6, 7, 8, 9 };
+static const uint16_t prime[8] = { 2, 3, 5, 7, 11, 13, 17, 19 };
+static const uint16_t power[8] = { 2, 4, 8, 16, 32, 64, 128, 256 };
+
+static volatile const uint16_t *divs = arith;
 static volatile uint16_t i = 0;
 
 ISR(PCINT0_vect)
@@ -37,24 +42,10 @@ ISR(PCINT1_vect)
     static uint8_t bits = 0;
 
     // if (!in_clk::read())    // inverted input
+    for (uint8_t j = 0; j < 8; ++j)
+        if (i % divs[j] == 0)
+            bits ^= _BV(j);
  
-    if (i % 2 == 0)
-        bits ^= _BV(0);
-    if (i % 3 == 0)
-        bits ^= _BV(1);
-    if (i % 4 == 0)
-        bits ^= _BV(2);
-    if (i % 5 == 0)
-        bits ^= _BV(3);
-    if (i % 6 == 0)
-        bits ^= _BV(4);
-    if (i % 7 == 0)
-        bits ^= _BV(5);
-    if (i % 8 == 0)
-        bits ^= _BV(6);
-    if (i % 9 == 0)
-        bits ^= _BV(7);
-
     output::write(bits);
  
     if (++i == 5 * 6 * 7 * 8 * 9)
@@ -104,19 +95,6 @@ void setup()
     sei();
 }
 
-/*
-static bool update(uint8_t& c, uint8_t m)
-{
-    if (c++ >= m)
-    {
-        c = 0;
-        return true;
-    }
-
-    return false;
-}
-*/
-
 void loop()
 {
     static sw_pos_t sw0 = sw_err, sw1 = sw_err;
@@ -126,9 +104,24 @@ void loop()
 
     if (_sw0 != sw0 || _sw1 != sw1)
     {
-            i = 0;
-            sw0 = _sw0;
-            sw1 = _sw1;
+        sw0 = _sw0;
+        sw1 = _sw1;
+
+        switch (sw0)
+        {
+        case sw_dn:
+            divs = prime;
+            break;
+        case sw_mid:
+            divs = arith;
+            break;
+        case sw_up:
+            divs = power;
+            break;
+        default: ;
+        }
+
+        i = 0;
     }
 }
 
