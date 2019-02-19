@@ -29,7 +29,13 @@ static const uint16_t prime[8] = { 2, 3, 5, 7, 11, 13, 17, 19 };
 static const uint16_t power[8] = { 2, 4, 8, 16, 32, 64, 128, 256 };
 
 static volatile const uint16_t *divs = arith;
-static volatile uint16_t i = 0;
+
+static const uint32_t arith_wrap = 5 * 6 * 7 * 8 * 9; 
+static const uint32_t prime_wrap = 2L * 3L * 5L* 7L * 11L * 13L * 17L * 19L;
+static const uint32_t power_wrap = 256;
+
+static volatile uint32_t wrap = arith_wrap;
+static volatile uint32_t i = 0;
 
 ISR(PCINT0_vect)
 {
@@ -48,7 +54,7 @@ ISR(PCINT1_vect)
  
     output::write(bits);
  
-    if (++i == 5 * 6 * 7 * 8 * 9)
+    if (++i == wrap)
         i = 0;
 }
 
@@ -111,12 +117,15 @@ void loop()
         {
         case sw_dn:
             divs = prime;
+            wrap = prime_wrap;
             break;
         case sw_mid:
             divs = arith;
+            wrap = arith_wrap;
             break;
         case sw_up:
             divs = power;
+            wrap = power_wrap;
             break;
         default: ;
         }
