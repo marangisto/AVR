@@ -41,7 +41,9 @@ ISR(PCINT1_vect)
         clk_falling = true;
 }
 
-static uint8_t read_spdts()     // 1-9 is valid state, 0 is an error condition
+enum sw_pos { sw_err, sw_dn, sw_mid, sw_up };
+
+static uint8_t read_spdts() // return sw0 | (sw1 << 2)
 {
     static uint16_t midpoints[] = { 956, 846, 757, 659, 559, 459, 365, 281, 119 };
 
@@ -49,9 +51,20 @@ static uint8_t read_spdts()     // 1-9 is valid state, 0 is an error condition
 
     for (uint8_t i = 0; i < sizeof(midpoints) / sizeof(*midpoints); ++i)
         if (x > midpoints[i])
-            return i + 1;
+            switch (i)
+            {
+                case 0: return sw_dn | (sw_dn << 2);
+                case 1: return sw_mid | (sw_dn << 2);
+                case 2: return sw_dn | (sw_mid << 2);
+                case 3: return sw_mid | (sw_mid << 2);
+                case 4: return sw_dn | (sw_up << 2);
+                case 5: return sw_mid | (sw_up << 2);
+                case 6: return sw_up | (sw_dn << 2);
+                case 7: return sw_up | (sw_mid << 2);
+                case 8: return sw_up | (sw_up << 2);
+            }
 
-    return 0;
+    return sw_err | (sw_err << 2);
 }
 
 void setup()
