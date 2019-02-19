@@ -24,8 +24,7 @@ typedef input_t<PB, 1> in_clk;  // PCINT9
 
 static const uint8_t spdts = 7;
 
-static volatile bool clk_rising = false;
-static volatile bool clk_falling = false;
+static volatile uint16_t i = 0;
 
 ISR(PCINT0_vect)
 {
@@ -35,10 +34,31 @@ ISR(PCINT0_vect)
 
 ISR(PCINT1_vect)
 {
-    if (!in_clk::read())    // inverted input
-        clk_rising = true;
-    else
-        clk_falling = true;
+    static uint8_t bits = 0;
+
+    // if (!in_clk::read())    // inverted input
+ 
+    if (i % 2 == 0)
+        bits ^= _BV(0);
+    if (i % 3 == 0)
+        bits ^= _BV(1);
+    if (i % 4 == 0)
+        bits ^= _BV(2);
+    if (i % 5 == 0)
+        bits ^= _BV(3);
+    if (i % 6 == 0)
+        bits ^= _BV(4);
+    if (i % 7 == 0)
+        bits ^= _BV(5);
+    if (i % 8 == 0)
+        bits ^= _BV(6);
+    if (i % 9 == 0)
+        bits ^= _BV(7);
+
+    output::write(bits);
+ 
+    if (++i == 5 * 6 * 7 * 8 * 9)
+        i = 0;
 }
 
 enum sw_pos_t { sw_err, sw_dn, sw_mid, sw_up };
@@ -99,34 +119,16 @@ static bool update(uint8_t& c, uint8_t m)
 
 void loop()
 {
-    static uint8_t bits = 0;
-    static uint8_t i = 0;
     static sw_pos_t sw0 = sw_err, sw1 = sw_err;
+    uint8_t s = read_spdts();
+    sw_pos_t _sw0 = static_cast<sw_pos_t>(s & 0x3);
+    sw_pos_t _sw1 = static_cast<sw_pos_t>(s >> 2);
 
-    if (clk_rising)
+    if (_sw0 != sw0 || _sw1 != sw1)
     {
-        bits ^= 0x01;
-        i++;
-        clk_rising = false;
-    }
-    else if (clk_falling)
-    {
-        clk_falling = false;
-    }
-    else
-    {
-        uint8_t s = read_spdts();
-        sw_pos_t _sw0 = static_cast<sw_pos_t>(s & 0x3);
-        sw_pos_t _sw1 = static_cast<sw_pos_t>(s >> 2);
-
-        if (_sw0 != sw0 || _sw1 != sw1)
-        {
             i = 0;
             sw0 = _sw0;
             sw1 = _sw1;
-        }
     }
-
-    output::write(bits);
 }
 
