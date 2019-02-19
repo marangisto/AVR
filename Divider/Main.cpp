@@ -30,31 +30,38 @@ static const uint16_t power[8] = { 2, 4, 8, 16, 32, 64, 128, 256 };
 
 static volatile const uint16_t *divs = arith;
 
-static const uint32_t arith_wrap = 5 * 6 * 7 * 8 * 9; 
+static const uint32_t arith_wrap = 5 * 6 * 7 * 8 * 9;
 static const uint32_t prime_wrap = 2L * 3L * 5L* 7L * 11L * 13L * 17L * 19L;
-static const uint32_t power_wrap = 256;
+static const uint32_t power_wrap = 0;
 
 static volatile uint32_t wrap = arith_wrap;
 static volatile uint32_t i = 0;
+static volatile bool trig_mode = false;
 
 ISR(PCINT0_vect)
 {
     if (!in_rst::read())    // inverted input
-        ; // FIXME: perform reset here
+        i = 0;
 }
 
 ISR(PCINT1_vect)
 {
     static uint8_t bits = 0;
 
-    // if (!in_clk::read())    // inverted input
+    if (i == 0)                 // sync bits after reset
+        bits = 0;
+
+    // if (!in_clk::read())    // FIXME: capture correct edge after reset
+
     for (uint8_t j = 0; j < 8; ++j)
         if (i % divs[j] == 0)
             bits ^= _BV(j);
- 
+        else if (trig_mode && (bits & _BV(j)))
+            bits &= ~_BV(j);
+
     output::write(bits);
- 
-    if (++i == wrap)
+
+    if (++i == wrap && wrap != 0)   // N.B. power divs wraps naturally
         i = 0;
 }
 
@@ -126,6 +133,17 @@ void loop()
         case sw_up:
             divs = power;
             wrap = power_wrap;
+            break;
+        default: ;
+        }
+
+        switch (sw1)
+        {
+        case sw_dn:
+            trig_mode = false;
+            break;
+        case sw_mid:
+            trig_mode = true;
             break;
         default: ;
         }
