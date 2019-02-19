@@ -41,7 +41,7 @@ ISR(PCINT1_vect)
         clk_falling = true;
 }
 
-enum sw_pos { sw_err, sw_dn, sw_mid, sw_up };
+enum sw_pos_t { sw_err, sw_dn, sw_mid, sw_up };
 
 static uint8_t read_spdts() // return sw0 | (sw1 << 2)
 {
@@ -99,94 +99,34 @@ static bool update(uint8_t& c, uint8_t m)
 
 void loop()
 {
-    /*
-    static uint32_t clock = 0;
-    static bool tick = false;
-    static bool b0 = false;
-    static bool b1 = false;
-    static bool b2 = false;
-    static bool b3 = false;
-    static bool b4 = false;
-    static bool b5 = false;
-    static bool b6 = false;
-    static bool b7 = false;
-    static uint8_t m1 = 2;
-    static uint8_t m2 = 4;
-    static uint8_t m3 = 8;
-    static uint8_t m4 = 16;
-    static uint8_t m5 = 32;
-    static uint8_t m6 = 64;
-    static uint8_t m7 = 128;
-    static uint8_t c1 = m1;
-    static uint8_t c2 = m2;
-    static uint8_t c3 = m3;
-    static uint8_t c4 = m4;
-    static uint8_t c5 = m5;
-    static uint8_t c6 = m6;
-    static uint8_t c7 = m7;
-
-    if (!i++)               // this should be the clock interrupt
-    {
-        tick = true;
-        b0 = !b0;
-    }
-
-    if (tick)
-    {
-        b1 = update(c1, m1);
-        b2 = update(c2, m2);
-        b3 = update(c3, m3);
-        b4 = update(c4, m4);
-        b5 = update(c5, m5);
-        b6 = update(c6, m6);
-        b7 = update(c7, m7);
-    }
-
-    out_0::write(b0);
-    out_1::write(b1);
-    out_2::write(b2);
-    out_3::write(b3);
-    out_4::write(b4);
-    out_5::write(b5);
-    out_6::write(b6);
-    out_7::write(b7);
-
-    if (tick)
-        ++clock;
-
-    */
-    /*
+    static uint8_t bits = 0;
     static uint8_t i = 0;
+    static sw_pos_t sw0 = sw_err, sw1 = sw_err;
 
     if (clk_rising)
     {
-        out_0::set();
+        bits ^= 0x01;
+        i++;
         clk_rising = false;
-        i = (i + 1) & 0x7;
-        switch (i)
-        {
-            case 1: out_1::set(); break;
-            case 2: out_2::set(); break;
-            case 3: out_3::set(); break;
-            case 4: out_4::set(); break;
-            case 5: out_5::set(); break;
-            case 6: out_6::set(); break;
-            case 7: out_7::set(); break;
-        }
     }
     else if (clk_falling)
     {
-        out_0::clear();
         clk_falling = false;
-        out_1::clear();
-        out_2::clear();
-        out_3::clear();
-        out_4::clear();
-        out_5::clear();
-        out_6::clear();
-        out_7::clear();
     }
-    */
-    output::write(read_spdts());
+    else
+    {
+        uint8_t s = read_spdts();
+        sw_pos_t _sw0 = static_cast<sw_pos_t>(s & 0x3);
+        sw_pos_t _sw1 = static_cast<sw_pos_t>(s >> 2);
+
+        if (_sw0 != sw0 || _sw1 != sw1)
+        {
+            i = 0;
+            sw0 = _sw0;
+            sw1 = _sw1;
+        }
+    }
+
+    output::write(bits);
 }
 
