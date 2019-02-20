@@ -24,45 +24,69 @@ typedef input_t<PB, 1> in_clk;  // PCINT9
 
 static const uint8_t spdts = 7;
 
-static const uint16_t arith[8] = { 2, 3, 4, 5, 6, 7, 8, 9 };
-static const uint16_t prime[8] = { 2, 3, 5, 7, 11, 13, 17, 19 };
-static const uint16_t power[8] = { 2, 4, 8, 16, 32, 64, 128, 256 };
+static const uint8_t nchan = 8;
+
+static const uint16_t arith[nchan] = { 2, 3, 4, 5, 6, 7, 8, 9 };
+static const uint16_t prime[nchan] = { 2, 3, 5, 7, 11, 13, 17, 19 };
+static const uint16_t power[nchan] = { 2, 4, 8, 16, 32, 64, 128, 256 };
 
 static volatile const uint16_t *divs = arith;
 
-static const uint32_t arith_wrap = 5 * 6 * 7 * 8 * 9;
-static const uint32_t prime_wrap = 2L * 3L * 5L* 7L * 11L * 13L * 17L * 19L;
-static const uint32_t power_wrap = 0;
+static volatile bool do_reset = true;
 
-static volatile uint32_t wrap = arith_wrap;
-static volatile uint32_t i = 0;
-static volatile bool trig_mode = false;
+enum mode_t { gate_mode, trig_mode, scan_mode };
+
+static volatile mode_t mode = gate_mode;
 
 ISR(PCINT0_vect)
 {
     if (!in_rst::read())    // inverted input
-        i = 0;
+        do_reset = true;
 }
 
 ISR(PCINT1_vect)
 {
     static uint8_t bits = 0;
+    static uint8_t counts[nchan];
 
-    if (i == 0)                 // sync bits after reset
+    if (do_reset)
+    {
+        for (uint8_t i = 0; i < nchan; ++i)
+            counts[i] = 0;
+
         bits = 0;
+        do_reset = false;
 
-    // if (!in_clk::read())    // FIXME: capture correct edge after reset
+        if (in_clk::read())     // N.B. discard falling edge (inverted input)
+            return;
+    }
 
-    for (uint8_t j = 0; j < 8; ++j)
-        if (i % divs[j] == 0)
-            bits ^= _BV(j);
-        else if (trig_mode && (bits & _BV(j)))
-            bits &= ~_BV(j);
+    switch (mode)
+    {
+    case gate_mode:
+        for (uint8_t i = 0; i < nchan; ++i)
+        {
+            if (counts[i] == 0)
+                bits ^= _BV(i);
+            if (++counts[i] == divs[i])
+                counts[i] = 0;
+        }
+        break;
+    case trig_mode:
+        for (uint8_t i = 0; i < nchan; ++i)
+        {
+            if (counts[i] == 0)
+                bits |= _BV(i);
+            else
+                bits &= ~_BV(i);
+            if (++counts[i] == divs[i] << 1)
+                counts[i] = 0;
+        }
+        break;
+    default:;
+    }
 
     output::write(bits);
-
-    if (++i == wrap && wrap != 0)   // N.B. power divs wraps naturally
-        i = 0;
 }
 
 enum sw_pos_t { sw_err, sw_dn, sw_mid, sw_up };
@@ -124,15 +148,12 @@ void loop()
         {
         case sw_dn:
             divs = prime;
-            wrap = prime_wrap;
             break;
         case sw_mid:
             divs = arith;
-            wrap = arith_wrap;
             break;
         case sw_up:
             divs = power;
-            wrap = power_wrap;
             break;
         default: ;
         }
@@ -140,15 +161,18 @@ void loop()
         switch (sw1)
         {
         case sw_dn:
-            trig_mode = false;
+            mode = gate_mode;
             break;
         case sw_mid:
-            trig_mode = true;
+            mode = trig_mode;
+            break;
+        case sw_up:
+            mode = scan_mode;
             break;
         default: ;
         }
 
-        i = 0;
+        do_reset = true;
     }
 }
 
