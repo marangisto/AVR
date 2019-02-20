@@ -83,7 +83,12 @@ ISR(PCINT1_vect)
                 counts[i] = 0;
         }
         break;
-    default:;
+    case scan_mode:
+        if (in_clk::read())
+            return;         // discard trailing edges (inverted input)
+        if (!(bits = bits << 1))
+            bits = 1;
+        break;
     }
 
     output::write(bits);
