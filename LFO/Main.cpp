@@ -66,15 +66,18 @@ void setup()
     adc::setup<128>();
 
     // sei();
+    read_spdts();
 }
 
 void loop()
 {
-    out_led::toggle();
+    //out_led::toggle();
     //out_trig::toggle();
     //show(read_spdts());
-    read_spdts();
+    //read_spdts();
+    //show(adc::read<adc_freq>());
     show(adc::read<adc_pwm>());
+    //out_trig::write(in_sync::read());
 //    delay_ms(100);
 }
 
