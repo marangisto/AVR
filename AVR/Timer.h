@@ -36,6 +36,7 @@ struct timer_traits<0>
 template<> struct channel_traits<0, channel_a>
 {
 #if defined(__AVR_ATtiny84__)
+    typedef output_t<PB, 2> pin_t;
 #else
     typedef output_t<PD, 6> pin_t;
 #endif
@@ -46,6 +47,7 @@ template<> struct channel_traits<0, channel_a>
 template<> struct channel_traits<0, channel_b>
 {
 #if defined(__AVR_ATtiny84__)
+    typedef output_t<PA, 7> pin_t;
 #else
     typedef output_t<PD, 5> pin_t;
 #endif
@@ -177,14 +179,22 @@ struct timer_traits<1>
 
 template<> struct channel_traits<1, channel_a>
 {
+#if defined(__AVR_ATtiny84__)
+    typedef output_t<PA, 6> pin_t;
+#else
     typedef output_t<PB, 1> pin_t;
+#endif
 
     static inline volatile timer_traits<1>::count_t& ocr() { return OCR1A; }
 };
 
 template<> struct channel_traits<1, channel_b>
 {
+#if defined(__AVR_ATtiny84__)
+    typedef output_t<PA, 5> pin_t;
+#else
     typedef output_t<PB, 2> pin_t;
+#endif
 
     static inline volatile timer_traits<1>::count_t& ocr() { return OCR1B; }
 };
