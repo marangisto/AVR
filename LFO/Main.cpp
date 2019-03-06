@@ -1,11 +1,14 @@
 #define NO_TIMER_VECTORS 1
 #include <AVR/Main.h>
+#include <AVR/Timer.h>
 #include <AVR/Delay.h>
 #include <AVR/ADC.h>
 #include <AVR/Pins.h>
 
 template <class T> const T& max(const T& a, const T& b) { return (a<b) ? b : a; }
 template <class T> const T& min(const T& a, const T& b) { return (a<b) ? a : b; }
+
+typedef timer_t<1> pwm;
 
 typedef output_t<PA, 2> out_trig;
 typedef output_t<PB, 2> out_led;
@@ -65,18 +68,30 @@ void setup()
 
     adc::setup<128>();
 
+    pwm::setup<fast_pwm, top_0x1ff>();
+    pwm::clock_select<1>();
+    pwm::output_pin<channel_a>::setup();
+    pwm::compare_output_mode<channel_a, clear_on_compare_match>();
+
     // sei();
     read_spdts();
+    show(adc::read<adc_pwm>());
 }
 
 void loop()
 {
+    static uint16_t i = 0;
     //out_led::toggle();
     //out_trig::toggle();
     //show(read_spdts());
     //read_spdts();
     //show(adc::read<adc_freq>());
-    show(adc::read<adc_pwm>());
+    //show(adc::read<adc_pwm>());
+
+    pwm::output_compare_register<channel_a>() = 0x1ff - (adc::read<adc_freq>() >> 1);
+
+    if (++i > 511)
+        i = 0;
     //out_trig::write(in_sync::read());
 //    delay_ms(100);
 }
