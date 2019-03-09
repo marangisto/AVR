@@ -67,6 +67,7 @@ enum state_t { reset, tri_up, tri_dn, saw_up, sin_a, sin_b, sin_c, sin_d };
 
 static volatile state_t start = tri_up;
 static volatile state_t state = reset;
+static volatile uint16_t duty_cycle = 511;
 
 static const uint8_t sin_tab[] =
     { 0,2,3,5,6,8,9,11,13,14,16,17,19,20,22,23,25,27,28,30,31,33,34,36,37,39,41,42,44,45,47,48
@@ -81,13 +82,25 @@ static const uint8_t sin_tab[] =
 
 ISR(TIM0_COMPA_vect)
 {
-    static int16_t i = 0;
+    static bool triggered = false;
+    static uint16_t i = 0;
     int16_t y = 0;
 
     if (state == reset)
     {
         i = 0;
         state = start;
+    }
+
+    if (i == 0)
+    {
+        out_trig::set();
+        triggered = true;
+    }
+    else if (triggered && i >= duty_cycle)
+    {
+        out_trig::clear();
+        triggered = false;
     }
 
     switch (state)
@@ -201,6 +214,8 @@ void loop()
         }
         sei();
     }
+
+    duty_cycle = max<uint16_t>(1, 0x3ff - adc::read<adc_pwm>());
     //out_led::toggle();
     //out_trig::toggle();
     //show(read_spdts());
