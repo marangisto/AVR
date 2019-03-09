@@ -68,6 +68,7 @@ enum state_t { reset, tri_up, tri_dn, saw_up, sin_a, sin_b, sin_c, sin_d };
 static volatile state_t start = tri_up;
 static volatile state_t state = reset;
 static volatile uint16_t duty_cycle = 511;
+static volatile uint8_t step = 1;
 
 static const uint8_t sin_tab[] =
     { 0,2,3,5,6,8,9,11,13,14,16,17,19,20,22,23,25,27,28,30,31,33,34,36,37,39,41,42,44,45,47,48
@@ -155,7 +156,7 @@ ISR(TIM0_COMPA_vect)
 
     pwm::output_compare_register<channel_a>() = 0x1ff - y;
 
-    if ((i = (i + 1) & 0x3ff) == 0)
+    if ((i = (i + step) & 0x3ff) == 0)
         state = start;
 }
 
@@ -216,17 +217,10 @@ void loop()
     }
 
     duty_cycle = max<uint16_t>(1, 0x3ff - adc::read<adc_pwm>());
-    //out_led::toggle();
-    //out_trig::toggle();
-    //show(read_spdts());
-    //read_spdts();
-    //show(adc::read<adc_freq>());
-    //show(adc::read<adc_pwm>());
 
-    //pwm::output_compare_register<channel_a>() = 0x1ff - (adc::read<adc_freq>() >> 1);
-    time::output_compare_register<channel_a>() = max<uint16_t>(1, adc::read<adc_freq>() >> 2);
+    time::output_compare_register<channel_a>() = 127;
+    //time::output_compare_register<channel_a>() = max<uint16_t>(1, adc::read<adc_freq>() >> 2);
+ 
     delay_ms(10);
-    //out_trig::write(in_sync::read());
-//    delay_ms(100);
 }
 
