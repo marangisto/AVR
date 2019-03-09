@@ -63,12 +63,26 @@ static void show(uint16_t x)
 }
 */
 
+enum speed_t { slow, medium, fast };
 enum state_t { reset, tri_up, tri_dn, saw_up, sin_a, sin_b, sin_c, sin_d };
 
 static volatile state_t start = tri_up;
 static volatile state_t state = reset;
+static volatile uint8_t use_count = 255;
+static volatile uint8_t use_step = 1;
+static volatile uint16_t use_divs = 1;
 static volatile uint16_t duty_cycle = 511;
-static volatile uint8_t step = 1;
+
+static const uint8_t count_tab[] =
+    { 255,254,252,251,250,248,247,245,244,243,242,240,239,238,236,235
+    , 234,232,231,230,229,227,226,225,224,223,221,220,219,218,217,215
+    , 214,213,212,211,210,209,207,206,205,204,203,202,201,200,199,197
+    , 196,195,194,193,192,191,190,189,188,187,186,185,184,183,182,181
+    , 180,179,178,177,176,175,174,173,172,171,170,170,169,168,167,166
+    , 165,164,163,162,161,161,160,159,158,157,156,155,155,154,153,152
+    , 151,150,150,149,148,147,146,146,145,144,143,142,142,141,140,139
+    , 139,138,137,136,136,135,134,133,133,132,131,131,130,129,128,128
+    };
 
 static const uint8_t sin_tab[] =
     { 0,2,3,5,6,8,9,11,13,14,16,17,19,20,22,23,25,27,28,30,31,33,34,36,37,39,41,42,44,45,47,48
@@ -84,17 +98,27 @@ static const uint8_t sin_tab[] =
 ISR(TIM0_COMPA_vect)
 {
     static bool triggered = false;
-    static uint16_t i = 0;
+    static uint16_t i = 0, j = 0;
+    static uint8_t step = 1;
+    static uint16_t divs = 1;
     int16_t y = 0;
 
     if (state == reset)
     {
-        i = 0;
+        i = j = 0;
         state = start;
     }
 
+    if (++j < divs)
+        return;
+    else
+        j = 0;
+
     if (i == 0)
     {
+        time::output_compare_register<channel_a>() = use_count;
+        step = use_step;
+        divs = use_divs;
         out_trig::set();
         triggered = true;
     }
@@ -175,7 +199,7 @@ void setup()
 
     time::setup<ctc_mode, top_ocra>();
     time::clock_select<8>();
-    time::output_compare_register<channel_a>() = 50;
+    time::output_compare_register<channel_a>() = 255;
     time::enable_oca();
 
     sei();
@@ -183,6 +207,7 @@ void setup()
 
 void loop()
 {
+    static speed_t speed = fast;
     static sw_pos_t sw0 = sw_err, sw1 = sw_err;
     uint8_t s = read_spdts();
     sw_pos_t _sw0 = static_cast<sw_pos_t>(s & 0x3);
@@ -194,9 +219,9 @@ void loop()
 
         switch (sw0)
         {
-            case sw_up: time::clock_select<8>(); break;
-            case sw_mid: time::clock_select<64>(); break;
-            case sw_dn: time::clock_select<256>(); break;
+            case sw_up: speed = fast; break;
+            case sw_mid: speed = medium; break;
+            case sw_dn: speed = slow; break;
             default: ;
         }
     }
@@ -216,11 +241,40 @@ void loop()
         sei();
     }
 
+    uint16_t cv_freq = 0x3ff - adc::read<adc_freq>();
+
+    // FIXME: wait for timer counter to be far away from overflow to avoid race
+    // FIXME: also do someting to have the slow / lower medium range update mid-cycle
+
+    switch (speed)
+    {
+    case fast:
+        use_count = count_tab[cv_freq & 0x7f];
+        use_step = 1 << (cv_freq >> 7);
+        use_divs = 1;
+        break;
+    case medium:
+        use_count = count_tab[cv_freq & 0x7f];
+        if ((cv_freq >> 7) < 4)
+        {
+            use_step = 1;
+            use_divs = 1 << (4 - (cv_freq >> 7));
+        }
+        else
+        {
+            use_step = 1 << ((cv_freq >> 7) - 4);
+            use_divs = 1;
+        }
+        break;
+    case slow:
+        use_count = count_tab[(cv_freq & 0x3f) << 1];
+        use_step = 1;
+        use_divs = 1 << (16 - (cv_freq >> 6));
+    default: ;
+    }
+
     duty_cycle = max<uint16_t>(1, 0x3ff - adc::read<adc_pwm>());
 
-    time::output_compare_register<channel_a>() = 127;
-    //time::output_compare_register<channel_a>() = max<uint16_t>(1, adc::read<adc_freq>() >> 2);
- 
     delay_ms(10);
 }
 
