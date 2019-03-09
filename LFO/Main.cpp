@@ -8,6 +8,7 @@
 template <class T> const T& max(const T& a, const T& b) { return (a<b) ? b : a; }
 template <class T> const T& min(const T& a, const T& b) { return (a<b) ? a : b; }
 
+typedef timer_t<0> time;
 typedef timer_t<1> pwm;
 
 typedef output_t<PA, 2> out_trig;
@@ -60,6 +61,52 @@ static void show(uint16_t x)
     }
 }
 
+enum waveform_t { wf_tri, wf_saw, wf_sin };
+
+static volatile waveform_t waveform = wf_tri;
+
+enum state_t { reset, tri_up, tri_dn, saw_up };
+
+static volatile state_t start = tri_up;
+static volatile state_t state = reset;
+
+ISR(TIM0_COMPA_vect)
+{
+    static uint16_t i = 0;
+    int16_t y = 0;
+
+    if (state == reset)
+    {
+        i = 0;
+        state = start;
+    }
+
+    switch (state)
+    {
+    case tri_up:
+        if (i < 512)
+        {
+            y = i;
+            break;
+        }
+        else
+            state = tri_dn;
+        // fall through...
+    case tri_dn:
+        y = 512 - (i - 511);
+        break;
+    case saw_up:
+        y = i >> 1;
+        break;
+    default: ;
+    }
+
+    pwm::output_compare_register<channel_a>() = 0x1ff - y;
+
+    if ((i = (i + 1) & 0x3ff) == 0)
+        state = start;
+}
+
 void setup()
 {
     out_trig::setup();
@@ -73,14 +120,52 @@ void setup()
     pwm::output_pin<channel_a>::setup();
     pwm::compare_output_mode<channel_a, clear_on_compare_match>();
 
-    // sei();
     read_spdts();
     show(adc::read<adc_pwm>());
+ 
+    time::setup<ctc_mode, top_ocra>();
+    time::clock_select<8>();
+    time::output_compare_register<channel_a>() = 50;
+    time::enable_oca();
+
+    sei();
 }
 
 void loop()
 {
-    static uint16_t i = 0;
+    static sw_pos_t sw0 = sw_err, sw1 = sw_err;
+    uint8_t s = read_spdts();
+    sw_pos_t _sw0 = static_cast<sw_pos_t>(s & 0x3);
+    sw_pos_t _sw1 = static_cast<sw_pos_t>(s >> 2);
+
+    if (_sw0 != sw0)
+    {
+        sw0 = _sw0;
+
+        switch (sw0)
+        {
+            case sw_up: time::clock_select<8>(); break;
+            case sw_mid: time::clock_select<64>(); break;
+            case sw_dn: time::clock_select<256>(); break;
+            default: ;
+        }
+    }
+
+    if (_sw1 != sw1)
+    {
+        sw1 = _sw1;
+
+        cli();
+
+        switch (sw1)
+        {
+            case sw_up: start = tri_up; state = reset; break;
+            case sw_mid: start = saw_up; state = reset; break;
+            default: ;
+        }
+
+        sei();
+    }
     //out_led::toggle();
     //out_trig::toggle();
     //show(read_spdts());
@@ -88,10 +173,9 @@ void loop()
     //show(adc::read<adc_freq>());
     //show(adc::read<adc_pwm>());
 
-    pwm::output_compare_register<channel_a>() = 0x1ff - (adc::read<adc_freq>() >> 1);
-
-    if (++i > 511)
-        i = 0;
+    //pwm::output_compare_register<channel_a>() = 0x1ff - (adc::read<adc_freq>() >> 1);
+    time::output_compare_register<channel_a>() = max<uint16_t>(1, adc::read<adc_freq>() >> 2);
+    delay_ms(10);
     //out_trig::write(in_sync::read());
 //    delay_ms(100);
 }
