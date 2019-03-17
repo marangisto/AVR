@@ -5,22 +5,7 @@
 #include <AVR/Main.h>
 #include <AVR/Delay.h>
 #include <AVR/Timer.h>
-#include <AVR/Queue.h>
 #include <AVR/Pins.h>
-
-enum event_t
-    { NO_EVENT
-    , CLK_A_UP
-    , CLK_A_DN
-    , RST_A_UP
-    , RST_A_DN
-    , CLK_B_UP
-    , CLK_B_DN
-    , RST_B_UP
-    , RST_B_DN
-    };
-
-typedef queue_t<event_t, 0, 16> event_queue;
 
 typedef input_t<PD, 3> clk_a;
 typedef input_t<PD, 4> rst_a;
@@ -67,7 +52,7 @@ static void attach_subseqs()
         {
             led_state[n_subseqs] = 0;
             twi_addr[n_subseqs++] = a;
-            printf("found sub-sequence at 0x%02x\n", a);
+            //printf("found sub-sequence at 0x%02x\n", a);
         }
     }
 }
@@ -93,6 +78,11 @@ ISR(TIMER2_OVF_vect)
     }
 }
 
+enum channel_state { STOPPED, RESETTING, RUNNING };
+
+static volatile channel_state state_a = STOPPED;
+static volatile channel_state state_b = STOPPED;
+
 ISR(PCINT2_vect)
 {
     static uint8_t last_bits = 0;
@@ -101,6 +91,13 @@ ISR(PCINT2_vect)
     uint8_t bits = mask & port_t<clk_a::port>::pin();  // ugly hack to get all clk / rst inputs
     uint8_t change = bits ^ last_bits;
 
+    if (state_a == RUNNING && (change & clk_a::mask))
+        trig_a1::write(!(bits & clk_a::mask));
+
+    if (state_b == RUNNING && (change & clk_b::mask))
+        trig_b1::write(!(bits & clk_b::mask));
+
+ /* 
     if (change & rst_a::mask)
         event_queue::put(bits & rst_a::mask ? RST_A_UP : RST_A_DN);
     if (change & rst_b::mask)
@@ -109,6 +106,7 @@ ISR(PCINT2_vect)
         event_queue::put(bits & clk_a::mask ? CLK_A_UP : CLK_A_DN);
     if (change & clk_b::mask)
         event_queue::put(bits & clk_b::mask ? CLK_B_UP : CLK_B_DN);
+*/
  
     last_bits = bits;
 }
@@ -166,7 +164,7 @@ static void get_subseq_slot(bool side, uint8_t step, uint8_t& subseq, uint8_t& s
 
 void setup()
 {
-    UART::setup<115200>();
+    ///UART::setup<115200>();
     adc::setup<128>();
 
     clk_a::setup();
@@ -202,7 +200,7 @@ void setup()
     twi::setup();
     sei();
 
-    printf("Marangisto Modular Sequencer, V1.0\n");
+    //printf("Marangisto Modular Sequencer, V1.0\n");
 
     attach_subseqs();
 
@@ -216,39 +214,12 @@ void loop()
 
     uint16_t sw = scan_switches();
 
+    //printf("%x\n", sw);
+
     auto_step = sw & sw_run_a;
 
-    event_t e;
-
-    while (event_queue::get(e))
-        switch (e)
-        {
-        case CLK_A_UP:
-            trig_a1::set();
-            break;
-        case CLK_A_DN:
-            trig_a1::clear();
-            break;
-        case RST_A_UP:
-            trig_a2::set();
-            break;
-        case RST_A_DN:
-            trig_a2::clear();
-            break;
-        case CLK_B_UP:
-            trig_b1::set();
-            break;
-        case CLK_B_DN:
-            trig_b1::clear();
-            break;
-        case RST_B_UP:
-            trig_b2::set();
-            break;
-        case RST_B_DN:
-            trig_b2::clear();
-            break;
-        default: ;
-        }
+    state_a = (sw & sw_run_a) ? RUNNING : STOPPED;
+    state_b = (sw & sw_run_b) ? RUNNING : STOPPED;
 
     if (action != no_action)
     {
