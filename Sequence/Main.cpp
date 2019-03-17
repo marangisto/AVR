@@ -5,20 +5,22 @@
 #include <AVR/Main.h>
 #include <AVR/Delay.h>
 #include <AVR/Timer.h>
+#include <AVR/Queue.h>
 #include <AVR/Pins.h>
 
-enum Event
-    { evCLK_a_UP = _BV(0)
-    , evCLK_a_DN = _BV(1)
-    , evRST_a_UP = _BV(2)
-    , evRST_a_DN = _BV(3)
-    , evCLK_b_UP = _BV(4)
-    , evCLK_b_DN = _BV(5)
-    , evRST_b_UP = _BV(6)
-    , evRST_b_DN = _BV(7)
+enum event_t
+    { NO_EVENT
+    , CLK_A_UP
+    , CLK_A_DN
+    , RST_A_UP
+    , RST_A_DN
+    , CLK_B_UP
+    , CLK_B_DN
+    , RST_B_UP
+    , RST_B_DN
     };
 
-static volatile uint16_t event = 0;
+typedef queue_t<event_t, 0, 16> event_queue;
 
 typedef input_t<PD, 3> clk_a;
 typedef input_t<PD, 4> rst_a;
@@ -99,14 +101,14 @@ ISR(PCINT2_vect)
     uint8_t bits = mask & port_t<clk_a::port>::pin();  // ugly hack to get all clk / rst inputs
     uint8_t change = bits ^ last_bits;
 
-    if (change & clk_a::mask)
-        event |= bits & clk_a::mask ? evCLK_a_UP : evCLK_a_DN;
     if (change & rst_a::mask)
-        event |= bits & rst_a::mask ? evRST_a_UP : evRST_a_DN;
-    if (change & clk_b::mask)
-        event |= bits & clk_b::mask ? evCLK_b_UP : evCLK_b_DN;
+        event_queue::put(bits & rst_a::mask ? RST_A_UP : RST_A_DN);
     if (change & rst_b::mask)
-        event |= bits & rst_b::mask ? evRST_b_UP : evRST_b_DN;
+        event_queue::put(bits & rst_b::mask ? RST_B_UP : RST_B_DN);
+    if (change & clk_a::mask)
+        event_queue::put(bits & clk_a::mask ? CLK_A_UP : CLK_A_DN);
+    if (change & clk_b::mask)
+        event_queue::put(bits & clk_b::mask ? CLK_B_UP : CLK_B_DN);
  
     last_bits = bits;
 }
@@ -216,6 +218,38 @@ void loop()
 
     auto_step = sw & sw_run_a;
 
+    event_t e;
+
+    while (event_queue::get(e))
+        switch (e)
+        {
+        case CLK_A_UP:
+            trig_a1::set();
+            break;
+        case CLK_A_DN:
+            trig_a1::clear();
+            break;
+        case RST_A_UP:
+            trig_a2::set();
+            break;
+        case RST_A_DN:
+            trig_a2::clear();
+            break;
+        case CLK_B_UP:
+            trig_b1::set();
+            break;
+        case CLK_B_DN:
+            trig_b1::clear();
+            break;
+        case RST_B_UP:
+            trig_b2::set();
+            break;
+        case RST_B_DN:
+            trig_b2::clear();
+            break;
+        default: ;
+        }
+
     if (action != no_action)
     {
         uint8_t last_ia = ia;
@@ -269,6 +303,5 @@ void loop()
     }
 
     delay_us(500);
-    delay_ms(100);
 }
 
