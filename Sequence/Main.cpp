@@ -57,7 +57,8 @@ static void attach_subseqs()
     }
 }
 
-typedef timer_t<3> pwm;     // channel-a (cv0, cv1)
+typedef timer_t<3> pwm_a;     // channel-a (cv1, cv2)
+typedef timer_t<1> pwm_b;     // channel-b (cv1, cv2)
 typedef timer_t<2> aux;
 
 enum action_t { no_action, play_step, play_no_advance };
@@ -78,37 +79,75 @@ ISR(TIMER2_OVF_vect)
     }
 }
 
-enum channel_state { STOPPED, RESETTING, RUNNING };
+enum state_t { STOPPED, RUNNING };
 
-static volatile channel_state state_a = STOPPED;
-static volatile channel_state state_b = STOPPED;
+template<class CLK, class RST, class TRIG_A, class TRIG_B, class PWM>
+class channel_t
+{
+public:
+    void init(uint8_t nsteps)
+    {
+        m_nsteps = nsteps;
+        m_state = STOPPED;
+        m_step = 0;
+        m_start = 0;
+        m_finish = nsteps - 1;
+    }
+
+    inline void start() { m_state = RUNNING; }
+    inline void stop() { m_state = STOPPED; }
+    inline void reset() { m_step = m_finish; }  // next clock will be start step
+
+    inline state_t state() const { return m_state; }
+    inline uint8_t step() const { return m_step; }
+
+    inline void advance()
+    {
+        if (m_step >= m_finish)
+            m_step = m_start;
+        else
+            ++m_step;
+    }
+
+    inline void isr()
+    {
+        static bool last_clk;
+
+        if (!RST::read())
+            reset();
+
+        bool clk = !CLK::read();
+
+        if (clk != last_clk)
+        {
+            if (clk && m_state == RUNNING)
+            {
+                advance();
+                // PWM::output_compare_register<channel_a>() = m_level[m_step] >> 1;
+                TRIG_A::set();
+            }
+            else
+                TRIG_A::clear();
+            last_clk = clk;
+        }
+    }
+
+private:
+    volatile uint8_t    m_nsteps;
+    volatile state_t    m_state;
+    volatile uint8_t    m_step;
+    volatile uint8_t    m_start;
+    volatile uint8_t    m_finish;
+    volatile uint16_t   m_level[max_subseqs * 4];
+};
+
+static channel_t<clk_a, rst_a, trig_a1, trig_a2, pwm_a> ch_a;
+static channel_t<clk_b, rst_b, trig_b1, trig_b2, pwm_b> ch_b;
 
 ISR(PCINT2_vect)
 {
-    static uint8_t last_bits = 0;
-    static uint8_t mask = clk_a::mask | rst_a::mask | clk_b::mask | rst_b::mask;
-
-    uint8_t bits = mask & port_t<clk_a::port>::pin();  // ugly hack to get all clk / rst inputs
-    uint8_t change = bits ^ last_bits;
-
-    if (state_a == RUNNING && (change & clk_a::mask))
-        trig_a1::write(!(bits & clk_a::mask));
-
-    if (state_b == RUNNING && (change & clk_b::mask))
-        trig_b1::write(!(bits & clk_b::mask));
-
- /* 
-    if (change & rst_a::mask)
-        event_queue::put(bits & rst_a::mask ? RST_A_UP : RST_A_DN);
-    if (change & rst_b::mask)
-        event_queue::put(bits & rst_b::mask ? RST_B_UP : RST_B_DN);
-    if (change & clk_a::mask)
-        event_queue::put(bits & clk_a::mask ? CLK_A_UP : CLK_A_DN);
-    if (change & clk_b::mask)
-        event_queue::put(bits & clk_b::mask ? CLK_B_UP : CLK_B_DN);
-*/
- 
-    last_bits = bits;
+    ch_a.isr();
+    ch_b.isr();
 }
 
 // We have 3 sense lines and 4 scan lines. We encode the 3
@@ -145,7 +184,7 @@ static uint16_t scan_switches()
           | (sense2::read() ? 0 : 0x04)
           ;
     }
- 
+
     return x;
 }
 
@@ -186,12 +225,19 @@ void setup()
     scan2::setup();
     scan3::setup();
 
-    pwm::setup<fast_pwm, top_0x1ff>();
-    pwm::clock_select<1>();
-    pwm::output_pin<channel_a>::setup();
-    pwm::output_pin<channel_b>::setup();
-    pwm::compare_output_mode<channel_a, clear_on_compare_match>();
-    pwm::compare_output_mode<channel_b, clear_on_compare_match>();
+    pwm_a::setup<fast_pwm, top_0x1ff>();
+    pwm_a::clock_select<1>();
+    pwm_a::output_pin<channel_a>::setup();
+    pwm_a::output_pin<channel_b>::setup();
+    pwm_a::compare_output_mode<channel_a, clear_on_compare_match>();
+    pwm_a::compare_output_mode<channel_b, clear_on_compare_match>();
+
+    pwm_b::setup<fast_pwm, top_0x1ff>();
+    pwm_b::clock_select<1>();
+    pwm_b::output_pin<channel_a>::setup();
+    pwm_b::output_pin<channel_b>::setup();
+    pwm_b::compare_output_mode<channel_a, clear_on_compare_match>();
+    pwm_b::compare_output_mode<channel_b, clear_on_compare_match>();
 
     aux::setup<normal_mode>();
     aux::clock_select<aux_prescale>();
@@ -204,6 +250,9 @@ void setup()
 
     attach_subseqs();
 
+    ch_a.init(16);  // FIXME: use sub-sequences
+    ch_b.init(16);  // FIXME: use sub-sequences
+
     PCMSK2 |= _BV(PCINT19) | _BV(PCINT20) | _BV(PCINT21) | _BV(PCINT22); // PCI for clk[1,2] + rst[1,2]
     PCICR |= _BV(PCIE2);    // enable channel 2 pin-change interrupts
 }
@@ -211,15 +260,37 @@ void setup()
 void loop()
 {
     static uint8_t ia = 0, ib = 0;
+    static uint16_t last_state_a = 0;
+    //static uint16_t last_mode_a = 0;
+    static uint16_t last_state_b = 0;
+    //static uint16_t last_mode_b = 0;
+    uint16_t sw = scan_switches(), tmp = 0;
 
-    uint16_t sw = scan_switches();
+    if ((tmp = (sw & (sw_run_a | sw_rst_a))) != last_state_a)
+    {
+        if (tmp & sw_run_a)
+            ch_a.start();
+        else if (tmp & sw_rst_a)
+            ch_a.reset();
+        else
+            ch_a.stop();
+        last_state_a = tmp;
+    }
+
+    if ((tmp = (sw & (sw_run_b | sw_rst_b))) != last_state_b)
+    {
+        if (tmp & sw_run_b)
+            ch_b.start();
+        else if (tmp & sw_rst_b)
+            ch_b.reset();
+        else
+            ch_b.stop();
+        last_state_b = tmp;
+    }
 
     //printf("%x\n", sw);
 
     auto_step = sw & sw_run_a;
-
-    state_a = (sw & sw_run_a) ? RUNNING : STOPPED;
-    state_b = (sw & sw_run_b) ? RUNNING : STOPPED;
 
     if (action != no_action)
     {
@@ -258,14 +329,14 @@ void loop()
         //printf("%d %d %s\n", i, value, sw_a ? "a" : (sw_b ? "b" : " "));
         if (sw_1)
         {
-            pwm::output_compare_register<channel_a>() = (value >> 2);
+            pwm_a::output_compare_register<channel_a>() = (value >> 2);
             trig_a1::set();
             delay_us(100);
             trig_a1::clear();
         }
         else if (sw_2)
         {
-            pwm::output_compare_register<channel_b>() = (value >> 2);
+            pwm_a::output_compare_register<channel_b>() = (value >> 2);
             trig_a2::set();
             delay_us(100);
             trig_a2::clear();
