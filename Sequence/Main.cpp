@@ -1,5 +1,5 @@
 #define NO_TIMER_VECTORS 1
-//#include <AVR/UART.h>
+#include <AVR/UART.h>
 #include <AVR/TWI.h>
 #include <AVR/ADC.h>
 #include <AVR/Main.h>
@@ -7,17 +7,28 @@
 #include <AVR/Timer.h>
 #include <AVR/Pins.h>
 
-/*
-typedef output_t<PB, 1> cv_1a;
-typedef output_t<PB, 2> cv_1b;
-typedef output_t<PD, 2> cv_2a;
-typedef output_t<PD, 0> cv_2b;
-*/
+enum Event
+    { evCLK_a_UP = _BV(0)
+    , evCLK_a_DN = _BV(1)
+    , evRST_a_UP = _BV(2)
+    , evRST_a_DN = _BV(3)
+    , evCLK_b_UP = _BV(4)
+    , evCLK_b_DN = _BV(5)
+    , evRST_b_UP = _BV(6)
+    , evRST_b_DN = _BV(7)
+    };
 
-typedef output_t<PB, 0> trig_1a;
-typedef output_t<PB, 3> trig_1b;
-typedef output_t<PB, 4> trig_2a;
-typedef output_t<PB, 5> trig_2b;
+static volatile uint16_t event = 0;
+
+typedef input_t<PD, 3> clk_a;
+typedef input_t<PD, 4> rst_a;
+typedef input_t<PD, 5> clk_b;
+typedef input_t<PD, 6> rst_b;
+
+typedef output_t<PB, 0> trig_a1;
+typedef output_t<PB, 3> trig_a2;
+typedef output_t<PB, 4> trig_b1;
+typedef output_t<PB, 5> trig_b2;
 
 typedef output_t<PE, 0> scan0;
 typedef output_t<PE, 1> scan1;
@@ -54,7 +65,7 @@ static void attach_subseqs()
         {
             led_state[n_subseqs] = 0;
             twi_addr[n_subseqs++] = a;
-            //printf("found sub-sequence at 0x%02x\n", a);
+            printf("found sub-sequence at 0x%02x\n", a);
         }
     }
 }
@@ -78,6 +89,26 @@ ISR(TIMER2_OVF_vect)
         action = play_step;
         i = 0;
     }
+}
+
+ISR(PCINT2_vect)
+{
+    static uint8_t last_bits = 0;
+    static uint8_t mask = clk_a::mask | rst_a::mask | clk_b::mask | rst_b::mask;
+
+    uint8_t bits = mask & port_t<clk_a::port>::pin();  // ugly hack to get all clk / rst inputs
+    uint8_t change = bits ^ last_bits;
+
+    if (change & clk_a::mask)
+        event |= bits & clk_a::mask ? evCLK_a_UP : evCLK_a_DN;
+    if (change & rst_a::mask)
+        event |= bits & rst_a::mask ? evRST_a_UP : evRST_a_DN;
+    if (change & clk_b::mask)
+        event |= bits & clk_b::mask ? evCLK_b_UP : evCLK_b_DN;
+    if (change & rst_b::mask)
+        event |= bits & rst_b::mask ? evRST_b_UP : evRST_b_DN;
+ 
+    last_bits = bits;
 }
 
 // We have 3 sense lines and 4 scan lines. We encode the 3
@@ -131,33 +162,20 @@ static void get_subseq_slot(bool side, uint8_t step, uint8_t& subseq, uint8_t& s
         subseq = slot = 0;                // this is an illegal step value...
 }
 
-
-/*
-static uint8_t bit(uint16_t x)
-{
-    for (uint8_t i = 0; i < 16; ++i)
-        if (x & (1 << i))
-            return i + 1;
-    return 0xf0;
-}
-*/
-
 void setup()
 {
-    //UART::setup<115200>();
+    UART::setup<115200>();
     adc::setup<128>();
 
-    trig_1a::setup();
-    trig_1b::setup();
-    trig_2a::setup();
-    trig_2b::setup();
+    clk_a::setup();
+    rst_a::setup();
+    clk_b::setup();
+    rst_b::setup();
 
-    /*
-    cv_1a::setup();
-    cv_1b::setup();
-    cv_2a::setup();
-    cv_2b::setup();
-    */
+    trig_a1::setup();
+    trig_a2::setup();
+    trig_b1::setup();
+    trig_b2::setup();
 
     sense0::setup();
     sense1::setup();
@@ -182,14 +200,17 @@ void setup()
     twi::setup();
     sei();
 
-    //printf("Marangisto Sequence 0.1\n");
+    printf("Marangisto Modular Sequencer, V1.0\n");
 
     attach_subseqs();
+
+    PCMSK2 |= _BV(PCINT19) | _BV(PCINT20) | _BV(PCINT21) | _BV(PCINT22); // PCI for clk[1,2] + rst[1,2]
+    PCICR |= _BV(PCIE2);    // enable channel 2 pin-change interrupts
 }
 
 void loop()
 {
-    static uint8_t i = 0;
+    static uint8_t ia = 0, ib = 0;
 
     uint16_t sw = scan_switches();
 
@@ -197,22 +218,25 @@ void loop()
 
     if (action != no_action)
     {
-        uint8_t last_i = i;
+        uint8_t last_ia = ia;
 
         if (action == play_step)
-            i = (i + 1) & 0x07;
+        {
+            ia = (ia + 1) & 0x0f;
+            ib = (ib + 1) & 0x0f;
+        }
 
         uint8_t led_cmd[2] = { 0, 0 };
         uint8_t subseq, slot;
 
-        get_subseq_slot(false, last_i, subseq, slot);
+        get_subseq_slot(false, last_ia, subseq, slot);
         led_state[subseq] &= ~(1 << slot);
         led_cmd[1] = led_state[subseq];
         twi::write(twi_addr[subseq], led_cmd, sizeof(led_cmd));
         twi::wait_idle();
         delay_us(100);
 
-        get_subseq_slot(false, i, subseq, slot);
+        get_subseq_slot(false, ia, subseq, slot);
         led_state[subseq] |= (1 << slot);
         led_cmd[1] = led_state[subseq];
         twi::write(twi_addr[subseq], led_cmd, sizeof(led_cmd));
@@ -224,26 +248,27 @@ void loop()
 
         twi::write_read(twi_addr[subseq], read_cmd, sizeof(read_cmd), reinterpret_cast<uint8_t*>(&value), sizeof(value));
         twi::wait_idle();
-        bool sw_a = (value & (1 << 13)) != 0;
-        bool sw_b = (value & (1 << 14)) != 0;
+        bool sw_1 = (value & (1 << 13)) != 0;
+        bool sw_2 = (value & (1 << 14)) != 0;
         //printf("%d %d %s\n", i, value, sw_a ? "a" : (sw_b ? "b" : " "));
-        if (sw_a )
+        if (sw_1)
         {
             pwm::output_compare_register<channel_a>() = (value >> 2);
-            trig_1a::set();
+            trig_a1::set();
             delay_us(100);
-            trig_1a::clear();
+            trig_a1::clear();
         }
-        else if (sw_b)
+        else if (sw_2)
         {
             pwm::output_compare_register<channel_b>() = (value >> 2);
-            trig_1b::set();
+            trig_a2::set();
             delay_us(100);
-            trig_1b::clear();
+            trig_a2::clear();
         }
         action = no_action;
     }
 
     delay_us(500);
+    delay_ms(100);
 }
 
