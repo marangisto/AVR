@@ -1,6 +1,6 @@
 #define NO_TIMER_VECTORS 1
 #define USE_UART 0
-#if defined(USE_UART)
+#if USE_UART
 #include <AVR/UART.h>
 #endif
 #include <AVR/TWI.h>
@@ -9,6 +9,8 @@
 #include <AVR/Delay.h>
 #include <AVR/Timer.h>
 #include <AVR/Pins.h>
+
+typedef output_t<PD, 2> cv1;
 
 typedef input_t<PD, 3> clk_a;
 typedef input_t<PD, 4> rst_a;
@@ -55,7 +57,7 @@ static void attach_subseqs()
         {
             led_state[n_subseqs] = 0;
             twi_addr[n_subseqs++] = a;
-#if defined(USE_UART)
+#if USE_UART
             printf("found sub-sequence at 0x%02x\n", a);
 #endif
         }
@@ -216,12 +218,11 @@ static void get_subseq_slot(bool side, uint8_t step, uint8_t& subseq, uint8_t& s
 */
 void setup()
 {
-#if defined(USE_UART)
+#if USE_UART
     UART::setup<115200>();
 #endif
     adc::setup<128>();
 
-    clk_a::setup();
     rst_a::setup();
     clk_b::setup();
     rst_b::setup();
@@ -261,7 +262,7 @@ void setup()
     twi::setup();
     sei();
 
-#if defined(USE_UART)
+#if USE_UART
     printf("Marangisto Modular Sequencer, V1.0\n");
 #endif
 
@@ -280,6 +281,11 @@ void setup()
         ch_a.set_level(i, xs[i]);
         ch_b.set_level(i, xs[i]);
     }
+
+    // FIXME: mystery why this is necessary to get CV1 to produce output!
+
+    cv1::setup();
+    cv1::set();
 }
 
 void loop()
