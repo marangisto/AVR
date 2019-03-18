@@ -1,5 +1,8 @@
 #define NO_TIMER_VECTORS 1
+#define USE_UART 0
+#if defined(USE_UART)
 #include <AVR/UART.h>
+#endif
 #include <AVR/TWI.h>
 #include <AVR/ADC.h>
 #include <AVR/Main.h>
@@ -52,7 +55,9 @@ static void attach_subseqs()
         {
             led_state[n_subseqs] = 0;
             twi_addr[n_subseqs++] = a;
-            //printf("found sub-sequence at 0x%02x\n", a);
+#if defined(USE_UART)
+            printf("found sub-sequence at 0x%02x\n", a);
+#endif
         }
     }
 }
@@ -211,7 +216,9 @@ static void get_subseq_slot(bool side, uint8_t step, uint8_t& subseq, uint8_t& s
 */
 void setup()
 {
-    ///UART::setup<115200>();
+#if defined(USE_UART)
+    UART::setup<115200>();
+#endif
     adc::setup<128>();
 
     clk_a::setup();
@@ -254,7 +261,9 @@ void setup()
     twi::setup();
     sei();
 
-    //printf("Marangisto Modular Sequencer, V1.0\n");
+#if defined(USE_UART)
+    printf("Marangisto Modular Sequencer, V1.0\n");
+#endif
 
     attach_subseqs();
 
@@ -305,7 +314,6 @@ void loop()
     }
 
     /*
-    //printf("%x\n", sw);
 
     auto_step = sw & sw_run_a;
 
