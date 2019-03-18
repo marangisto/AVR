@@ -101,6 +101,12 @@ public:
     inline state_t state() const { return m_state; }
     inline uint8_t step() const { return m_step; }
 
+    inline void set_level(uint8_t i, uint16_t x)
+    {
+        if (i < sizeof(m_level) / sizeof(*m_level))
+            m_level[i] = x;
+    }
+
     inline void advance()
     {
         if (m_step >= m_finish)
@@ -123,7 +129,8 @@ public:
             if (clk && m_state == RUNNING)
             {
                 advance();
-                // PWM::output_compare_register<channel_a>() = m_level[m_step] >> 1;
+                PWM::template output_compare_register<channel_a>() = m_level[m_step] >> 1;
+                PWM::template output_compare_register<channel_b>() = m_level[m_step] >> 1;
                 TRIG_A::set();
             }
             else
@@ -188,6 +195,7 @@ static uint16_t scan_switches()
     return x;
 }
 
+/*
 static void get_subseq_slot(bool side, uint8_t step, uint8_t& subseq, uint8_t& slot)
 {
     uint8_t n_steps = n_subseqs << 2;   // 4-slots per sub-sequence module
@@ -200,7 +208,7 @@ static void get_subseq_slot(bool side, uint8_t step, uint8_t& subseq, uint8_t& s
     else
         subseq = slot = 0;                // this is an illegal step value...
 }
-
+*/
 void setup()
 {
     ///UART::setup<115200>();
@@ -255,11 +263,19 @@ void setup()
 
     PCMSK2 |= _BV(PCINT19) | _BV(PCINT20) | _BV(PCINT21) | _BV(PCINT22); // PCI for clk[1,2] + rst[1,2]
     PCICR |= _BV(PCIE2);    // enable channel 2 pin-change interrupts
+
+    static uint16_t xs[] = { 0, 68, 136, 204, 272, 340, 408, 476, 544, 612, 680, 748, 816, 884, 952, 1023 };
+
+    for (uint8_t i = 0; i < sizeof(xs) / sizeof(*xs); ++i)
+    {
+        ch_a.set_level(i, xs[i]);
+        ch_b.set_level(i, xs[i]);
+    }
 }
 
 void loop()
 {
-    static uint8_t ia = 0, ib = 0;
+    //static uint8_t ia = 0, ib = 0;
     static uint16_t last_state_a = 0;
     //static uint16_t last_mode_a = 0;
     static uint16_t last_state_b = 0;
@@ -288,6 +304,7 @@ void loop()
         last_state_b = tmp;
     }
 
+    /*
     //printf("%x\n", sw);
 
     auto_step = sw & sw_run_a;
@@ -343,6 +360,7 @@ void loop()
         }
         action = no_action;
     }
+    */
 
     delay_us(500);
 }
