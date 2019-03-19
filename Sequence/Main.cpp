@@ -253,7 +253,7 @@ void setup()
     aux::clock_select<aux_prescale>();
     aux::enable();
 
-    twi::setup();
+    twi::setup(100000);
     sei();
 
 #if USE_UART
@@ -284,6 +284,8 @@ void setup()
 
 void loop()
 {
+    // read switches
+
     //static uint8_t ia = 0, ib = 0;
     static uint16_t last_state_a = 0;
     //static uint16_t last_mode_a = 0;
@@ -313,6 +315,8 @@ void loop()
         last_state_b = tmp;
     }
 
+    // update leds and read levels
+
     uint8_t step_a = ch_a.step(), step_b = ch_b.step();
 
     for (uint8_t ss = 0; ss < n_subseqs; ++ss)
@@ -330,7 +334,25 @@ void loop()
         twi::wait_idle();
         delay_us(100);
 
+        uint8_t offset = ss << 2;
+
+        for (uint8_t i = 0; i < 8; ++i)
+        {
+            uint8_t read_cmd[2] = { 1, i };
+            uint16_t x = 0;
+
+            twi::write_read(twi_addr[ss], read_cmd, sizeof(read_cmd), reinterpret_cast<uint8_t*>(&x), sizeof(x));
+            twi::wait_idle();
+            delay_us(100);
+
+            if (i < 4)
+                ch_a.set_level(offset + i, x);
+            else
+                ch_b.set_level(offset + i - 4, x);
+        }
     }
+
+    // update start and finish steps
 
     uint8_t n_steps = n_subseqs << 2;
     uint16_t scale = 1024 / n_steps;
@@ -339,63 +361,6 @@ void loop()
     ch_a.set_finish((1023 - adc::read<adc_finish_a>()) / scale);
     ch_b.set_start((1023 - adc::read<adc_start_b>()) / scale);
     ch_b.set_finish((1023 - adc::read<adc_finish_b>()) / scale);
-
-    /*
-
-    auto_step = sw & sw_run_a;
-
-    if (action != no_action)
-    {
-        uint8_t last_ia = ia;
-
-        if (action == play_step)
-        {
-            ia = (ia + 1) & 0x0f;
-            ib = (ib + 1) & 0x0f;
-        }
-
-        uint8_t led_cmd[2] = { 0, 0 };
-        uint8_t subseq, slot;
-
-        get_subseq_slot(false, last_ia, subseq, slot);
-        led_state[subseq] &= ~(1 << slot);
-        led_cmd[1] = led_state[subseq];
-        twi::write(twi_addr[subseq], led_cmd, sizeof(led_cmd));
-        twi::wait_idle();
-        delay_us(100);
-
-        get_subseq_slot(false, ia, subseq, slot);
-        led_state[subseq] |= (1 << slot);
-        led_cmd[1] = led_state[subseq];
-        twi::write(twi_addr[subseq], led_cmd, sizeof(led_cmd));
-        twi::wait_idle();
-        delay_us(100);
-
-        uint8_t read_cmd[2] = { 1, slot };
-        uint16_t value = 0;
-
-        twi::write_read(twi_addr[subseq], read_cmd, sizeof(read_cmd), reinterpret_cast<uint8_t*>(&value), sizeof(value));
-        twi::wait_idle();
-        bool sw_1 = (value & (1 << 13)) != 0;
-        bool sw_2 = (value & (1 << 14)) != 0;
-        //printf("%d %d %s\n", i, value, sw_a ? "a" : (sw_b ? "b" : " "));
-        if (sw_1)
-        {
-            pwm_a::output_compare_register<channel_a>() = (value >> 2);
-            trig_a1::set();
-            delay_us(100);
-            trig_a1::clear();
-        }
-        else if (sw_2)
-        {
-            pwm_a::output_compare_register<channel_b>() = (value >> 2);
-            trig_a2::set();
-            delay_us(100);
-            trig_a2::clear();
-        }
-        action = no_action;
-    }
-    */
 
     delay_us(500);
 }
