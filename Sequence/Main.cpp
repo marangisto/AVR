@@ -319,6 +319,24 @@ void loop()
         last_state_b = tmp;
     }
 
+    uint8_t step_a = ch_a.step(), step_b = ch_b.step();
+
+    for (uint8_t ss = 0; ss < n_subseqs; ++ss)
+    {
+#if USE_UART
+        printf("ss%d\n", ss);
+#endif
+        uint8_t led_cmd[2] = { 0, 0 };
+
+        led_cmd[1] = ((ss == step_a >> 2) ? 1 << (step_a & 0x03) : 0)
+                   | ((ss == step_b >> 2) ? 1 << (4 + (step_b & 0x03)) : 0)
+                   ;
+
+        twi::write(twi_addr[ss], led_cmd, sizeof(led_cmd));
+        twi::wait_idle();
+        delay_us(100);
+
+    }
     /*
 
     auto_step = sw & sw_run_a;
