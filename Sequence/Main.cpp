@@ -10,8 +10,6 @@
 #include <AVR/Timer.h>
 #include <AVR/Pins.h>
 
-typedef output_t<PD, 2> cv1;
-
 typedef input_t<PD, 3> clk_a;
 typedef input_t<PD, 4> rst_a;
 typedef input_t<PD, 5> clk_b;
@@ -37,6 +35,9 @@ static const uint8_t adc_start_b = 2;   // PC2
 static const uint8_t adc_finish_b = 3;  // PC3
 
 typedef twi_master_t<0> twi;
+
+typedef timer_t<3> pwm_a;     // channel-a (cv1, cv2)
+typedef timer_t<1> pwm_b;     // channel-b (cv1, cv2)
 
 static const uint8_t max_subseqs = 8;
 static uint8_t twi_addr[max_subseqs];
@@ -66,28 +67,6 @@ static void attach_subseqs()
             printf("found sub-sequence at 0x%02x\n", a);
 #endif
         }
-    }
-}
-
-typedef timer_t<3> pwm_a;     // channel-a (cv1, cv2)
-typedef timer_t<1> pwm_b;     // channel-b (cv1, cv2)
-typedef timer_t<2> aux;
-
-enum action_t { no_action, play_step, play_no_advance };
-
-static const uint16_t aux_prescale = 64;
-static volatile uint16_t aux_count = 100;
-static volatile bool auto_step = true;
-static volatile action_t action = no_action;
-
-ISR(TIMER2_OVF_vect)
-{
-    static uint16_t i = 0;
-
-    if (auto_step && i++ >= aux_count)
-    {
-        action = play_step;
-        i = 0;
     }
 }
 
@@ -239,6 +218,7 @@ void setup()
     pwm_a::clock_select<1>();
     pwm_a::output_pin<channel_a>::setup();
     pwm_a::output_pin<channel_b>::setup();
+    pwm_a::output_pin<channel_b>::set();    // required for OC3B!
     pwm_a::compare_output_mode<channel_a, clear_on_compare_match>();
     pwm_a::compare_output_mode<channel_b, clear_on_compare_match>();
 
@@ -248,10 +228,6 @@ void setup()
     pwm_b::output_pin<channel_b>::setup();
     pwm_b::compare_output_mode<channel_a, clear_on_compare_match>();
     pwm_b::compare_output_mode<channel_b, clear_on_compare_match>();
-
-    aux::setup<normal_mode>();
-    aux::clock_select<aux_prescale>();
-    aux::enable();
 
     twi::setup(100000);
     sei();
@@ -275,11 +251,6 @@ void setup()
         ch_a.set_level(i, xs[i]);
         ch_b.set_level(i, xs[i]);
     }
-
-    // FIXME: mystery why this is necessary to get CV1 to produce output!
-
-    cv1::setup();
-    cv1::set();
 }
 
 void loop()
