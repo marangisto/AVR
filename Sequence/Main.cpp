@@ -31,6 +31,11 @@ typedef input_t<PD, 1> sense0;
 typedef input_t<PB, 7> sense1;
 typedef input_t<PD, 7> sense2;
 
+static const uint8_t adc_start_a = 0;   // PC0
+static const uint8_t adc_finish_a = 1;  // PC1
+static const uint8_t adc_start_b = 2;   // PC2
+static const uint8_t adc_finish_b = 3;  // PC3
+
 typedef twi_master_t<0> twi;
 
 static const uint8_t max_subseqs = 8;
@@ -146,6 +151,9 @@ public:
         }
     }
 
+    inline void set_start(uint8_t i) { m_start = i; }
+    inline void set_finish(uint8_t i) { m_finish = i; }
+
 private:
     volatile uint8_t    m_nsteps;
     volatile state_t    m_state;
@@ -202,20 +210,6 @@ static uint16_t scan_switches()
     return x;
 }
 
-/*
-static void get_subseq_slot(bool side, uint8_t step, uint8_t& subseq, uint8_t& slot)
-{
-    uint8_t n_steps = n_subseqs << 2;   // 4-slots per sub-sequence module
-
-    if (step < n_steps)
-    {
-        subseq = step >> 2;
-        slot = (step & 0x03) + (side ? 4 : 0);
-    }
-    else
-        subseq = slot = 0;                // this is an illegal step value...
-}
-*/
 void setup()
 {
 #if USE_UART
@@ -337,6 +331,15 @@ void loop()
         delay_us(100);
 
     }
+
+    uint8_t n_steps = n_subseqs << 2;
+    uint16_t scale = 1024 / n_steps;
+
+    ch_a.set_start((1023 - adc::read<adc_start_a>()) / scale);
+    ch_a.set_finish((1023 - adc::read<adc_finish_a>()) / scale);
+    ch_b.set_start((1023 - adc::read<adc_start_b>()) / scale);
+    ch_b.set_finish((1023 - adc::read<adc_finish_b>()) / scale);
+
     /*
 
     auto_step = sw & sw_run_a;
