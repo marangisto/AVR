@@ -1,6 +1,6 @@
 #pragma once
 
-#include <avr/io.h>
+#include <avr/wdt.h>
 
 template<int KILOCYCLES> struct wdt_traits {};
 
