@@ -34,9 +34,9 @@ typedef outputs_t<sink_0, sink_1, sink_2, sink_3, sink_4, sink_5, sink_6, sink_7
 typedef input_t<PB, 1> sense_a;
 typedef input_t<PD, 2> sense_b;
 
-static uint8_t led_state = 0;
-static uint8_t swa_state = 0;
-static uint8_t swb_state = 0;
+static volatile uint8_t led_state = 0;
+static volatile uint8_t swa_state = 0;
+static volatile uint8_t swb_state = 0;
 
 static const uint8_t ch0 = 5;
 static const uint8_t ch1 = 3;
@@ -46,6 +46,8 @@ static const uint8_t ch4 = 4;
 static const uint8_t ch5 = 2;
 static const uint8_t ch6 = 1;
 static const uint8_t ch7 = 7;
+
+static volatile uint16_t levels[8];
 
 typedef timer_t<2> aux;
 
@@ -107,30 +109,17 @@ static void slave_callback(bool read, volatile uint8_t *buf, uint8_t len)
         if (!read)
             led_state = buf[1];
         break;
-    case 1:                         // read adc
+    case 1:                         // read data
         if (read)
         {
             uint8_t step = buf[1];
             volatile uint16_t *value = reinterpret_cast<volatile uint16_t*>(buf);
-            
-            switch (step)
-            {
-                case 0: *value = adc::read<ch0>() | sw_bit(0, swa_state) << 13 | sw_bit(0, swb_state) << 14; break;
-                case 1: *value = adc::read<ch1>() | sw_bit(1, swa_state) << 13 | sw_bit(1, swb_state) << 14; break;
-                case 2: *value = adc::read<ch2>() | sw_bit(2, swa_state) << 13 | sw_bit(2, swb_state) << 14; break;
-                case 3: *value = adc::read<ch3>() | sw_bit(3, swa_state) << 13 | sw_bit(3, swb_state) << 14; break;
-                case 4: *value = adc::read<ch4>() | sw_bit(4, swa_state) << 13 | sw_bit(4, swb_state) << 14; break;
-                case 5: *value = adc::read<ch5>() | sw_bit(5, swa_state) << 13 | sw_bit(5, swb_state) << 14; break;
-                case 6: *value = adc::read<ch6>() | sw_bit(6, swa_state) << 13 | sw_bit(6, swb_state) << 14; break;
-                case 7: *value = adc::read<ch7>() | sw_bit(7, swa_state) << 13 | sw_bit(7, swb_state) << 14; break;
-                default: *value = 0;
-            }
-
-            wdt_reset();  // give the dog a bone
+            *value = levels[step];
+            wdt_reset();            // give the dog a bone
         }
         break;
     default:
-        ; // ignore illegal command
+        ;                           // ignore illegal command
     }
 }
 
@@ -142,6 +131,7 @@ void setup()
     sinks::setup();
     sinks::write(~1);   // first sink active
     adc::setup<128>();
+
     aux::setup<normal_mode>();
     aux::clock_select<1>();
     aux::enable();
@@ -162,6 +152,27 @@ void setup()
 
 void loop()
 {
-    delay_ms(1);
+    for (uint8_t i = 0; i < 8; ++i)
+    {
+        uint16_t x = 0;
+
+        switch (i)
+        {
+            case 0: x = adc::read<ch0>(); break;
+            case 1: x = adc::read<ch1>(); break;
+            case 2: x = adc::read<ch2>(); break;
+            case 3: x = adc::read<ch3>(); break;
+            case 4: x = adc::read<ch4>(); break;
+            case 5: x = adc::read<ch5>(); break;
+            case 6: x = adc::read<ch6>(); break;
+            case 7: x = adc::read<ch7>(); break;
+        }
+
+        uint16_t xab = x | sw_bit(i, swa_state) << 13 | sw_bit(i, swb_state) << 14;
+
+        cli();
+        levels[i] = xab;
+        sei();
+    }
 }
 
