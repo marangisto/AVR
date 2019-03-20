@@ -53,7 +53,7 @@ typedef timer_t<2> aux;
 
 ISR(TIMER2_OVF_vect)
 {
-    static const uint8_t led_duty = 2; // of 255
+    static const uint8_t led_duty = 8; // of 255
     static uint8_t i = 0;
 
     switch (i)
