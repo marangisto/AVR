@@ -7,12 +7,13 @@
 #include <AVR/ADC.h>
 #include <AVR/Pins.h>
 #include <AVR/Buttons.h>
+#include <AVR/WatchDog.h>
 #include <stdlib.h>
 
 template <class T> const T& max(const T& a, const T& b) { return (a<b) ? b : a; }
 template <class T> const T& min(const T& a, const T& b) { return (a<b) ? a : b; }
 
-static const uint8_t twi_addr = 0x63;   // FIXME: use EEPROM and reset config
+static const uint8_t twi_addr = 0x61;   // FIXME: use EEPROM and reset config
 
 //typedef twi_master_t<1> twi;
 typedef twi_slave_t<1> twi;
@@ -124,6 +125,8 @@ static void slave_callback(bool read, volatile uint8_t *buf, uint8_t len)
                 case 7: *value = adc::read<ch7>() | sw_bit(7, swa_state) << 13 | sw_bit(7, swb_state) << 14; break;
                 default: *value = 0;
             }
+
+            wdt_reset();  // give the dog a bone
         }
         break;
     default:
@@ -133,6 +136,8 @@ static void slave_callback(bool read, volatile uint8_t *buf, uint8_t len)
 
 void setup()
 {
+    enable_watchdog<512>(); // every 4 seconds
+
     leds::setup();
     sinks::setup();
     sinks::write(~1);   // first sink active
@@ -145,11 +150,9 @@ void setup()
 
     sei();
 
-    srand(1);
-
-    for (uint8_t i = 0; i < 50; ++i)
+    for (uint8_t i = 0; i < 8; ++i)
     {
-        led_state = i < 25 ? rand() : (1 << (i & 0x07));
+        led_state = i & 0x1 ? 0xff : 0;
         delay_ms(25);
     }
 
