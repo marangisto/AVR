@@ -93,10 +93,11 @@ public:
 
     inline void start() { m_state = RUNNING; }
     inline void stop() { m_state = STOPPED; }
+
     inline void reset()
     {
-        m_step = m_finish > m_start ? m_finish : m_start;   // next clock will be start step
-        m_tock = false;                                     // pemdulum state variable
+        m_step = m_finish;  // next clock will be start step
+        m_tock = false;     // pemdulum state variable
     }
 
     inline state_t state() const { return m_state; }
