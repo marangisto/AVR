@@ -10,6 +10,9 @@
 #include <AVR/Timer.h>
 #include <AVR/Pins.h>
 
+//template <class T> const T& max(const T& a, const T& b) { return (a<b) ? b : a; }
+//template <class T> const T& min(const T& a, const T& b) { return (a<b) ? a : b; }
+
 typedef input_t<PD, 3> clk_a;
 typedef input_t<PD, 4> rst_a;
 typedef input_t<PD, 5> clk_b;
@@ -71,6 +74,7 @@ static void attach_subseqs()
 }
 
 enum state_t { STOPPED, RUNNING };
+enum mode_t { NORMAL, PENDULUM, RANDOM };
 
 template<class CLK, class RST, class TRIG_A, class TRIG_B, class PWM>
 class channel_t
@@ -80,6 +84,7 @@ public:
     {
         m_nsteps = nsteps;
         m_state = STOPPED;
+        m_mode = NORMAL;
         m_step = 0;
         m_start = 0;
         m_finish = nsteps - 1;
@@ -87,7 +92,7 @@ public:
 
     inline void start() { m_state = RUNNING; }
     inline void stop() { m_state = STOPPED; }
-    inline void reset() { m_step = m_finish; }  // next clock will be start step
+    inline void reset() { m_step = m_finish > m_start ? m_finish : m_start; }  // next clock will be start step
 
     inline state_t state() const { return m_state; }
     inline uint8_t step() const { return m_step; }
@@ -100,10 +105,10 @@ public:
 
     inline void advance()
     {
-        if (m_step >= m_finish)
-            m_step = m_start;
+        if (m_finish > m_start)
+            m_step = m_step < m_finish ? m_step + 1 : m_start;
         else
-            ++m_step;
+            m_step = m_step > m_finish ? m_step - 1 : m_start;
     }
 
     inline void isr()
@@ -132,10 +137,12 @@ public:
 
     inline void set_start(uint8_t i) { m_start = i; }
     inline void set_finish(uint8_t i) { m_finish = i; }
+    inline void set_mode(mode_t m) { m_mode = m; }
 
 private:
     volatile uint8_t    m_nsteps;
     volatile state_t    m_state;
+    volatile mode_t     m_mode;
     volatile uint8_t    m_step;
     volatile uint8_t    m_start;
     volatile uint8_t    m_finish;
