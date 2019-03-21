@@ -125,6 +125,28 @@ public:
             m_tock = !m_tock;
     }
 
+    inline void jog(bool rev)
+    {
+        cli();
+
+        if (rev)
+        {
+            if (m_finish > m_start)
+                m_step = m_step > m_start ? m_step - 1 : m_finish;
+            else
+                m_step = m_step < m_start ? m_step + 1 : m_finish;
+        }
+        else
+        {
+            if (m_finish > m_start)
+                m_step = m_step < m_finish ? m_step + 1 : m_start;
+            else
+                m_step = m_step > m_finish ? m_step - 1 : m_start;
+        }
+
+        sei();
+    }
+
     inline void isr()
     {
         static bool last_clk;
@@ -283,6 +305,7 @@ void loop()
     static uint16_t last_mode_a = 0;
     static uint16_t last_state_b = 0;
     static uint16_t last_mode_b = 0;
+    static uint16_t last_jog = 0;
     uint16_t sw = scan_switches(), tmp = 0;
 
     if ((tmp = (sw & (sw_run_a | sw_rst_a))) != last_state_a)
@@ -327,6 +350,19 @@ void loop()
         else
             ch_b.set_mode(NORMAL);
         last_mode_b = tmp;
+    }
+
+    if ((tmp = (sw & (sw_inc | sw_dec))) != last_jog)
+    {
+        if (tmp)
+        {
+            if (sw & sw_side)
+                ch_b.jog(tmp & sw_dec);
+            else
+                ch_a.jog(tmp & sw_dec);
+        }
+
+        last_jog = tmp;
     }
 
     // update leds and read levels
