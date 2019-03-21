@@ -147,6 +147,33 @@ public:
         sei();
     }
 
+    inline void fire(bool up)
+    {
+        if (m_state != STOPPED)
+            return;
+
+        if (up)
+        {
+            uint16_t x = m_level[m_step];   // including switch bits (shift 1 bit right for 9-bit DAC)
+
+            if ((x & (1 << 13)) != 0)
+            {
+                PWM::template output_compare_register<channel_a>() = x >> 1;
+                TRIG_A::set();
+            }
+            if ((x & (1 << 14)) != 0)
+            {
+                PWM::template output_compare_register<channel_b>() = x >> 1;
+                TRIG_B::set();
+            }
+        }
+        else
+        {
+            TRIG_A::clear();
+            TRIG_B::clear();
+        }
+    }
+
     inline void isr()
     {
         static bool last_clk;
@@ -325,6 +352,8 @@ void loop()
         static uint16_t last_state_b = 0;
         static uint16_t last_mode_b = 0;
         static uint16_t last_jog = 0;
+        static uint16_t last_trg = 0;
+ 
         if ((tmp = (sw & (sw_run_a | sw_rst_a))) != last_state_a)
         {
             if (tmp & sw_run_a)
@@ -380,6 +409,16 @@ void loop()
             }
             last_jog = tmp;
         }
+
+        if ((tmp = (sw & sw_trg)) != last_trg)
+        {
+            if (sw & sw_side)
+                ch_b.fire(tmp);
+            else
+                ch_a.fire(tmp);
+            last_trg = tmp;
+        }
+
         last_sw = sw;
     }
 
