@@ -9,6 +9,7 @@
 #include <AVR/Delay.h>
 #include <AVR/Timer.h>
 #include <AVR/Pins.h>
+#include <stdlib.h>
 
 template <class T> const T& max(const T& a, const T& b) { return (a<b) ? b : a; }
 template <class T> const T& min(const T& a, const T& b) { return (a<b) ? a : b; }
@@ -84,7 +85,7 @@ public:
     {
         m_nsteps = nsteps;
         m_state = STOPPED;
-        m_mode = NORMAL;
+        m_mode = RANDOM;
         m_step = 0;
         m_start = 0;
         m_finish = nsteps - 1;
@@ -112,7 +113,9 @@ public:
         uint8_t lo = min(m_start, m_finish), hi = max(m_start, m_finish);
         bool fwd = m_tock ^ (m_start < m_finish);
 
-        if (fwd)
+        if (m_mode == RANDOM)
+            m_step = hi > lo ? lo + rand() % (hi - lo) : lo;
+        else if (fwd)
             m_step = m_step < hi ? m_step + 1 : lo;
         else
             m_step = m_step > lo ? m_step - 1 : hi;
