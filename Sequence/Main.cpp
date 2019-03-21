@@ -85,7 +85,7 @@ public:
     {
         m_nsteps = nsteps;
         m_state = STOPPED;
-        m_mode = RANDOM;
+        m_mode = NORMAL;
         m_step = 0;
         m_start = 0;
         m_finish = nsteps - 1;
@@ -178,13 +178,13 @@ ISR(PCINT2_vect)
 
 static const uint16_t sw_run_a = (1 << 9);   // run state a
 static const uint16_t sw_rst_a = (1 << 1);   // reset a
-static const uint16_t sw_up_a = (1 << 0);    // a mode swith up
-static const uint16_t sw_dn_a = (1 << 4);    // a mode swith down
+static const uint16_t sw_rnd_a = (1 << 0);   // a mode swith up
+static const uint16_t sw_pnd_a = (1 << 4);   // a mode swith down
 
 static const uint16_t sw_run_b = (1 << 3);   // run state b
 static const uint16_t sw_rst_b = (1 << 7);   // reset b
-static const uint16_t sw_up_b = (1 << 6);    // b mode switch up
-static const uint16_t sw_dn_b = (1 << 10);   // b mode switch down
+static const uint16_t sw_rnd_b = (1 << 6);   // b mode switch up
+static const uint16_t sw_pnd_b = (1 << 10);  // b mode switch down
 
 static const uint16_t sw_side = (1 << 8);    // manual action side
 static const uint16_t sw_inc = (1 << 5);     // increment step
@@ -278,11 +278,10 @@ void loop()
 {
     // read switches
 
-    //static uint8_t ia = 0, ib = 0;
     static uint16_t last_state_a = 0;
-    //static uint16_t last_mode_a = 0;
+    static uint16_t last_mode_a = 0;
     static uint16_t last_state_b = 0;
-    //static uint16_t last_mode_b = 0;
+    static uint16_t last_mode_b = 0;
     uint16_t sw = scan_switches(), tmp = 0;
 
     if ((tmp = (sw & (sw_run_a | sw_rst_a))) != last_state_a)
@@ -305,6 +304,28 @@ void loop()
         else
             ch_b.stop();
         last_state_b = tmp;
+    }
+
+    if ((tmp = (sw & (sw_rnd_a | sw_pnd_a))) != last_mode_a)
+    {
+        if (tmp & sw_rnd_a)
+            ch_a.set_mode(RANDOM);
+        else if (tmp & sw_pnd_a)
+            ch_a.set_mode(PENDULUM);
+        else
+            ch_a.set_mode(NORMAL);
+        last_mode_a = tmp;
+    }
+
+    if ((tmp = (sw & (sw_rnd_b | sw_pnd_b))) != last_mode_b)
+    {
+        if (tmp & sw_rnd_b)
+            ch_b.set_mode(RANDOM);
+        else if (tmp & sw_pnd_b)
+            ch_b.set_mode(PENDULUM);
+        else
+            ch_b.set_mode(NORMAL);
+        last_mode_b = tmp;
     }
 
     // update leds and read levels
