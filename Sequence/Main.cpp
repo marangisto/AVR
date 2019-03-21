@@ -10,8 +10,8 @@
 #include <AVR/Timer.h>
 #include <AVR/Pins.h>
 
-//template <class T> const T& max(const T& a, const T& b) { return (a<b) ? b : a; }
-//template <class T> const T& min(const T& a, const T& b) { return (a<b) ? a : b; }
+template <class T> const T& max(const T& a, const T& b) { return (a<b) ? b : a; }
+template <class T> const T& min(const T& a, const T& b) { return (a<b) ? a : b; }
 
 typedef input_t<PD, 3> clk_a;
 typedef input_t<PD, 4> rst_a;
@@ -92,7 +92,11 @@ public:
 
     inline void start() { m_state = RUNNING; }
     inline void stop() { m_state = STOPPED; }
-    inline void reset() { m_step = m_finish > m_start ? m_finish : m_start; }  // next clock will be start step
+    inline void reset()
+    {
+        m_step = m_finish > m_start ? m_finish : m_start;   // next clock will be start step
+        m_tock = false;                                     // pemdulum state variable
+    }
 
     inline state_t state() const { return m_state; }
     inline uint8_t step() const { return m_step; }
@@ -105,10 +109,16 @@ public:
 
     inline void advance()
     {
-        if (m_finish > m_start)
-            m_step = m_step < m_finish ? m_step + 1 : m_start;
+        uint8_t lo = min(m_start, m_finish), hi = max(m_start, m_finish);
+        bool fwd = m_tock ^ (m_start < m_finish);
+
+        if (fwd)
+            m_step = m_step < hi ? m_step + 1 : lo;
         else
-            m_step = m_step > m_finish ? m_step - 1 : m_start;
+            m_step = m_step > lo ? m_step - 1 : hi;
+
+        if (m_mode == PENDULUM && (m_step == hi || m_step == lo))
+            m_tock = !m_tock;
     }
 
     inline void isr()
@@ -143,6 +153,7 @@ private:
     volatile uint8_t    m_nsteps;
     volatile state_t    m_state;
     volatile mode_t     m_mode;
+    volatile bool       m_tock;
     volatile uint8_t    m_step;
     volatile uint8_t    m_start;
     volatile uint8_t    m_finish;
