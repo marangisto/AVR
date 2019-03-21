@@ -156,17 +156,30 @@ public:
 
         bool clk = !CLK::read();
 
-        if (clk != last_clk)
+        if (clk != last_clk)                    // only process edges
         {
             if (clk && m_state == RUNNING)
             {
                 advance();
-                PWM::template output_compare_register<channel_a>() = m_level[m_step] >> 1;
-                PWM::template output_compare_register<channel_b>() = m_level[m_step] >> 1;
-                TRIG_A::set();
+
+                uint16_t x = m_level[m_step];   // including switch bits (shift 1 bit right for 9-bit DAC)
+
+                if ((x & (1 << 13)) != 0)
+                {
+                    PWM::template output_compare_register<channel_a>() = x >> 1;
+                    TRIG_A::set();
+                }
+                if ((x & (1 << 14)) != 0)
+                {
+                    PWM::template output_compare_register<channel_b>() = x >> 1;
+                    TRIG_B::set();
+                }
             }
             else
+            {
                 TRIG_A::clear();
+                TRIG_B::clear();
+            }
             last_clk = clk;
         }
     }
