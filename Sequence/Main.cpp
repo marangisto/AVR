@@ -301,68 +301,73 @@ void loop()
 {
     // read switches
 
-    static uint16_t last_state_a = 0;
-    static uint16_t last_mode_a = 0;
-    static uint16_t last_state_b = 0;
-    static uint16_t last_mode_b = 0;
-    static uint16_t last_jog = 0;
+    static uint16_t last_sw = 0;
+
     uint16_t sw = scan_switches(), tmp = 0;
 
-    if ((tmp = (sw & (sw_run_a | sw_rst_a))) != last_state_a)
+    if (sw != last_sw)
     {
-        if (tmp & sw_run_a)
-            ch_a.start();
-        else if (tmp & sw_rst_a)
-            ch_a.reset();
-        else
-            ch_a.stop();
-        last_state_a = tmp;
-    }
-
-    if ((tmp = (sw & (sw_run_b | sw_rst_b))) != last_state_b)
-    {
-        if (tmp & sw_run_b)
-            ch_b.start();
-        else if (tmp & sw_rst_b)
-            ch_b.reset();
-        else
-            ch_b.stop();
-        last_state_b = tmp;
-    }
-
-    if ((tmp = (sw & (sw_rnd_a | sw_pnd_a))) != last_mode_a)
-    {
-        if (tmp & sw_rnd_a)
-            ch_a.set_mode(RANDOM);
-        else if (tmp & sw_pnd_a)
-            ch_a.set_mode(PENDULUM);
-        else
-            ch_a.set_mode(NORMAL);
-        last_mode_a = tmp;
-    }
-
-    if ((tmp = (sw & (sw_rnd_b | sw_pnd_b))) != last_mode_b)
-    {
-        if (tmp & sw_rnd_b)
-            ch_b.set_mode(RANDOM);
-        else if (tmp & sw_pnd_b)
-            ch_b.set_mode(PENDULUM);
-        else
-            ch_b.set_mode(NORMAL);
-        last_mode_b = tmp;
-    }
-
-    if ((tmp = (sw & (sw_inc | sw_dec))) != last_jog)
-    {
-        if (tmp)
+        static uint16_t last_state_a = 0;
+        static uint16_t last_mode_a = 0;
+        static uint16_t last_state_b = 0;
+        static uint16_t last_mode_b = 0;
+        static uint16_t last_jog = 0;
+        if ((tmp = (sw & (sw_run_a | sw_rst_a))) != last_state_a)
         {
-            if (sw & sw_side)
-                ch_b.jog(tmp & sw_dec);
+            if (tmp & sw_run_a)
+                ch_a.start();
+            else if (tmp & sw_rst_a)
+                ch_a.reset();
             else
-                ch_a.jog(tmp & sw_dec);
+                ch_a.stop();
+            last_state_a = tmp;
         }
 
-        last_jog = tmp;
+        if ((tmp = (sw & (sw_run_b | sw_rst_b))) != last_state_b)
+        {
+            if (tmp & sw_run_b)
+                ch_b.start();
+            else if (tmp & sw_rst_b)
+                ch_b.reset();
+            else
+                ch_b.stop();
+            last_state_b = tmp;
+        }
+
+        if ((tmp = (sw & (sw_rnd_a | sw_pnd_a))) != last_mode_a)
+        {
+            if (tmp & sw_rnd_a)
+                ch_a.set_mode(RANDOM);
+            else if (tmp & sw_pnd_a)
+                ch_a.set_mode(PENDULUM);
+            else
+                ch_a.set_mode(NORMAL);
+            last_mode_a = tmp;
+        }
+
+        if ((tmp = (sw & (sw_rnd_b | sw_pnd_b))) != last_mode_b)
+        {
+            if (tmp & sw_rnd_b)
+                ch_b.set_mode(RANDOM);
+            else if (tmp & sw_pnd_b)
+                ch_b.set_mode(PENDULUM);
+            else
+                ch_b.set_mode(NORMAL);
+            last_mode_b = tmp;
+        }
+
+        if ((tmp = (sw & (sw_inc | sw_dec))) != last_jog)
+        {
+            if (tmp)
+            {
+                if (sw & sw_side)
+                    ch_b.jog(tmp & sw_dec);
+                else
+                    ch_a.jog(tmp & sw_dec);
+            }
+            last_jog = tmp;
+        }
+        last_sw = sw;
     }
 
     // update leds and read levels
