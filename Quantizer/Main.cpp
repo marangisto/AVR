@@ -3,13 +3,9 @@
 #include <AVR/ADC.h>
 #include <AVR/SPI.h>
 #include <AVR/MCP48x2.h>
-#include <AVR/SN74HC595.h>
 #include <AVR/Delay.h>
 #include <AVR/Timer.h>
 #include <AVR/Button.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
 
 template<class T> T max(const T& x, const T& y) { return x > y ? x : y; }
 
@@ -18,6 +14,8 @@ typedef spi_t<2, msb_first, PB, 2> spi;
 typedef output_t<PB, 1> dac;
 typedef button_t<PD, 6> btn_dn;
 typedef button_t<PD, 7> btn_up;
+
+static const uint8_t adc_offset = 0;
 
 typedef timer_t<0> debounce;
 
@@ -29,6 +27,7 @@ ISR(TIMER0_OVF_vect)
 
 void setup()
 {
+    adc::setup<128>();
     led::setup();
     spi::setup();
     dac::setup();
@@ -44,6 +43,7 @@ void setup()
 void loop()
 {
     static uint16_t i = 0;
+    uint16_t j = adc::read<adc_offset>();
 
     if (btn_up::read())
         i = (i + 1) & 0x0fff;
@@ -51,8 +51,8 @@ void loop()
     if (btn_dn::read())
         i = (i - 1) & 0x0fff;
 
-    spi::write(mcp48x2_t::encode<chan_a, gain_x2>(i));
-    spi::write(mcp48x2_t::encode<chan_b, gain_x2>(i));
+    spi::write(mcp48x2_t::encode<chan_a, gain_x2>(i+j));
+    spi::write(mcp48x2_t::encode<chan_b, gain_x2>(i+j));
 
     dac::clear();
     dac::set();
