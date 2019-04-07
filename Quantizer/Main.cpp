@@ -66,7 +66,8 @@ void loop()
 {
     static uint16_t i = 0;
     uint16_t j = adc::read<adc_offset>();
-    uint16_t cv = adc::read<adc_cv>() << 2;
+    uint16_t cv = (static_cast<uint32_t>(adc::read<adc_cv>() << 2) << 10) / 819;    // FIXME: use input stage scaling!
+    uint16_t ot = j << 2;
 
     if (btn_up::read())
         i = (i + 1) & 0x0fff;
@@ -74,9 +75,9 @@ void loop()
     if (btn_dn::read())
         i = (i - 1) & 0x0fff;
 
-    spi::write(mcp48x2_t::encode<chan_a, gain_x2>(i+j+cv));
     cv = chromatic_tab[find_index(cv)];
-    spi::write(mcp48x2_t::encode<chan_b, gain_x2>(i+j+cv));
+    spi::write(mcp48x2_t::encode<chan_a, gain_x2>(i+cv));
+    spi::write(mcp48x2_t::encode<chan_b, gain_x2>(i+ot+cv));
 
     dac::clear();
     dac::set();
