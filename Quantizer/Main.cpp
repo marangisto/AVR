@@ -68,8 +68,8 @@ void loop()
     static uint16_t i = 0;
     static uint16_t last_cva = 0, last_cvb = 0;
     uint16_t j = adc::read<adc_offset>();
-    uint16_t cva = (static_cast<uint32_t>(adc::read<adc_cva>() << 2) << 10) / 819;    // FIXME: use input stage scaling!
-    uint16_t cvb = (static_cast<uint32_t>(adc::read<adc_cvb>() << 2) << 10) / 819;    // FIXME: use input stage scaling!
+    uint16_t cva = adc::read<adc_cva>() << 2;
+    uint16_t cvb = adc::read<adc_cvb>() << 2;
     uint16_t ot = j << 2;
 
     if (btn_up::read())
