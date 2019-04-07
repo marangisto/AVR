@@ -17,7 +17,8 @@ typedef button_t<PD, 6> btn_dn;
 typedef button_t<PD, 7> btn_up;
 
 static const uint8_t adc_offset = 0;
-static const uint8_t adc_cv = 1;
+static const uint8_t adc_cva = 2;
+static const uint8_t adc_cvb = 1;
 
 typedef timer_t<0> debounce;
 
@@ -65,8 +66,10 @@ void setup()
 void loop()
 {
     static uint16_t i = 0;
+    static uint16_t last_cva = 0, last_cvb = 0;
     uint16_t j = adc::read<adc_offset>();
-    uint16_t cv = (static_cast<uint32_t>(adc::read<adc_cv>() << 2) << 10) / 819;    // FIXME: use input stage scaling!
+    uint16_t cva = (static_cast<uint32_t>(adc::read<adc_cva>() << 2) << 10) / 819;    // FIXME: use input stage scaling!
+    uint16_t cvb = (static_cast<uint32_t>(adc::read<adc_cvb>() << 2) << 10) / 819;    // FIXME: use input stage scaling!
     uint16_t ot = j << 2;
 
     if (btn_up::read())
@@ -75,13 +78,19 @@ void loop()
     if (btn_dn::read())
         i = (i - 1) & 0x0fff;
 
-    cv = chromatic_tab[find_index(cv)];
-    spi::write(mcp48x2_t::encode<chan_a, gain_x2>(i+cv));
-    spi::write(mcp48x2_t::encode<chan_b, gain_x2>(i+ot+cv));
+    cva = chromatic_tab[find_index(cva)];
+    cvb = chromatic_tab[find_index(cvb)];
+    spi::write(mcp48x2_t::encode<chan_a, gain_x2>(cva));
+    spi::write(mcp48x2_t::encode<chan_b, gain_x2>(ot+cvb));
 
     dac::clear();
     dac::set();
 
-    led::toggle();
+    if (cva != last_cva || cvb != last_cvb)
+    {
+        led::toggle();
+        last_cva = cva;
+        last_cvb = cvb;
+    }
 }
 
