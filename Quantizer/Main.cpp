@@ -16,6 +16,7 @@ typedef button_t<PD, 6> btn_dn;
 typedef button_t<PD, 7> btn_up;
 
 static const uint8_t adc_offset = 0;
+static const uint8_t adc_cv = 1;
 
 typedef timer_t<0> debounce;
 
@@ -44,6 +45,7 @@ void loop()
 {
     static uint16_t i = 0;
     uint16_t j = adc::read<adc_offset>();
+    uint16_t cv = adc::read<adc_cv>() << 2;
 
     if (btn_up::read())
         i = (i + 1) & 0x0fff;
@@ -51,8 +53,8 @@ void loop()
     if (btn_dn::read())
         i = (i - 1) & 0x0fff;
 
-    spi::write(mcp48x2_t::encode<chan_a, gain_x2>(i+j));
-    spi::write(mcp48x2_t::encode<chan_b, gain_x2>(i+j));
+    spi::write(mcp48x2_t::encode<chan_a, gain_x2>(i+j+cv));
+    spi::write(mcp48x2_t::encode<chan_b, gain_x2>(i+j+cv));
 
     dac::clear();
     dac::set();
