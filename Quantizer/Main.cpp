@@ -37,6 +37,22 @@ static const uint16_t chromatic_tab[] =
 
 static const uint8_t chromatic_tab_size = sizeof(chromatic_tab) / sizeof(*chromatic_tab);
 
+static uint8_t scale_index[chromatic_tab_size];
+
+static void set_chromatic()
+{
+    for (uint8_t i = 0; i < chromatic_tab_size; ++i)
+        scale_index[i] = i;
+}
+
+static void set_diatonic()
+{
+    static const bool use[12] = { true, false, true, false, true, true, false, true, false, true, false, true };
+
+    for (uint8_t i = 0; i < chromatic_tab_size; ++i)
+        scale_index[i] = use[i % 12] ? i : (i - 1);
+}
+
 static inline uint8_t find_index(uint16_t cv)
 {
     uint8_t i = min<uint16_t>(cv >> 6, chromatic_tab_size - 1);
@@ -45,7 +61,7 @@ static inline uint8_t find_index(uint16_t cv)
         ++i;
     while (i > 0 && chromatic_tab[i] > cv)
         --i;
-    return i;
+    return scale_index[i];
 }
 
 void setup()
@@ -60,12 +76,13 @@ void setup()
     debounce::template setup<normal_mode>();
     debounce::template clock_select<64>();
     debounce::enable();
+    set_chromatic();
     sei();
 }
 
 void loop()
 {
-    static uint16_t i = 0;
+//    static uint16_t i = 0;
     static uint16_t last_cva = 0, last_cvb = 0;
     uint16_t j = adc::read<adc_offset>();
     uint16_t cva = adc::read<adc_cva>() << 2;
@@ -73,10 +90,16 @@ void loop()
     uint16_t ot = j << 2;
 
     if (btn_up::read())
+        set_diatonic();
+    if (btn_dn::read())
+        set_chromatic();
+/*
+    if (btn_up::read())
         i = (i + 1) & 0x0fff;
 
     if (btn_dn::read())
         i = (i - 1) & 0x0fff;
+*/
 
     cva = chromatic_tab[find_index(cva)];
     cvb = chromatic_tab[find_index(cvb)];
