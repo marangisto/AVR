@@ -8,6 +8,7 @@
 #include <AVR/Button.h>
 
 template<class T> T max(const T& x, const T& y) { return x > y ? x : y; }
+template<class T> T min(const T& x, const T& y) { return x < y ? x : y; }
 
 typedef output_t<PC, 3> led;
 typedef spi_t<2, msb_first, PB, 2> spi;
@@ -24,6 +25,26 @@ ISR(TIMER0_OVF_vect)
 {
     btn_up::update();
     btn_dn::update();
+}
+
+static const uint16_t chromatic_tab[] =
+    { 0,83,167,250,333,417,500,583,667,750,833,917,1000,1083,1167,1250
+    , 1333,1417,1500,1583,1667,1750,1833,1917,2000,2083,2167,2250,2333,2417,2500,2583
+    , 2667,2750,2833,2917,3000,3083,3167,3250,3333,3417,3500,3583,3667,3750,3833,3917
+    , 4000,4083
+    };
+
+static const uint8_t chromatic_tab_size = sizeof(chromatic_tab) / sizeof(*chromatic_tab);
+
+static inline uint8_t find_index(uint16_t cv)
+{
+    uint8_t i = min<uint16_t>(cv >> 6, chromatic_tab_size - 1);
+
+    while (i < chromatic_tab_size - 1 && chromatic_tab[i] < cv)
+        ++i;
+    while (i > 0 && chromatic_tab[i] > cv)
+        --i;
+    return i;
 }
 
 void setup()
@@ -54,6 +75,7 @@ void loop()
         i = (i - 1) & 0x0fff;
 
     spi::write(mcp48x2_t::encode<chan_a, gain_x2>(i+j+cv));
+    cv = chromatic_tab[find_index(cv)];
     spi::write(mcp48x2_t::encode<chan_b, gain_x2>(i+j+cv));
 
     dac::clear();
