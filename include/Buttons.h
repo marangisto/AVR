@@ -1,7 +1,7 @@
 #ifndef BUTTONS_H
 #define BUTTONS_H
 
-#include "../AVR/ADC.h"
+#include "ADC.h"
 
 template<int CH>
 class buttons_t

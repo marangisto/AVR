@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../AVR/Pins.h"
+#include "Pins.h"
 
 enum shift_order_t { LSB_FIRST = 0, MSB_FIRST = 1};
 

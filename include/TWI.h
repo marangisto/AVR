@@ -1,7 +1,7 @@
 #pragma once
 
-#include <AVR/Pins.h>
-#include <AVR/Delay.h>
+#include "Pins.h"
+#include "Delay.h"
 #include <util/twi.h>
 #include <avr/interrupt.h>
 
